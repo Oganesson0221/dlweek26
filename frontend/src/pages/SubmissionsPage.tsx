@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import {
   FileText,
   FileSpreadsheet,
@@ -244,20 +250,28 @@ export const SubmissionsPage: React.FC = () => {
     submitted: allAssignments.filter((a) => a.status === "submitted"),
   };
 
-  const stats = useMemo(() => ({
-    total: allAssignments.length,
-    submitted: allAssignments.filter((a) => a.status === "submitted").length,
-    inProgress: allAssignments.filter((a) => a.status === "in-progress").length,
-    pending: allAssignments.filter((a) => a.status === "pending").length,
-  }), [allAssignments]);
+  const stats = useMemo(
+    () => ({
+      total: allAssignments.length,
+      submitted: allAssignments.filter((a) => a.status === "submitted").length,
+      inProgress: allAssignments.filter((a) => a.status === "in-progress")
+        .length,
+      pending: allAssignments.filter((a) => a.status === "pending").length,
+    }),
+    [allAssignments],
+  );
 
   /* ── Upcoming deadlines for Clippy ── */
-  const urgentDeadlines = useMemo(() => allAssignments
-    .filter((a) => a.status === "in-progress" || a.status === "pending")
-    .map((a) => ({ ...a, daysLeft: getDaysUntil(a.dueDate) }))
-    .filter((a) => a.daysLeft > 0 && a.daysLeft <= 14)
-    .sort((a, b) => a.daysLeft - b.daysLeft)
-    .slice(0, 5), [allAssignments]);
+  const urgentDeadlines = useMemo(
+    () =>
+      allAssignments
+        .filter((a) => a.status === "in-progress" || a.status === "pending")
+        .map((a) => ({ ...a, daysLeft: getDaysUntil(a.dueDate) }))
+        .filter((a) => a.daysLeft > 0 && a.daysLeft <= 14)
+        .sort((a, b) => a.daysLeft - b.daysLeft)
+        .slice(0, 5),
+    [allAssignments],
+  );
 
   // Add Clippy messages based on context - only run once on mount
   useEffect(() => {
@@ -494,11 +508,9 @@ export const SubmissionsPage: React.FC = () => {
   );
 
   return (
-    <div
-      className="relative min-h-screen"
-    >
+    <div className="relative min-h-screen">
       {/* Background Image with Gradient Overlay */}
-      <div 
+      <div
         className="fixed inset-0 z-0"
         style={{
           backgroundImage: "url('/submissions.png')",
@@ -509,7 +521,7 @@ export const SubmissionsPage: React.FC = () => {
       />
       {/* Microsoft-style gradient overlay */}
       <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#0078d4]/10 via-white/90 to-[#50e6ff]/10" />
-      
+
       {/* Content container */}
       <div className="relative z-10 space-y-5 max-w-[1080px] mx-auto py-8 px-4">
         {/* Header with Microsoft branding */}
@@ -541,10 +553,30 @@ export const SubmissionsPage: React.FC = () => {
         {/* Stats with Microsoft Fluent Design */}
         <div className="grid grid-cols-4 gap-4 mb-2">
           {[
-            { label: "Total", value: stats.total, color: "from-[#0078d4] to-[#50e6ff]", icon: FileText },
-            { label: "Submitted", value: stats.submitted, color: "from-[#107c10] to-[#00cc6a]", icon: CheckCircle2 },
-            { label: "In Progress", value: stats.inProgress, color: "from-[#ff8c00] to-[#ffb900]", icon: Clock },
-            { label: "Pending", value: stats.pending, color: "from-[#5c2d91] to-[#b4a0ff]", icon: AlertCircle },
+            {
+              label: "Total",
+              value: stats.total,
+              color: "from-[#0078d4] to-[#50e6ff]",
+              icon: FileText,
+            },
+            {
+              label: "Submitted",
+              value: stats.submitted,
+              color: "from-[#107c10] to-[#00cc6a]",
+              icon: CheckCircle2,
+            },
+            {
+              label: "In Progress",
+              value: stats.inProgress,
+              color: "from-[#ff8c00] to-[#ffb900]",
+              icon: Clock,
+            },
+            {
+              label: "Pending",
+              value: stats.pending,
+              color: "from-[#5c2d91] to-[#b4a0ff]",
+              icon: AlertCircle,
+            },
           ].map((s) => {
             const Icon = s.icon;
             return (
@@ -552,7 +584,9 @@ export const SubmissionsPage: React.FC = () => {
                 key={s.label}
                 className="group backdrop-blur-md bg-white/70 rounded-xl border border-white/50 p-5 text-center shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 cursor-default"
               >
-                <div className={`w-10 h-10 mx-auto mb-3 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`w-10 h-10 mx-auto mb-3 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}
+                >
                   <Icon className="w-5 h-5 text-white" />
                 </div>
                 <p className="text-3xl font-bold text-neutral-800 tabular-nums">
@@ -566,520 +600,550 @@ export const SubmissionsPage: React.FC = () => {
           })}
         </div>
 
-      {/* Course Outlines Section */}
-      {uploadedOutlines.length > 0 && (
-        <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 overflow-hidden shadow-lg">
-          <div className="px-5 py-4 border-b border-neutral-200/50 flex items-center justify-between bg-gradient-to-r from-[#0078d4]/5 to-transparent">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-sm font-semibold text-neutral-800">
-                Uploaded Course Outlines
-              </h2>
-            </div>
-            <button
-              onClick={() => setShowOutlineUploader(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] text-[#0078d4] hover:bg-[#0078d4]/10 font-medium rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add More
-            </button>
-          </div>
-          <div className="divide-y divide-neutral-200/50">
-            {uploadedOutlines.map((outline) => (
-              <div
-                key={outline.id}
-                className={`px-5 py-3 hover:bg-[#0078d4]/5 cursor-pointer transition-all ${
-                  selectedOutline === outline.id
-                    ? "bg-[#0078d4]/10 border-l-3 border-l-[#0078d4]"
-                    : ""
-                }`}
-                onClick={() => setSelectedOutline(outline.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-base font-bold text-neutral-900">
-                      {outline.courseName} <span className="text-[#0078d4]">({outline.courseCode})</span>
-                    </p>
-                    <p className="text-[12px] text-neutral-500 mt-1">
-                      {outline.fileName} •{" "}
-                      {new Date(outline.uploadDate).toLocaleDateString()} •{" "}
-                      {outline.outline.components.length} components
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setUploadedOutlines((prev) =>
-                        prev.filter((o) => o.id !== outline.id),
-                      );
-                      if (selectedOutline === outline.id)
-                        setSelectedOutline(null);
-                    }}
-                    className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+        {/* Course Outlines Section */}
+        {uploadedOutlines.length > 0 && (
+          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 overflow-hidden shadow-lg">
+            <div className="px-5 py-4 border-b border-neutral-200/50 flex items-center justify-between bg-gradient-to-r from-[#0078d4]/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-white" />
                 </div>
+                <h2 className="text-sm font-semibold text-neutral-800">
+                  Uploaded Course Outlines
+                </h2>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Selected Outline Components */}
-      {selectedOutlineData && (
-        <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 overflow-hidden shadow-lg">
-          <div className="px-5 py-4 border-b border-neutral-200/50 flex items-center justify-between bg-gradient-to-r from-[#5c2d91]/5 to-transparent">
-            <div>
-              <h2 className="text-sm font-semibold text-neutral-800">
-                Course Components - {selectedOutlineData.courseCode}
-              </h2>
-              <p className="text-[12px] text-neutral-500 mt-1">
-                Instructor: {selectedOutlineData.outline.instructor} •{" "}
-                {selectedOutlineData.outline.components.length} components
-              </p>
-            </div>
-            <button
-              onClick={handleGenerateGuidelines}
-              disabled={generatingGuidelines}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white text-[11px] font-medium rounded-lg hover:opacity-90 transition-all disabled:opacity-40 shadow-md"
-            >
-              {generatingGuidelines ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <ClipboardList className="w-3 h-3" />
-              )}
-              Generate Guidelines
-            </button>
-          </div>
-          <div className="divide-y divide-neutral-100/50 max-h-[400px] overflow-y-auto">
-            {selectedOutlineData.outline.components.map((component, idx) => (
-              <div key={idx} className="px-4 py-3 hover:bg-[#5c2d91]/5 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[13px] font-medium text-neutral-800">
-                        {component.name}
-                      </p>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-neutral-100 text-neutral-600 rounded-full capitalize">
-                        {component.type}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[11px] text-neutral-400">
-                        Weight: {component.weight}%
-                      </span>
-                      {component.dueDate && (
-                        <span className="text-[11px] text-neutral-400">
-                          Due: {component.dueDate}
-                        </span>
-                      )}
-                    </div>
-                    {component.description && (
-                      <p className="text-[11px] text-neutral-500 mt-1 line-clamp-2">
-                        {component.description}
-                      </p>
-                    )}
-                    {component.rubric && component.rubric.length > 0 && (
-                      <div className="mt-2 bg-neutral-50 p-2 rounded-md">
-                        <p className="text-[10px] font-medium text-neutral-600 mb-1">
-                          Rubric:
-                        </p>
-                        <div className="space-y-1">
-                          {component.rubric.slice(0, 2).map((r, i) => (
-                            <div
-                              key={i}
-                              className="text-[10px] text-neutral-500 flex items-start gap-1"
-                            >
-                              <span className="font-medium text-neutral-600 min-w-[60px]">
-                                {r.criteria}:
-                              </span>
-                              <span>{r.points}pts</span>
-                            </div>
-                          ))}
-                          {component.rubric.length > 2 && (
-                            <p className="text-[9px] text-neutral-400">
-                              +{component.rubric.length - 2} more criteria
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleTemplateGeneration(
-                        component.name,
-                        "assignment",
-                        component,
-                      )
-                    }
-                    disabled={templateLoading === component.name}
-                    className="flex items-center gap-1 px-3 py-1.5 text-[11px] text-white bg-neutral-800 hover:bg-neutral-700 rounded-md ml-2 shrink-0 disabled:opacity-50"
-                  >
-                    {templateLoading === component.name ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Globe className="w-3 h-3" />
-                    )}
-                    {templateLoading === component.name
-                      ? "Opening..."
-                      : "Open Template"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          {guidelines && (
-            <div className="px-5 py-3 border-t border-neutral-200 bg-neutral-50">
-              <p className="text-[12px] font-semibold text-neutral-700 mb-2 flex items-center gap-2">
-                <FileCheck className="w-4 h-4" />
-                Guidelines Generated
-              </p>
               <button
-                onClick={() => {
-                  const url = generateGoogleDocsUrl(
-                    `${selectedOutlineData.courseCode}_Guidelines`,
-                    guidelines,
-                  );
-                  window.open(url, "_blank");
-                }}
-                className="text-[12px] text-neutral-700 hover:text-neutral-900 font-medium flex items-center gap-1"
+                onClick={() => setShowOutlineUploader(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] text-[#0078d4] hover:bg-[#0078d4]/10 font-medium rounded-lg transition-colors"
               >
-                <ExternalLink className="w-4 h-4" />
-                Open in Google Docs
+                <Plus className="w-4 h-4" />
+                Add More
               </button>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Course filter */}
-      {/* Course filter with Microsoft tab style */}
-      <div className="flex items-center gap-1 backdrop-blur-md bg-white/60 rounded-xl p-1.5 border border-white/50 shadow-lg">
-        <button
-          onClick={() => setSelectedCourse("")}
-          className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all ${
-            selectedCourse === ""
-              ? "bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white shadow-md"
-              : "text-neutral-600 hover:bg-[#0078d4]/10 hover:text-[#0078d4]"
-          }`}
-        >
-          All Courses
-        </button>
-        {courses.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setSelectedCourse(c.id)}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all ${
-              selectedCourse === c.id
-                ? "bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white shadow-md"
-                : "text-neutral-600 hover:bg-[#0078d4]/10 hover:text-[#0078d4]"
-            }`}
-          >
-            {c.code}
-          </button>
-        ))}
-      </div>
-
-      {/* Main content + Clippy sidebar */}
-      <div className="flex gap-5">
-        {/* Assignments list */}
-        <div className="flex-1 min-w-0 space-y-5">
-          {/* In Progress + Pending */}
-          {(["in-progress", "pending"] as const).map((status) => {
-            const items = grouped[status];
-            if (items.length === 0) return null;
-            const statusColors = {
-              "in-progress": { bg: "from-[#ff8c00]/10 to-transparent", border: "border-l-[#ff8c00]", text: "text-[#ff8c00]" },
-              pending: { bg: "from-[#5c2d91]/10 to-transparent", border: "border-l-[#5c2d91]", text: "text-[#5c2d91]" },
-            };
-            const colors = statusColors[status];
-            return (
-              <div key={status}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-1.5 h-6 rounded-full bg-gradient-to-b ${status === "in-progress" ? "from-[#ff8c00] to-[#ffb900]" : "from-[#5c2d91] to-[#b4a0ff]"}`} />
-                  <h2 className="text-sm font-bold text-neutral-800">
-                    {getStatusLabel(status)}
-                  </h2>
-                  <span className={`text-[11px] ${colors.text} font-semibold px-2 py-0.5 rounded-full bg-current/10`}>
-                    {items.length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {items.map((a) => {
-                    const daysLeft = getDaysUntil(a.dueDate);
-                    const isExpanded = expandedAssignment === a.id;
-                    const outlineComponent =
-                      selectedOutlineData?.outline.components.find(
-                        (c) =>
-                          c.name
-                            .toLowerCase()
-                            .includes(a.title.toLowerCase()) ||
-                          a.title.toLowerCase().includes(c.name.toLowerCase()),
-                      );
-
-                    return (
-                      <div
-                        key={a.id}
-                        className={`backdrop-blur-md bg-white/80 rounded-xl border border-white/50 overflow-hidden hover:shadow-xl transition-all shadow-lg border-l-3 ${colors.border}`}
-                      >
-                        <button
-                          onClick={() =>
-                            setExpandedAssignment(isExpanded ? "" : a.id)
-                          }
-                          className="w-full px-5 py-4 flex items-center gap-4 text-left"
-                        >
-                          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${status === "in-progress" ? "from-[#ff8c00] to-[#ffb900]" : "from-[#5c2d91] to-[#b4a0ff]"} flex items-center justify-center shadow-md`}>
-                            <span className="text-white">{fileTypeIcons[a.fileType]}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-neutral-800 truncate">
-                                {a.title}
-                              </p>
-                              <span className="text-[11px] text-neutral-500 shrink-0 font-medium">
-                                {a.courseCode}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 mt-2 text-[12px] text-neutral-500">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3.5 h-3.5" />
-                                Due {formatDate(a.dueDate)}
-                              </span>
-                              <span
-                                className={`font-medium ${
-                                  daysLeft <= 3
-                                    ? "text-red-600"
-                                    : daysLeft <= 7
-                                      ? "text-amber-600"
-                                      : "text-neutral-400"
-                                }`}
-                              >
-                                {daysLeft > 0 ? `${daysLeft}d left` : "Overdue"}
-                              </span>
-                              <span>Weight: {a.weight}%</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {statusIcons[a.status]}
-                            <ChevronRight
-                              className={`w-3.5 h-3.5 text-neutral-300 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                            />
-                          </div>
-                        </button>
-                        {isExpanded && (
-                          <div className="px-4 pb-3.5 border-t border-neutral-100 pt-3">
-                            <p className="text-[12px] text-neutral-500 mb-3">
-                              {a.description}
-                            </p>
-                            {outlineComponent && (
-                              <div className="mb-3 p-2 bg-blue-50 rounded-md">
-                                <p className="text-[11px] font-medium text-blue-700 mb-1">
-                                  Rubric Available:
-                                </p>
-                                <div className="space-y-1">
-                                  {outlineComponent.rubric?.map((r, i) => (
-                                    <div
-                                      key={i}
-                                      className="text-[10px] text-blue-600"
-                                    >
-                                      • {r.criteria}: {r.points}pts -{" "}
-                                      {r.description}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {/* Template dropdown */}
-                              <div className="relative">
-                                <button
-                                  onClick={() =>
-                                    setTemplateDropdown(
-                                      templateDropdown === a.id ? null : a.id,
-                                    )
-                                  }
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 text-white text-[12px] font-medium rounded-md hover:bg-neutral-800 transition-colors"
-                                >
-                                  <FileDown className="w-3 h-3" />
-                                  Generate Template
-                                  <ChevronDown className="w-3 h-3" />
-                                </button>
-                                {templateDropdown === a.id && (
-                                  <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-neutral-200 rounded-lg shadow-lg z-20 py-1">
-                                    {templateOptions.map((t) => (
-                                      <button
-                                        key={t.type}
-                                        onClick={() => {
-                                          if (
-                                            t.type === "assignment" &&
-                                            outlineComponent
-                                          ) {
-                                            handleTemplateGeneration(
-                                              a.title,
-                                              t.type,
-                                              outlineComponent,
-                                            );
-                                          } else {
-                                            handleTemplateGeneration(
-                                              a.title,
-                                              t.type,
-                                            );
-                                          }
-                                        }}
-                                        disabled={templateLoading === a.title}
-                                        className="w-full text-left px-3 py-2 hover:bg-neutral-50 transition-colors disabled:opacity-50"
-                                      >
-                                        <p className="text-[12px] font-medium text-neutral-700 flex items-center gap-1">
-                                          {t.label}
-                                          {t.type === "assignment" &&
-                                            outlineComponent && (
-                                              <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
-                                                AI
-                                              </span>
-                                            )}
-                                        </p>
-                                        <p className="text-[10px] text-neutral-400">
-                                          {t.desc}
-                                        </p>
-                                        {t.type === "assignment" &&
-                                          outlineComponent && (
-                                            <p className="text-[9px] text-green-600 mt-1">
-                                              Opens in Google Docs with rubric
-                                            </p>
-                                          )}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-
-                              <button
-                                onClick={() =>
-                                  handleTemplateGeneration(a.title, "docx")
-                                }
-                                disabled={templateLoading === a.title}
-                                className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral-200 text-neutral-600 text-[12px] font-medium rounded-md hover:bg-neutral-50 transition-colors disabled:opacity-50"
-                              >
-                                {templateLoading === a.title ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Globe className="w-3 h-3" />
-                                )}
-                                Open in Docs
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleTemplateGeneration(a.title, "pptx")
-                                }
-                                disabled={templateLoading === a.title}
-                                className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral-200 text-neutral-600 text-[12px] font-medium rounded-md hover:bg-neutral-50 transition-colors disabled:opacity-50"
-                              >
-                                {templateLoading === a.title ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Globe className="w-3 h-3" />
-                                )}
-                                Open in Slides
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Submitted */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#107c10] to-[#00cc6a]" />
-              <h2 className="text-sm font-bold text-neutral-800">Submitted</h2>
-              <span className="text-[11px] text-[#107c10] font-semibold px-2 py-0.5 rounded-full bg-[#107c10]/10">
-                {grouped.submitted.length}
-              </span>
-            </div>
-            <div className="space-y-3">
-              {grouped.submitted.map((a) => (
+            <div className="divide-y divide-neutral-200/50">
+              {uploadedOutlines.map((outline) => (
                 <div
-                  key={a.id}
-                  className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 border-l-3 border-l-[#107c10] px-5 py-4 flex items-center gap-4 group shadow-lg hover:shadow-xl transition-all"
+                  key={outline.id}
+                  className={`px-5 py-3 hover:bg-[#0078d4]/5 cursor-pointer transition-all ${
+                    selectedOutline === outline.id
+                      ? "bg-[#0078d4]/10 border-l-3 border-l-[#0078d4]"
+                      : ""
+                  }`}
+                  onClick={() => setSelectedOutline(outline.id)}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center shadow-md">
-                    <span className="text-white">{fileTypeIcons[a.fileType]}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[13px] font-medium text-neutral-700 truncate">
-                        {a.title}
-                      </p>
-                      <span className="text-[10px] px-2 py-0.5 bg-[#0078d4]/10 text-[#0078d4] rounded-full font-medium">
-                        {a.courseCode}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-neutral-500">
-                      <span>Submitted {formatDate(a.dueDate)}</span>
-                      <span>Weight: {a.weight}%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {emailSent.has(a.id) ? (
-                      <span className="flex items-center gap-1.5 text-[11px] text-[#107c10] font-medium px-2 py-1 bg-[#107c10]/10 rounded-lg">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Emailed
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => openEmailModal(a)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-[#0078d4] hover:bg-[#0078d4]/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all border border-[#0078d4]/30"
-                        title="Email professor to confirm submission"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>Email Prof</span>
-                      </button>
-                    )}
-                    <div className="flex items-center gap-2 px-2 py-1 bg-[#107c10]/10 rounded-lg">
-                      <CheckCircle2 className="w-4 h-4 text-[#107c10]" />
-                      {a.score !== undefined && (
-                        <span className="text-[13px] font-bold text-[#107c10] tabular-nums">
-                          {a.score}%
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-base font-bold text-neutral-900">
+                        {outline.courseName}{" "}
+                        <span className="text-[#0078d4]">
+                          ({outline.courseCode})
                         </span>
-                      )}
+                      </p>
+                      <p className="text-[12px] text-neutral-500 mt-1">
+                        {outline.fileName} •{" "}
+                        {new Date(outline.uploadDate).toLocaleDateString()} •{" "}
+                        {outline.outline.components.length} components
+                      </p>
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUploadedOutlines((prev) =>
+                          prev.filter((o) => o.id !== outline.id),
+                        );
+                        if (selectedOutline === outline.id)
+                          setSelectedOutline(null);
+                      }}
+                      className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        )}
+
+        {/* Selected Outline Components */}
+        {selectedOutlineData && (
+          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 overflow-hidden shadow-lg">
+            <div className="px-5 py-4 border-b border-neutral-200/50 flex items-center justify-between bg-gradient-to-r from-[#5c2d91]/5 to-transparent">
+              <div>
+                <h2 className="text-sm font-semibold text-neutral-800">
+                  Course Components - {selectedOutlineData.courseCode}
+                </h2>
+                <p className="text-[12px] text-neutral-500 mt-1">
+                  Instructor: {selectedOutlineData.outline.instructor} •{" "}
+                  {selectedOutlineData.outline.components.length} components
+                </p>
+              </div>
+              <button
+                onClick={handleGenerateGuidelines}
+                disabled={generatingGuidelines}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white text-[11px] font-medium rounded-lg hover:opacity-90 transition-all disabled:opacity-40 shadow-md"
+              >
+                {generatingGuidelines ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <ClipboardList className="w-3 h-3" />
+                )}
+                Generate Guidelines
+              </button>
+            </div>
+            <div className="divide-y divide-neutral-100/50 max-h-[400px] overflow-y-auto">
+              {selectedOutlineData.outline.components.map((component, idx) => (
+                <div
+                  key={idx}
+                  className="px-4 py-3 hover:bg-[#5c2d91]/5 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-medium text-neutral-800">
+                          {component.name}
+                        </p>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-neutral-100 text-neutral-600 rounded-full capitalize">
+                          {component.type}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[11px] text-neutral-400">
+                          Weight: {component.weight}%
+                        </span>
+                        {component.dueDate && (
+                          <span className="text-[11px] text-neutral-400">
+                            Due: {component.dueDate}
+                          </span>
+                        )}
+                      </div>
+                      {component.description && (
+                        <p className="text-[11px] text-neutral-500 mt-1 line-clamp-2">
+                          {component.description}
+                        </p>
+                      )}
+                      {component.rubric && component.rubric.length > 0 && (
+                        <div className="mt-2 bg-neutral-50 p-2 rounded-md">
+                          <p className="text-[10px] font-medium text-neutral-600 mb-1">
+                            Rubric:
+                          </p>
+                          <div className="space-y-1">
+                            {component.rubric.slice(0, 2).map((r, i) => (
+                              <div
+                                key={i}
+                                className="text-[10px] text-neutral-500 flex items-start gap-1"
+                              >
+                                <span className="font-medium text-neutral-600 min-w-[60px]">
+                                  {r.criteria}:
+                                </span>
+                                <span>{r.points}pts</span>
+                              </div>
+                            ))}
+                            {component.rubric.length > 2 && (
+                              <p className="text-[9px] text-neutral-400">
+                                +{component.rubric.length - 2} more criteria
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleTemplateGeneration(
+                          component.name,
+                          "assignment",
+                          component,
+                        )
+                      }
+                      disabled={templateLoading === component.name}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[11px] text-white bg-neutral-800 hover:bg-neutral-700 rounded-md ml-2 shrink-0 disabled:opacity-50"
+                    >
+                      {templateLoading === component.name ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Globe className="w-3 h-3" />
+                      )}
+                      {templateLoading === component.name
+                        ? "Opening..."
+                        : "Open Template"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {guidelines && (
+              <div className="px-5 py-3 border-t border-neutral-200 bg-neutral-50">
+                <p className="text-[12px] font-semibold text-neutral-700 mb-2 flex items-center gap-2">
+                  <FileCheck className="w-4 h-4" />
+                  Guidelines Generated
+                </p>
+                <button
+                  onClick={() => {
+                    const url = generateGoogleDocsUrl(
+                      `${selectedOutlineData.courseCode}_Guidelines`,
+                      guidelines,
+                    );
+                    window.open(url, "_blank");
+                  }}
+                  className="text-[12px] text-neutral-700 hover:text-neutral-900 font-medium flex items-center gap-1"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open in Google Docs
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Course filter */}
+        {/* Course filter with Microsoft tab style */}
+        <div className="flex items-center gap-1 backdrop-blur-md bg-white/60 rounded-xl p-1.5 border border-white/50 shadow-lg">
+          <button
+            onClick={() => setSelectedCourse("")}
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all ${
+              selectedCourse === ""
+                ? "bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white shadow-md"
+                : "text-neutral-600 hover:bg-[#0078d4]/10 hover:text-[#0078d4]"
+            }`}
+          >
+            All Courses
+          </button>
+          {courses.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setSelectedCourse(c.id)}
+              className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all ${
+                selectedCourse === c.id
+                  ? "bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white shadow-md"
+                  : "text-neutral-600 hover:bg-[#0078d4]/10 hover:text-[#0078d4]"
+              }`}
+            >
+              {c.code}
+            </button>
+          ))}
         </div>
 
-        {/* Clippy sidebar */}
-        <ClippyAssistant
-          dismissed={clippyDismissed}
-          onDismiss={() => setClippyDismissed(true)}
-          minimized={clippyMinimized}
-          onToggleMinimize={() => setClippyMinimized(!clippyMinimized)}
-          messages={clippyMessages}
-          tips={clippyTips}
-          currentTip={clippyTip}
-          onTipChange={setClippyTip}
-          listening={clippyListening}
-          onToggleListening={() => setClippyListening(!clippyListening)}
-          urgentDeadlines={urgentDeadlines}
-          stats={stats}
-          onUploadOutline={() => setShowOutlineUploader(true)}
-          onNewDoc={() =>
-            window.open("https://docs.google.com/document/create", "_blank")
-          }
-        />
-      </div>
+        {/* Main content + Clippy sidebar */}
+        <div className="flex gap-5">
+          {/* Assignments list */}
+          <div className="flex-1 min-w-0 space-y-5">
+            {/* In Progress + Pending */}
+            {(["in-progress", "pending"] as const).map((status) => {
+              const items = grouped[status];
+              if (items.length === 0) return null;
+              const statusColors = {
+                "in-progress": {
+                  bg: "from-[#ff8c00]/10 to-transparent",
+                  border: "border-l-[#ff8c00]",
+                  text: "text-[#ff8c00]",
+                },
+                pending: {
+                  bg: "from-[#5c2d91]/10 to-transparent",
+                  border: "border-l-[#5c2d91]",
+                  text: "text-[#5c2d91]",
+                },
+              };
+              const colors = statusColors[status];
+              return (
+                <div key={status}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className={`w-1.5 h-6 rounded-full bg-gradient-to-b ${status === "in-progress" ? "from-[#ff8c00] to-[#ffb900]" : "from-[#5c2d91] to-[#b4a0ff]"}`}
+                    />
+                    <h2 className="text-sm font-bold text-neutral-800">
+                      {getStatusLabel(status)}
+                    </h2>
+                    <span
+                      className={`text-[11px] ${colors.text} font-semibold px-2 py-0.5 rounded-full bg-current/10`}
+                    >
+                      {items.length}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {items.map((a) => {
+                      const daysLeft = getDaysUntil(a.dueDate);
+                      const isExpanded = expandedAssignment === a.id;
+                      const outlineComponent =
+                        selectedOutlineData?.outline.components.find(
+                          (c) =>
+                            c.name
+                              .toLowerCase()
+                              .includes(a.title.toLowerCase()) ||
+                            a.title
+                              .toLowerCase()
+                              .includes(c.name.toLowerCase()),
+                        );
+
+                      return (
+                        <div
+                          key={a.id}
+                          className={`backdrop-blur-md bg-white/80 rounded-xl border border-white/50 overflow-hidden hover:shadow-xl transition-all shadow-lg border-l-3 ${colors.border}`}
+                        >
+                          <button
+                            onClick={() =>
+                              setExpandedAssignment(isExpanded ? "" : a.id)
+                            }
+                            className="w-full px-5 py-4 flex items-center gap-4 text-left"
+                          >
+                            <div
+                              className={`w-10 h-10 rounded-lg bg-gradient-to-br ${status === "in-progress" ? "from-[#ff8c00] to-[#ffb900]" : "from-[#5c2d91] to-[#b4a0ff]"} flex items-center justify-center shadow-md`}
+                            >
+                              <span className="text-white">
+                                {fileTypeIcons[a.fileType]}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-neutral-800 truncate">
+                                  {a.title}
+                                </p>
+                                <span className="text-[11px] text-neutral-500 shrink-0 font-medium">
+                                  {a.courseCode}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-2 text-[12px] text-neutral-500">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  Due {formatDate(a.dueDate)}
+                                </span>
+                                <span
+                                  className={`font-medium ${
+                                    daysLeft <= 3
+                                      ? "text-red-600"
+                                      : daysLeft <= 7
+                                        ? "text-amber-600"
+                                        : "text-neutral-400"
+                                  }`}
+                                >
+                                  {daysLeft > 0
+                                    ? `${daysLeft}d left`
+                                    : "Overdue"}
+                                </span>
+                                <span>Weight: {a.weight}%</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {statusIcons[a.status]}
+                              <ChevronRight
+                                className={`w-3.5 h-3.5 text-neutral-300 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                              />
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-3.5 border-t border-neutral-100 pt-3">
+                              <p className="text-[12px] text-neutral-500 mb-3">
+                                {a.description}
+                              </p>
+                              {outlineComponent && (
+                                <div className="mb-3 p-2 bg-blue-50 rounded-md">
+                                  <p className="text-[11px] font-medium text-blue-700 mb-1">
+                                    Rubric Available:
+                                  </p>
+                                  <div className="space-y-1">
+                                    {outlineComponent.rubric?.map((r, i) => (
+                                      <div
+                                        key={i}
+                                        className="text-[10px] text-blue-600"
+                                      >
+                                        • {r.criteria}: {r.points}pts -{" "}
+                                        {r.description}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* Template dropdown */}
+                                <div className="relative">
+                                  <button
+                                    onClick={() =>
+                                      setTemplateDropdown(
+                                        templateDropdown === a.id ? null : a.id,
+                                      )
+                                    }
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 text-white text-[12px] font-medium rounded-md hover:bg-neutral-800 transition-colors"
+                                  >
+                                    <FileDown className="w-3 h-3" />
+                                    Generate Template
+                                    <ChevronDown className="w-3 h-3" />
+                                  </button>
+                                  {templateDropdown === a.id && (
+                                    <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-neutral-200 rounded-lg shadow-lg z-20 py-1">
+                                      {templateOptions.map((t) => (
+                                        <button
+                                          key={t.type}
+                                          onClick={() => {
+                                            if (
+                                              t.type === "assignment" &&
+                                              outlineComponent
+                                            ) {
+                                              handleTemplateGeneration(
+                                                a.title,
+                                                t.type,
+                                                outlineComponent,
+                                              );
+                                            } else {
+                                              handleTemplateGeneration(
+                                                a.title,
+                                                t.type,
+                                              );
+                                            }
+                                          }}
+                                          disabled={templateLoading === a.title}
+                                          className="w-full text-left px-3 py-2 hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                                        >
+                                          <p className="text-[12px] font-medium text-neutral-700 flex items-center gap-1">
+                                            {t.label}
+                                            {t.type === "assignment" &&
+                                              outlineComponent && (
+                                                <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
+                                                  AI
+                                                </span>
+                                              )}
+                                          </p>
+                                          <p className="text-[10px] text-neutral-400">
+                                            {t.desc}
+                                          </p>
+                                          {t.type === "assignment" &&
+                                            outlineComponent && (
+                                              <p className="text-[9px] text-green-600 mt-1">
+                                                Opens in Google Docs with rubric
+                                              </p>
+                                            )}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <button
+                                  onClick={() =>
+                                    handleTemplateGeneration(a.title, "docx")
+                                  }
+                                  disabled={templateLoading === a.title}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral-200 text-neutral-600 text-[12px] font-medium rounded-md hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                                >
+                                  {templateLoading === a.title ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Globe className="w-3 h-3" />
+                                  )}
+                                  Open in Docs
+                                </button>
+
+                                <button
+                                  onClick={() =>
+                                    handleTemplateGeneration(a.title, "pptx")
+                                  }
+                                  disabled={templateLoading === a.title}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral-200 text-neutral-600 text-[12px] font-medium rounded-md hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                                >
+                                  {templateLoading === a.title ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Globe className="w-3 h-3" />
+                                  )}
+                                  Open in Slides
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Submitted */}
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#107c10] to-[#00cc6a]" />
+                <h2 className="text-sm font-bold text-neutral-800">
+                  Submitted
+                </h2>
+                <span className="text-[11px] text-[#107c10] font-semibold px-2 py-0.5 rounded-full bg-[#107c10]/10">
+                  {grouped.submitted.length}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {grouped.submitted.map((a) => (
+                  <div
+                    key={a.id}
+                    className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 border-l-3 border-l-[#107c10] px-5 py-4 flex items-center gap-4 group shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center shadow-md">
+                      <span className="text-white">
+                        {fileTypeIcons[a.fileType]}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-medium text-neutral-700 truncate">
+                          {a.title}
+                        </p>
+                        <span className="text-[10px] px-2 py-0.5 bg-[#0078d4]/10 text-[#0078d4] rounded-full font-medium">
+                          {a.courseCode}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-neutral-500">
+                        <span>Submitted {formatDate(a.dueDate)}</span>
+                        <span>Weight: {a.weight}%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {emailSent.has(a.id) ? (
+                        <span className="flex items-center gap-1.5 text-[11px] text-[#107c10] font-medium px-2 py-1 bg-[#107c10]/10 rounded-lg">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Emailed
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => openEmailModal(a)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-[#0078d4] hover:bg-[#0078d4]/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all border border-[#0078d4]/30"
+                          title="Email professor to confirm submission"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          <span>Email Prof</span>
+                        </button>
+                      )}
+                      <div className="flex items-center gap-2 px-2 py-1 bg-[#107c10]/10 rounded-lg">
+                        <CheckCircle2 className="w-4 h-4 text-[#107c10]" />
+                        {a.score !== undefined && (
+                          <span className="text-[13px] font-bold text-[#107c10] tabular-nums">
+                            {a.score}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Clippy sidebar */}
+          <ClippyAssistant
+            dismissed={clippyDismissed}
+            onDismiss={() => setClippyDismissed(true)}
+            minimized={clippyMinimized}
+            onToggleMinimize={() => setClippyMinimized(!clippyMinimized)}
+            messages={clippyMessages}
+            tips={clippyTips}
+            currentTip={clippyTip}
+            onTipChange={setClippyTip}
+            listening={clippyListening}
+            onToggleListening={() => setClippyListening(!clippyListening)}
+            urgentDeadlines={urgentDeadlines}
+            stats={stats}
+            onUploadOutline={() => setShowOutlineUploader(true)}
+            onNewDoc={() =>
+              window.open("https://docs.google.com/document/create", "_blank")
+            }
+          />
+        </div>
       </div>
 
       {/* Course Outline Upload Modal */}

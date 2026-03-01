@@ -57,10 +57,12 @@ export const QuizPage: React.FC = () => {
   };
 
   // Background wrapper component
-  const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  const PageWrapper: React.FC<{ children: React.ReactNode }> = ({
+    children,
+  }) => (
     <div className="relative min-h-screen">
       {/* Background Image */}
-      <div 
+      <div
         className="fixed inset-0 z-0"
         style={{
           backgroundImage: "url('/quiz.png')",
@@ -71,11 +73,9 @@ export const QuizPage: React.FC = () => {
       />
       {/* Microsoft-style gradient overlay */}
       <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#ff8c00]/10 via-white/90 to-[#0078d4]/10" />
-      
+
       {/* Content */}
-      <div className="relative z-10 py-8 px-4">
-        {children}
-      </div>
+      <div className="relative z-10 py-8 px-4">{children}</div>
     </div>
   );
 
@@ -153,11 +153,13 @@ export const QuizPage: React.FC = () => {
                         : "bg-white/60 border-neutral-200 text-neutral-700 hover:bg-white hover:border-[#0078d4]/50 hover:shadow-sm"
                     }`}
                   >
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0 ${
-                      answers[q.id] === opt
-                        ? "bg-gradient-to-br from-[#0078d4] to-[#50e6ff] text-white"
-                        : "bg-neutral-100 text-neutral-500"
-                    }`}>
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0 ${
+                        answers[q.id] === opt
+                          ? "bg-gradient-to-br from-[#0078d4] to-[#50e6ff] text-white"
+                          : "bg-neutral-100 text-neutral-500"
+                      }`}
+                    >
                       {String.fromCharCode(65 + idx)}
                     </span>
                     {opt}
@@ -200,27 +202,31 @@ export const QuizPage: React.FC = () => {
   // Show results
   if (activeQuiz && showResults) {
     const score = getScore();
-    const correctCount = activeQuiz.filter((q) => answers[q.id] === q.correctAnswer).length;
+    const correctCount = activeQuiz.filter(
+      (q) => answers[q.id] === q.correctAnswer,
+    ).length;
     return (
       <PageWrapper>
         <div className="max-w-3xl mx-auto space-y-5">
           <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 shadow-lg p-8 text-center">
-            <div className={`w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center shadow-lg ${
-              score >= 80
-                ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
-                : score >= 60
-                  ? "bg-gradient-to-br from-[#ff8c00] to-[#ffb347]"
-                  : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
-            }`}>
-              <span className="text-3xl font-bold text-white">
-                {score}%
-              </span>
+            <div
+              className={`w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center shadow-lg ${
+                score >= 80
+                  ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
+                  : score >= 60
+                    ? "bg-gradient-to-br from-[#ff8c00] to-[#ffb347]"
+                    : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
+              }`}
+            >
+              <span className="text-3xl font-bold text-white">{score}%</span>
             </div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0078d4] to-[#5c2d91] bg-clip-text text-transparent">
               Quiz Complete!
             </h2>
             <p className="text-[15px] text-neutral-600 mt-2 flex items-center justify-center gap-2">
-              <Trophy className={`w-5 h-5 ${score >= 80 ? "text-[#107c10]" : score >= 60 ? "text-[#ff8c00]" : "text-[#d83b01]"}`} />
+              <Trophy
+                className={`w-5 h-5 ${score >= 80 ? "text-[#107c10]" : score >= 60 ? "text-[#ff8c00]" : "text-[#d83b01]"}`}
+              />
               {correctCount} / {activeQuiz.length} correct answers
             </p>
             <div className="flex items-center justify-center gap-4 mt-6">
@@ -252,11 +258,13 @@ export const QuizPage: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      isCorrect
-                        ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
-                        : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                        isCorrect
+                          ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
+                          : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
+                      }`}
+                    >
                       {isCorrect ? (
                         <CheckCircle2 className="w-4 h-4 text-white" />
                       ) : (
@@ -418,7 +426,8 @@ export const QuizPage: React.FC = () => {
                 startQuiz(
                   courseQuestions
                     .filter(
-                      (q) => q.difficulty === "hard" || q.difficulty === "medium",
+                      (q) =>
+                        q.difficulty === "hard" || q.difficulty === "medium",
                     )
                     .slice(0, 5),
                 )
@@ -448,13 +457,15 @@ export const QuizPage: React.FC = () => {
                   key={result.id}
                   className="flex items-center gap-4 p-4 rounded-xl bg-white/60 hover:bg-white transition-all border border-transparent hover:border-[#0078d4]/20 hover:shadow-sm"
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-bold text-white ${
-                    result.score >= 80
-                      ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
-                      : result.score >= 60
-                        ? "bg-gradient-to-br from-[#ff8c00] to-[#ffb347]"
-                        : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
-                  }`}>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-bold text-white ${
+                      result.score >= 80
+                        ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
+                        : result.score >= 60
+                          ? "bg-gradient-to-br from-[#ff8c00] to-[#ffb347]"
+                          : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
+                    }`}
+                  >
                     {result.score}%
                   </div>
                   <div className="flex-1">
@@ -472,13 +483,15 @@ export const QuizPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <Trophy className={`w-5 h-5 ${
-                    result.score >= 80
-                      ? "text-[#107c10]"
-                      : result.score >= 60
-                        ? "text-[#ff8c00]"
-                        : "text-neutral-300"
-                  }`} />
+                  <Trophy
+                    className={`w-5 h-5 ${
+                      result.score >= 80
+                        ? "text-[#107c10]"
+                        : result.score >= 60
+                          ? "text-[#ff8c00]"
+                          : "text-neutral-300"
+                    }`}
+                  />
                 </div>
               );
             })}

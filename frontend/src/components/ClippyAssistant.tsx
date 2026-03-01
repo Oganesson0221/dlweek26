@@ -116,7 +116,7 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
   const [textInput, setTextInput] = useState("");
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -124,7 +124,8 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognitionAPI =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognitionAPI) {
         const recognition = new SpeechRecognitionAPI();
         recognition.continuous = false;
@@ -139,7 +140,7 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
         recognition.onresult = (event: SpeechRecognitionEvent) => {
           let interim = "";
           let final = "";
-          
+
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i];
             if (result.isFinal) {
@@ -148,7 +149,7 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
               interim += result[0].transcript;
             }
           }
-          
+
           setInterimTranscript(interim);
           if (final) {
             setTranscript(final);
@@ -159,7 +160,9 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
           console.error("Speech recognition error:", event.error);
           setIsListening(false);
           if (event.error === "not-allowed") {
-            setError("Microphone access denied. Please allow microphone access.");
+            setError(
+              "Microphone access denied. Please allow microphone access.",
+            );
           } else if (event.error === "no-speech") {
             setError("No speech detected. Please try again.");
           }
@@ -195,7 +198,8 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
   // Auto-scroll chat
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
 
@@ -221,45 +225,50 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
   }, [isListening, onToggleListening]);
 
   // Text-to-speech - strips emojis for cleaner speech
-  const speakText = useCallback((text: string) => {
-    if (!voiceEnabled || !window.speechSynthesis) return;
+  const speakText = useCallback(
+    (text: string) => {
+      if (!voiceEnabled || !window.speechSynthesis) return;
 
-    window.speechSynthesis.cancel();
-    
-    // Remove emojis and special unicode characters for cleaner speech
-    const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F910}-\u{1F96B}]|[\u{1F980}-\u{1F9E0}]|[\u{200D}]|[\u{FE0F}]|[\u{20E3}]|[\u{E0020}-\u{E007F}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{2934}-\u{2935}]|[\u{25AA}-\u{25AB}]|[\u{25B6}]|[\u{25C0}]|[\u{25FB}-\u{25FE}]|[\u{2614}-\u{2615}]|[\u{2648}-\u{2653}]|[\u{267F}]|[\u{2693}]|[\u{26A1}]|[\u{26AA}-\u{26AB}]|[\u{26BD}-\u{26BE}]|[\u{26C4}-\u{26C5}]|[\u{26CE}]|[\u{26D4}]|[\u{26EA}]|[\u{26F2}-\u{26F3}]|[\u{26F5}]|[\u{26FA}]|[\u{26FD}]|[\u{2702}]|[\u{2705}]|[\u{2708}-\u{270D}]|[\u{270F}]|[\u{2712}]|[\u{2714}]|[\u{2716}]|[\u{271D}]|[\u{2721}]|[\u{2728}]|[\u{2733}-\u{2734}]|[\u{2744}]|[\u{2747}]|[\u{274C}]|[\u{274E}]|[\u{2753}-\u{2755}]|[\u{2757}]|[\u{2763}-\u{2764}]|[\u{2795}-\u{2797}]|[\u{27A1}]|[\u{27B0}]|[\u{27BF}]|[\u{2B05}-\u{2B07}]|[\u{2B1B}-\u{2B1C}]|[\u{2B55}]|[\u{3030}]|[\u{303D}]|[\u{3297}]|[\u{3299}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]/gu;
-    
-    const cleanText = text
-      .replace(emojiRegex, '')
-      .replace(/\s+/g, ' ')  // Normalize whitespace
-      .trim();
-    
-    if (!cleanText) return; // Don't speak if only emojis
-    
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
-    
-    // Try to use a natural voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.name.includes("Samantha") || 
-      v.name.includes("Google") || 
-      v.name.includes("Microsoft") ||
-      v.lang.startsWith("en")
-    );
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
+      window.speechSynthesis.cancel();
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+      // Remove emojis and special unicode characters for cleaner speech
+      const emojiRegex =
+        /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F910}-\u{1F96B}]|[\u{1F980}-\u{1F9E0}]|[\u{200D}]|[\u{FE0F}]|[\u{20E3}]|[\u{E0020}-\u{E007F}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{2934}-\u{2935}]|[\u{25AA}-\u{25AB}]|[\u{25B6}]|[\u{25C0}]|[\u{25FB}-\u{25FE}]|[\u{2614}-\u{2615}]|[\u{2648}-\u{2653}]|[\u{267F}]|[\u{2693}]|[\u{26A1}]|[\u{26AA}-\u{26AB}]|[\u{26BD}-\u{26BE}]|[\u{26C4}-\u{26C5}]|[\u{26CE}]|[\u{26D4}]|[\u{26EA}]|[\u{26F2}-\u{26F3}]|[\u{26F5}]|[\u{26FA}]|[\u{26FD}]|[\u{2702}]|[\u{2705}]|[\u{2708}-\u{270D}]|[\u{270F}]|[\u{2712}]|[\u{2714}]|[\u{2716}]|[\u{271D}]|[\u{2721}]|[\u{2728}]|[\u{2733}-\u{2734}]|[\u{2744}]|[\u{2747}]|[\u{274C}]|[\u{274E}]|[\u{2753}-\u{2755}]|[\u{2757}]|[\u{2763}-\u{2764}]|[\u{2795}-\u{2797}]|[\u{27A1}]|[\u{27B0}]|[\u{27BF}]|[\u{2B05}-\u{2B07}]|[\u{2B1B}-\u{2B1C}]|[\u{2B55}]|[\u{3030}]|[\u{303D}]|[\u{3297}]|[\u{3299}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]/gu;
 
-    synthRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-  }, [voiceEnabled]);
+      const cleanText = text
+        .replace(emojiRegex, "")
+        .replace(/\s+/g, " ") // Normalize whitespace
+        .trim();
+
+      if (!cleanText) return; // Don't speak if only emojis
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+
+      // Try to use a natural voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find(
+        (v) =>
+          v.name.includes("Samantha") ||
+          v.name.includes("Google") ||
+          v.name.includes("Microsoft") ||
+          v.lang.startsWith("en"),
+      );
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
+      synthRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    },
+    [voiceEnabled],
+  );
 
   // Stop speaking
   const stopSpeaking = useCallback(() => {
@@ -279,22 +288,24 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
       text: message.trim(),
     };
 
-    setChatMessages(prev => [...prev, userMessage]);
+    setChatMessages((prev) => [...prev, userMessage]);
     setIsProcessing(true);
     setError(null);
 
     try {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      const orgId = import.meta.env.VITE_OPENAI_ORG_ID || import.meta.env.OPENAI_ORG_ID;
+      const orgId =
+        import.meta.env.VITE_OPENAI_ORG_ID || import.meta.env.OPENAI_ORG_ID;
 
       if (!apiKey) {
         throw new Error("OpenAI API key not configured");
       }
 
       // Build context about assignments
-      const assignmentContext = urgentDeadlines.length > 0 
-        ? `Current urgent assignments: ${urgentDeadlines.map(a => `${a.title} (${a.courseCode}) - ${a.daysLeft} days left`).join(", ")}`
-        : "No urgent deadlines at the moment.";
+      const assignmentContext =
+        urgentDeadlines.length > 0
+          ? `Current urgent assignments: ${urgentDeadlines.map((a) => `${a.title} (${a.courseCode}) - ${a.daysLeft} days left`).join(", ")}`
+          : "No urgent deadlines at the moment.";
 
       const progressContext = `Student progress: ${stats.submitted}/${stats.total} assignments submitted (${Math.round((stats.submitted / stats.total) * 100)}% completion rate).`;
 
@@ -313,38 +324,45 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       };
-      
+
       if (orgId) {
         headers["OpenAI-Organization"] = orgId;
       }
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...chatMessages.slice(-6).map(m => ({
-              role: m.role,
-              content: m.text,
-            })),
-            { role: "user", content: message },
-          ],
-          max_tokens: 150,
-          temperature: 0.7,
-        }),
-      });
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...chatMessages.slice(-6).map((m) => ({
+                role: m.role,
+                content: m.text,
+              })),
+              { role: "user", content: message },
+            ],
+            max_tokens: 150,
+            temperature: 0.7,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API error: ${response.status}`);
+        throw new Error(
+          errorData.error?.message || `API error: ${response.status}`,
+        );
       }
 
       const data = await response.json();
-      const assistantText = data.choices?.[0]?.message?.content || "I'm not sure how to help with that. Could you rephrase your question?";
+      const assistantText =
+        data.choices?.[0]?.message?.content ||
+        "I'm not sure how to help with that. Could you rephrase your question?";
 
       const assistantMessage: ClippyMessage = {
         id: (Date.now() + 1).toString(),
@@ -352,22 +370,22 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
         text: assistantText,
       };
 
-      setChatMessages(prev => [...prev, assistantMessage]);
-      
+      setChatMessages((prev) => [...prev, assistantMessage]);
+
       // Speak the response
       speakText(assistantText);
-
     } catch (err) {
       console.error("Error calling OpenAI:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to get response";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to get response";
       setError(errorMessage);
-      
+
       const fallbackMessage: ClippyMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         text: "Sorry, I'm having trouble connecting right now. Please try again in a moment!",
       };
-      setChatMessages(prev => [...prev, fallbackMessage]);
+      setChatMessages((prev) => [...prev, fallbackMessage]);
     } finally {
       setIsProcessing(false);
     }
@@ -404,14 +422,20 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
                     alt="Clippy"
                     className="w-12 h-12 object-contain"
                   />
-                  <span className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${isListening ? "bg-red-500 animate-pulse" : isSpeaking ? "bg-blue-500 animate-pulse" : "bg-green-500"}`}></span>
+                  <span
+                    className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${isListening ? "bg-red-500 animate-pulse" : isSpeaking ? "bg-blue-500 animate-pulse" : "bg-green-500"}`}
+                  ></span>
                 </div>
                 <div>
                   <span className="text-[14px] font-semibold text-neutral-800 flex items-center gap-1">
                     Clippy Assistant
                   </span>
                   <p className="text-[10px] text-neutral-500">
-                    {isListening ? "Listening..." : isSpeaking ? "Speaking..." : "Voice-enabled helper"}
+                    {isListening
+                      ? "Listening..."
+                      : isSpeaking
+                        ? "Speaking..."
+                        : "Voice-enabled helper"}
                   </p>
                 </div>
               </div>
@@ -421,7 +445,11 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
                   className={`p-1.5 rounded transition-colors ${voiceEnabled ? "text-[#0078d4] bg-[#0078d4]/10" : "text-neutral-400 hover:text-neutral-600"}`}
                   title={voiceEnabled ? "Disable voice" : "Enable voice"}
                 >
-                  {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                  {voiceEnabled ? (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 <button
                   onClick={onToggleMinimize}
@@ -454,7 +482,7 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
           <>
             {/* Chat Messages */}
             {chatMessages.length > 0 && (
-              <div 
+              <div
                 ref={chatContainerRef}
                 className="max-h-[200px] overflow-y-auto p-3 border-b border-neutral-200 bg-neutral-50/50 space-y-2"
               >
@@ -506,7 +534,9 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
                 ) : isProcessing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-[12px] font-medium">Processing...</span>
+                    <span className="text-[12px] font-medium">
+                      Processing...
+                    </span>
                   </>
                 ) : (
                   <>

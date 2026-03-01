@@ -3,12 +3,7 @@
   "name": "Clippy Notes",
   "version": "1.0.0",
   "description": "Save notes from any webpage with Clippy! Your friendly study companion.",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "contextMenus",
-    "scripting"
-  ],
+  "permissions": ["storage", "activeTab", "contextMenus", "scripting"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

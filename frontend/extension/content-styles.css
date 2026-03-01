@@ -10,7 +10,11 @@
   background: linear-gradient(135deg, #0078d4, #106ebe);
   color: white;
   border-radius: 20px;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -48,7 +52,11 @@
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: white;
   border-radius: 12px;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 14px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);

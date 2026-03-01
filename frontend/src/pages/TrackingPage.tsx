@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  TrendingUp,
-  Clock,
-  Award,
-  Target,
-  BarChart3,
-} from "lucide-react";
+import { TrendingUp, Clock, Award, Target, BarChart3 } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -94,7 +88,7 @@ export const TrackingPage: React.FC = () => {
   return (
     <div className="relative min-h-screen">
       {/* Background Image with Gradient Overlay */}
-      <div 
+      <div
         className="fixed inset-0 z-0"
         style={{
           backgroundImage: "url('/tracking.png')",
@@ -105,7 +99,7 @@ export const TrackingPage: React.FC = () => {
       />
       {/* Microsoft-style gradient overlay */}
       <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#0078d4]/10 via-white/90 to-[#00cc6a]/10" />
-      
+
       {/* Content container */}
       <div className="relative z-10 space-y-5 max-w-[1080px] mx-auto py-8 px-4">
         <div className="flex items-start justify-between mb-2">
@@ -179,225 +173,237 @@ export const TrackingPage: React.FC = () => {
                 key={m.title}
                 className="group backdrop-blur-md bg-white/70 rounded-xl border border-white/50 p-5 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
               >
-                <div className={`w-10 h-10 mb-3 rounded-lg bg-gradient-to-br ${m.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`w-10 h-10 mb-3 rounded-lg bg-gradient-to-br ${m.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}
+                >
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-2xl font-bold text-neutral-800 tabular-nums">{m.value}</p>
-                <p className="text-[12px] text-neutral-500 mt-1 font-medium">{m.title}</p>
+                <p className="text-2xl font-bold text-neutral-800 tabular-nums">
+                  {m.value}
+                </p>
+                <p className="text-[12px] text-neutral-500 mt-1 font-medium">
+                  {m.title}
+                </p>
                 <p className="text-[11px] text-neutral-400 mt-0.5">{m.sub}</p>
               </div>
             );
           })}
         </div>
 
-      {selectedView === "overview" ? (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Weekly Study Hours */}
+        {selectedView === "overview" ? (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Weekly Study Hours */}
+              <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+                <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center">
+                    <Clock className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  Weekly Study Hours
+                </h2>
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyHours}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(163,163,163,0.15)"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="week"
+                        tick={{ fontSize: 11, fill: "#a3a3a3" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(v: number) => `W${v}`}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: "#a3a3a3" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Bar
+                        dataKey="hours"
+                        name="Study Hours"
+                        fill="#525252"
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Course Performance Radar */}
+              <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+                <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#5c2d91] to-[#b4a0ff] flex items-center justify-center">
+                    <Target className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  Course Performance
+                </h2>
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={radarData}>
+                      <PolarGrid stroke="rgba(163,163,163,0.2)" />
+                      <PolarAngleAxis
+                        dataKey="course"
+                        tick={{ fontSize: 11, fill: "#525252" }}
+                      />
+                      <Radar
+                        name="Progress"
+                        dataKey="progress"
+                        stroke="#0078d4"
+                        fill="#0078d4"
+                        fillOpacity={0.1}
+                        strokeWidth={1.5}
+                      />
+                      <Radar
+                        name="Quiz Avg"
+                        dataKey="average"
+                        stroke="#525252"
+                        fill="#525252"
+                        fillOpacity={0.05}
+                        strokeWidth={1.5}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Study Hours by Course */}
             <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
               <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5 text-white" />
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center">
+                  <Award className="w-3.5 h-3.5 text-white" />
                 </div>
-                Weekly Study Hours
+                Study Hours by Course (Last 2 Weeks)
               </h2>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyHours}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(163,163,163,0.15)"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="week"
-                      tick={{ fontSize: 11, fill: "#a3a3a3" }}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(v: number) => `W${v}`}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: "#a3a3a3" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar
-                      dataKey="hours"
-                      name="Study Hours"
-                      fill="#525252"
-                      radius={[4, 4, 0, 0]}
-                      barSize={20}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Course Performance Radar */}
-            <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
-              <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#5c2d91] to-[#b4a0ff] flex items-center justify-center">
-                  <Target className="w-3.5 h-3.5 text-white" />
-                </div>
-                Course Performance
-              </h2>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="rgba(163,163,163,0.2)" />
-                    <PolarAngleAxis
-                      dataKey="course"
-                      tick={{ fontSize: 11, fill: "#525252" }}
-                    />
-                    <Radar
-                      name="Progress"
-                      dataKey="progress"
-                      stroke="#0078d4"
-                      fill="#0078d4"
-                      fillOpacity={0.1}
-                      strokeWidth={1.5}
-                    />
-                    <Radar
-                      name="Quiz Avg"
-                      dataKey="average"
-                      stroke="#525252"
-                      fill="#525252"
-                      fillOpacity={0.05}
-                      strokeWidth={1.5}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Study Hours by Course */}
-          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
-            <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center">
-                <Award className="w-3.5 h-3.5 text-white" />
-              </div>
-              Study Hours by Course (Last 2 Weeks)
-            </h2>
-            <div className="grid grid-cols-5 gap-3">
-              {studyByCourseLast7.map((s, idx) => {
-                const colors = [
-                  "from-[#0078d4] to-[#50e6ff]",
-                  "from-[#107c10] to-[#00cc6a]",
-                  "from-[#ff8c00] to-[#ffb900]",
-                  "from-[#5c2d91] to-[#b4a0ff]",
-                  "from-[#d83b01] to-[#ff6f61]",
-                ];
-                return (
-                  <div
-                    key={s.course}
-                    className="text-center p-4 rounded-xl backdrop-blur-sm bg-white/50 border border-white/50 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
-                  >
-                    <div className={`w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center`}>
-                      <Clock className="w-4 h-4 text-white" />
-                    </div>
-                    <p className="text-xl font-bold text-neutral-800 tabular-nums">
-                      {s.hours}h
-                    </p>
-                    <p className="text-[11px] text-neutral-500 mt-1 font-medium">
-                      {s.course}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="space-y-4">
-          {courses.map((course, idx) => {
-            const avg = getCourseAverage(course);
-            const colors = [
-              "from-[#0078d4] to-[#50e6ff]",
-              "from-[#107c10] to-[#00cc6a]",
-              "from-[#ff8c00] to-[#ffb900]",
-              "from-[#5c2d91] to-[#b4a0ff]",
-              "from-[#d83b01] to-[#ff6f61]",
-            ];
-            return (
-              <div
-                key={course.id}
-                className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg hover:shadow-xl transition-all"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-md`}>
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-[14px] font-semibold text-neutral-800">
-                      {course.name}
-                    </h3>
-                    <p className="text-[11px] text-neutral-500">
-                      {course.code} · {course.instructor}
-                    </p>
-                  </div>
-                  <span className={`text-[14px] font-bold ml-auto px-3 py-1 rounded-lg bg-gradient-to-r ${colors[idx % colors.length]} text-white shadow-md`}>
-                    {course.grade}
-                  </span>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex justify-between text-[11px] text-neutral-400 mb-1">
-                    <span>Progress</span>
-                    <span className="tabular-nums">{course.progress}%</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+              <div className="grid grid-cols-5 gap-3">
+                {studyByCourseLast7.map((s, idx) => {
+                  const colors = [
+                    "from-[#0078d4] to-[#50e6ff]",
+                    "from-[#107c10] to-[#00cc6a]",
+                    "from-[#ff8c00] to-[#ffb900]",
+                    "from-[#5c2d91] to-[#b4a0ff]",
+                    "from-[#d83b01] to-[#ff6f61]",
+                  ];
+                  return (
                     <div
-                      className="h-full rounded-full bg-accent"
-                      style={{ width: `${course.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {course.checkpoints.map((cp) => (
-                    <div
-                      key={cp.id}
-                      className={`flex-1 p-2 rounded-md border text-center ${
-                        cp.status === "completed"
-                          ? "bg-green-50 border-green-100"
-                          : cp.status === "upcoming"
-                            ? "bg-neutral-50 border-neutral-200"
-                            : "bg-neutral-50 border-neutral-100"
-                      }`}
+                      key={s.course}
+                      className="text-center p-4 rounded-xl backdrop-blur-sm bg-white/50 border border-white/50 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
                     >
-                      <p className="text-[10px] font-medium text-neutral-600 truncate">
-                        {cp.name.length > 20
-                          ? cp.name.slice(0, 20) + "…"
-                          : cp.name}
+                      <div
+                        className={`w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center`}
+                      >
+                        <Clock className="w-4 h-4 text-white" />
+                      </div>
+                      <p className="text-xl font-bold text-neutral-800 tabular-nums">
+                        {s.hours}h
                       </p>
-                      {cp.score !== undefined ? (
-                        <p
-                          className={`text-[12px] font-semibold mt-0.5 tabular-nums ${
-                            cp.score >= 80
-                              ? "text-green-700"
-                              : cp.score >= 60
-                                ? "text-amber-600"
-                                : "text-red-600"
-                          }`}
-                        >
-                          {cp.score}%
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-neutral-400 mt-0.5">
-                          W{cp.weekNumber}
-                        </p>
-                      )}
+                      <p className="text-[11px] text-neutral-500 mt-1 font-medium">
+                        {s.course}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4">
+            {courses.map((course, idx) => {
+              const avg = getCourseAverage(course);
+              const colors = [
+                "from-[#0078d4] to-[#50e6ff]",
+                "from-[#107c10] to-[#00cc6a]",
+                "from-[#ff8c00] to-[#ffb900]",
+                "from-[#5c2d91] to-[#b4a0ff]",
+                "from-[#d83b01] to-[#ff6f61]",
+              ];
+              return (
+                <div
+                  key={course.id}
+                  className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-md`}
+                    >
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-[14px] font-semibold text-neutral-800">
+                        {course.name}
+                      </h3>
+                      <p className="text-[11px] text-neutral-500">
+                        {course.code} · {course.instructor}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-[14px] font-bold ml-auto px-3 py-1 rounded-lg bg-gradient-to-r ${colors[idx % colors.length]} text-white shadow-md`}
+                    >
+                      {course.grade}
+                    </span>
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="flex justify-between text-[11px] text-neutral-400 mb-1">
+                      <span>Progress</span>
+                      <span className="tabular-nums">{course.progress}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-accent"
+                        style={{ width: `${course.progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {course.checkpoints.map((cp) => (
+                      <div
+                        key={cp.id}
+                        className={`flex-1 p-2 rounded-md border text-center ${
+                          cp.status === "completed"
+                            ? "bg-green-50 border-green-100"
+                            : cp.status === "upcoming"
+                              ? "bg-neutral-50 border-neutral-200"
+                              : "bg-neutral-50 border-neutral-100"
+                        }`}
+                      >
+                        <p className="text-[10px] font-medium text-neutral-600 truncate">
+                          {cp.name.length > 20
+                            ? cp.name.slice(0, 20) + "…"
+                            : cp.name}
+                        </p>
+                        {cp.score !== undefined ? (
+                          <p
+                            className={`text-[12px] font-semibold mt-0.5 tabular-nums ${
+                              cp.score >= 80
+                                ? "text-green-700"
+                                : cp.score >= 60
+                                  ? "text-amber-600"
+                                  : "text-red-600"
+                            }`}
+                          >
+                            {cp.score}%
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-neutral-400 mt-0.5">
+                            W{cp.weekNumber}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

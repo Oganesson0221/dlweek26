@@ -21,6 +21,7 @@ Since this extension isn't on the Chrome Web Store, follow these steps to instal
 The extension needs PNG icons. You can either:
 
 **Option A**: Use the included SVG files and convert them to PNG:
+
 ```bash
 cd frontend/extension/icons
 
@@ -33,12 +34,14 @@ convert clippy-128.png.svg clippy-128.png
 ```
 
 **Option B**: Create simple PNG icons manually or use any 16x16, 32x32, 48x48, and 128x128 PNG images renamed as:
+
 - `clippy-16.png`
 - `clippy-32.png`
 - `clippy-48.png`
 - `clippy-128.png`
 
 **Option C (Quick Start)**: Just rename the SVG files to PNG (Chrome may accept them):
+
 ```bash
 cd frontend/extension/icons
 mv clippy-16.png.svg clippy-16.png
@@ -58,6 +61,7 @@ mv clippy-128.png.svg clippy-128.png
 ## Usage
 
 ### Method 1: Popup Interface
+
 1. Click the LearnLens Clippy icon in your browser toolbar
 2. Select text on any webpage
 3. Click "Get Selection" to capture the selected text
@@ -65,11 +69,13 @@ mv clippy-128.png.svg clippy-128.png
 5. Click "Save Note"
 
 ### Method 2: Floating Button
+
 1. Select text on any webpage
 2. A floating "Save Note" button appears near your selection
 3. Click it to instantly save the note
 
 ### Method 3: Context Menu (Right-Click)
+
 1. Select text on any webpage
 2. Right-click and choose "Save to LearnLens Notes"
 3. The note is saved instantly with "quick-save" tag
@@ -93,10 +99,12 @@ mv clippy-128.png.svg clippy-128.png
 The extension stores notes in Chrome's local storage. To sync with the LearnLens web app:
 
 ### Method 1: Export/Import (Manual Sync)
+
 1. **Export from Extension**: Go to "My Notes" tab → Click "Export All Notes"
 2. **Import in Web App**: Go to the Notes page → Click "Import" → Select the JSON file
 
 ### Method 2: Copy to Web App localStorage (Automatic Sync)
+
 Since both the extension and web app use the same note format, you can sync them:
 
 1. Export notes from the extension as JSON
@@ -106,7 +114,9 @@ Since both the extension and web app use the same note format, you can sync them
 5. Refresh the Notes page
 
 ### Note Format
+
 Both the extension and web app use the same JSON format:
+
 ```json
 {
   "id": 1234567890,
@@ -124,14 +134,17 @@ Both the extension and web app use the same JSON format:
 ## Troubleshooting
 
 ### Extension not loading?
+
 - Make sure all PNG icon files exist in the `icons` folder
 - Check the Chrome console for errors (`chrome://extensions/` → Details → Inspect views)
 
 ### Can't capture text from some pages?
+
 - The extension cannot run on `chrome://` pages or other browser internal pages
 - Some websites may have Content Security Policy (CSP) that blocks extensions
 
 ### Notes not saving?
+
 - Check if Chrome storage has space (limit is ~5MB for local storage)
 - Try clearing some old notes
 

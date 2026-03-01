@@ -5,7 +5,9 @@ const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
 const getOpenAIClient = () => {
   if (!apiKey) {
-    console.warn("VITE_OPENAI_API_KEY is not set. OpenAI features will use fallback responses.");
+    console.warn(
+      "VITE_OPENAI_API_KEY is not set. OpenAI features will use fallback responses.",
+    );
     return null;
   }
   return new OpenAI({
