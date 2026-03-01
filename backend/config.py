@@ -11,8 +11,8 @@ class Config:
     OPENAI_ORG_ID = os.getenv('OPENAI_ORG_ID')
     
     # Model settings
-    DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'gpt-4')
-    VISION_MODEL = os.getenv('VISION_MODEL', 'gpt-4-vision-preview')
+    DEFAULT_MODEL = os.getenv('DEFAULT_MODEL')
+    VISION_MODEL = os.getenv('VISION_MODEL')
     MAX_TOKENS = int(os.getenv('MAX_TOKENS', 1000))
     TEMPERATURE = float(os.getenv('TEMPERATURE', 0.7))
     
