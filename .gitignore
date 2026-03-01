@@ -29,3 +29,5 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
 venv
+__pycache__
+backend/__pycache__

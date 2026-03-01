@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from fastapi import UploadFile, File, Form
+from app.services.academic.ingest_course_material import ingest_course_material
 
 from app.db.session import get_session
 from app.models.academic import Course, CourseOutline, CourseComponent
@@ -133,3 +135,20 @@ def topics_get(course_code: str, session: Session = Depends(get_session)):
     """
     course = get_course_or_404(session, course_code)
     return get_topics(session, course.id)
+
+
+@router.post("/upload")
+async def create_with_upload(
+    code: str = Form(...),
+    name: str = Form(...),
+    term: str = Form(...),
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    """
+    Create course + upload syllabus/outline file.
+    Auto-extract outline, grading components, and topics.
+    """
+    course = create_course(session, code, name, term)
+    result = await ingest_course_material(session, course.id, course.code, file)
+    return {"course": course, "ingest": result}

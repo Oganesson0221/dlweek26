@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
 
     APP_NAME: str = "Study Navigator API"
     ENV: str = os.getenv("ENV", "dev")
@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "./storage/uploads"
     GENERATED_DIR: str = "./storage/generated"
     IMAGE_DIR: str = "./storage/images"
-
+    OPENAI_API_KEY: str | None = None
+    DEFAULT_MODEL: str = "gpt-4.1"
+    TEMPERATURE: float = 0.2
     REMINDER_LEADS_HOURS: list[int] = [72, 24, 6]
 
 
