@@ -1,146 +1,144 @@
-// ─── Existing types ───
-export interface Message {
-  id: string;
-  role: "user" | "assistant" | "system";
-  content: string;
-  timestamp: Date;
-  toolsUsed?: string[];
-}
+// ─── LearnLens Types ───
 
-export interface Agent {
+export type CheckpointType = "quiz" | "midterm" | "final" | "assignment" | "project";
+export type CheckpointStatus = "completed" | "in-progress" | "upcoming" | "locked";
+export type SubmissionStatus = "submitted" | "in-progress" | "pending" | "overdue";
+export type CourseStatus = "active" | "completed" | "upcoming";
+
+export interface Course {
   id: string;
   name: string;
-  description: string;
-  systemPrompt: string;
-}
-
-export interface VisionAnalysis {
-  description: string;
-  objects: string[];
-  text?: string;
-  confidence?: number;
-}
-
-export interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  loading: boolean;
-}
-
-export interface AgentTask {
-  task: string;
-  agentName: string;
-  useTools?: boolean;
-}
-
-export interface UploadedFile {
-  file: File;
-  preview: string;
-  type: string;
-  name: string;
-}
-
-// ─── Git-inspired Learning Types ───
-
-export type MasteryLevel =
-  | "beginner"
-  | "developing"
-  | "proficient"
-  | "mastered";
-export type CommitType = "study" | "quiz" | "review" | "practice" | "exam";
-export type BranchStatus = "active" | "merged" | "stale";
-export type PRStatus = "open" | "merged" | "changes_requested";
-
-export interface Topic {
-  id: string;
-  name: string;
+  code: string;
   color: string;
+  icon: string;
+  progress: number;
+  currentWeek: number;
+  totalWeeks: number;
+  grade: string;
+  credits: number;
+  instructor: string;
+  topics: CourseTopic[];
+  checkpoints: Checkpoint[];
+  assignments: Assignment[];
+  schedule: string;
+  status: CourseStatus;
+}
+
+export interface CourseTopic {
+  id: string;
+  name: string;
+  weekNumber: number;
+  completed: boolean;
   mastery: number;
-  masteryLevel: MasteryLevel;
-  totalCommits: number;
-  totalTimeMinutes: number;
+  estimatedHours: number;
+  dependencies: string[];
+  description: string;
 }
 
-export interface StudyCommit {
+export interface Checkpoint {
   id: string;
-  hash: string;
-  topic: string;
-  topicName: string;
-  branch: string;
-  message: string;
-  date: string;
-  timeSpentMinutes: number;
-  scoreImprovement: number;
-  scoreBefore: number;
-  scoreAfter: number;
-  type: CommitType;
-  notes: string;
-  difficulty: number;
-  mistakes: string[];
-}
-
-export interface LearningBranch {
-  id: string;
+  courseId: string;
   name: string;
-  displayName: string;
-  topic: string;
-  color: string;
-  status: BranchStatus;
-  createdDate: string;
-  lastCommitDate: string;
-  commits: string[];
-  parentBranch: string;
-  aheadOfMain: number;
-  mergeReady: boolean;
-  aiMergeSuggestion?: string;
+  type: CheckpointType;
+  weekNumber: number;
+  date: string;
+  status: CheckpointStatus;
+  score?: number;
+  maxScore: number;
+  weight: number;
+  topics: string[];
+  estimatedPrepTime: number;
+  description: string;
 }
 
-export interface PullRequest {
+export interface Assignment {
   id: string;
+  courseId: string;
   title: string;
   description: string;
-  branch: string;
-  targetBranch: string;
-  status: PRStatus;
-  createdDate: string;
-  mergedDate?: string;
-  commits: string[];
-  score: number;
-  aiReview: AIReview;
-  checksPass: boolean;
-  labels: string[];
+  dueDate: string;
+  status: SubmissionStatus;
+  type: "essay" | "problem-set" | "project" | "presentation" | "lab";
+  fileType: "docx" | "pptx" | "pdf" | "code";
+  score?: number;
+  maxScore: number;
+  weight: number;
+  topics: string[];
 }
 
-export interface AIReview {
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  suggestions: string[];
-  readyToMerge: boolean;
-  confidence: number;
-}
-
-export interface BlameEntry {
+export interface QuizQuestion {
   id: string;
-  line: string;
-  commitHash: string;
+  question: string;
+  type: "multiple-choice" | "open-ended" | "true-false";
+  options?: string[];
+  correctAnswer: string;
+  explanation: string;
   topic: string;
-  mistake: string;
-  frequency: number;
-  lastOccurred: string;
-  severity: "low" | "medium" | "high" | "critical";
-  suggestion: string;
-  responsible: string;
+  difficulty: "easy" | "medium" | "hard";
 }
 
-export interface ContributionDay {
+export interface QuizResult {
+  id: string;
+  courseId: string;
   date: string;
-  count: number;
-  level: 0 | 1 | 2 | 3 | 4;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  topics: string[];
+  weakAreas: string[];
+  timeSpent: number;
 }
 
-export interface StreakInfo {
-  current: number;
-  longest: number;
-  lastStudyDate: string;
+export interface ConceptNode {
+  id: string;
+  name: string;
+  courseId: string;
+  mastery: number;
+  x: number;
+  y: number;
+  dependencies: string[];
+  description: string;
+  isGap: boolean;
+}
+
+export interface ConceptLink {
+  source: string;
+  target: string;
+  strength: number;
+}
+
+export interface StudySession {
+  date: string;
+  hours: number;
+  course: string;
+}
+
+export interface PerformanceMetric {
+  week: number;
+  gpa: number;
+  studyHours: number;
+  assignmentsCompleted: number;
+  quizAverage: number;
+}
+
+export interface CopilotSuggestion {
+  id: string;
+  type: "study" | "reminder" | "insight" | "warning" | "tip";
+  title: string;
+  body: string;
+  priority: number;
+  courseId?: string;
+  actionLabel?: string;
+  actionPage?: string;
+}
+
+export interface SemesterInfo {
+  name: string;
+  startDate: string;
+  endDate: string;
+  currentWeek: number;
+  totalWeeks: number;
+  gpa: number;
+  totalCredits: number;
+  completedCredits: number;
 }

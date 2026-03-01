@@ -1,60 +1,42 @@
 import React, { useState } from "react";
-import { Header } from "./components/Header";
-import { Sidebar } from "./components/Sidebar";
-import { Dashboard } from "./pages/Dashboard";
-import { AgentPage } from "./pages/AgentPage";
-import { VisionPage } from "./pages/VisionPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { CommitHistory } from "./pages/CommitHistory";
-import { BranchView } from "./pages/BranchView";
-import { BlameView } from "./pages/BlameView";
-import { PullRequests } from "./pages/PullRequests";
-import { CopilotAssistant } from "./components/CopilotAssistant";
+import { NavHeader } from "./components/NavHeader";
+import { CopilotCompanion } from "./components/CopilotCompanion";
+import { OverviewPage } from "./pages/OverviewPage";
+import { JourneyMapPage } from "./pages/JourneyMapPage";
+import { QuizPage } from "./pages/QuizPage";
+import { SubmissionsPage } from "./pages/SubmissionsPage";
+import { TrackingPage } from "./pages/TrackingPage";
+import { ConceptMapPage } from "./pages/ConceptMapPage";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("dashboard");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentPage, setCurrentPage] = useState("overview");
 
   const renderPage = () => {
     switch (currentPage) {
-      case "dashboard":
-        return <Dashboard onNavigate={setCurrentPage} />;
-      case "agent":
-        return <AgentPage />;
-      case "vision":
-        return <VisionPage />;
-      case "settings":
-        return <SettingsPage />;
-      case "commits":
-        return <CommitHistory />;
-      case "branches":
-        return <BranchView />;
-      case "blame":
-        return <BlameView />;
-      case "pullrequests":
-        return <PullRequests />;
+      case "overview":
+        return <OverviewPage onNavigate={setCurrentPage} />;
+      case "journey":
+        return <JourneyMapPage />;
+      case "quiz":
+        return <QuizPage />;
+      case "submissions":
+        return <SubmissionsPage />;
+      case "tracking":
+        return <TrackingPage />;
+      case "concepts":
+        return <ConceptMapPage />;
       default:
-        return <Dashboard onNavigate={setCurrentPage} />;
+        return <OverviewPage onNavigate={setCurrentPage} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-surface">
-      <Sidebar
-        activePage={currentPage}
-        onPageChange={setCurrentPage}
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-
-      <div
-        className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-60"}`}
-      >
-        <Header />
-        <main className="p-6">{renderPage()}</main>
-      </div>
-
-      <CopilotAssistant />
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <NavHeader activePage={currentPage} onNavigate={setCurrentPage} />
+      <main className="pt-[72px] px-6 pb-10 max-w-[1440px] mx-auto">
+        {renderPage()}
+      </main>
+      <CopilotCompanion />
     </div>
   );
 }

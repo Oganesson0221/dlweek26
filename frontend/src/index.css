@@ -5,30 +5,30 @@
   --color-accent: #0078d4;
   --color-accent-light: #2899f5;
   --color-accent-dark: #005a9e;
-  --color-accent-subtle: rgba(0, 120, 212, 0.08);
-  --color-accent-muted: rgba(0, 120, 212, 0.15);
+  --color-accent-subtle: rgba(0, 120, 212, 0.06);
+  --color-accent-muted: rgba(0, 120, 212, 0.12);
 
   /* Gold / warning accent */
   --color-gold: #ffb900;
   --color-gold-light: #ffd455;
   --color-gold-dark: #d49800;
-  --color-gold-subtle: rgba(255, 185, 0, 0.1);
+  --color-gold-subtle: rgba(255, 185, 0, 0.08);
 
-  /* Fluent neutral surfaces (slate-based) */
-  --color-surface: #0f172a;
-  --color-surface-raised: #1e293b;
-  --color-surface-card: #1e293b;
-  --color-surface-overlay: #334155;
-  --color-surface-hover: #334155;
+  /* Light-first Fluent surfaces */
+  --color-surface: #f5f5f5;
+  --color-surface-raised: #ffffff;
+  --color-surface-card: #ffffff;
+  --color-surface-overlay: #f1f5f9;
+  --color-surface-hover: #e2e8f0;
 
-  /* Fluent semantic tokens */
+  /* Semantic tokens */
   --color-success: #107c10;
   --color-error: #d83b01;
   --color-warning: #ffb900;
 
   /* Border */
-  --color-border-subtle: rgba(148, 163, 184, 0.12);
-  --color-border-default: rgba(148, 163, 184, 0.2);
+  --color-border-subtle: rgba(100, 116, 139, 0.12);
+  --color-border-default: rgba(100, 116, 139, 0.22);
 
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -43,77 +43,57 @@
       "Roboto",
       "Helvetica Neue",
       sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
   body {
-    @apply bg-surface text-slate-200 antialiased;
+    @apply bg-[#f5f5f5] text-slate-800 antialiased;
   }
 
-  /* Light mode overrides */
-  html[data-theme="light"] body {
-    @apply text-slate-800;
+  /* Smooth transitions */
+  * {
+    @apply transition-colors duration-100;
   }
-}
-
-/* Light mode CSS variable overrides */
-html[data-theme="light"] {
-  --color-surface: #f8fafc;
-  --color-surface-raised: #ffffff;
-  --color-surface-card: #ffffff;
-  --color-surface-overlay: #f1f5f9;
-  --color-surface-hover: #e2e8f0;
-  --color-accent-subtle: rgba(0, 120, 212, 0.06);
-  --color-accent-muted: rgba(0, 120, 212, 0.12);
-  --color-gold-subtle: rgba(255, 185, 0, 0.08);
-  --color-border-subtle: rgba(100, 116, 139, 0.15);
-  --color-border-default: rgba(100, 116, 139, 0.25);
-}
-
-html[data-theme="light"] .text-white {
-  color: #0f172a;
-}
-
-html[data-theme="light"] .text-slate-200 {
-  color: #334155;
-}
-
-html[data-theme="light"] .text-slate-300 {
-  color: #475569;
-}
-
-html[data-theme="light"] .text-slate-400 {
-  color: #64748b;
-}
-
-html[data-theme="light"] .text-slate-500 {
-  color: #94a3b8;
-}
-
-html[data-theme="light"] .bg-slate-800 {
-  background-color: #e2e8f0;
-}
-
-html[data-theme="light"] .bg-slate-700 {
-  background-color: #cbd5e1;
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-light transition-colors duration-150 font-semibold text-sm;
+    @apply bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-light transition-colors duration-150 font-semibold text-sm shadow-sm;
   }
 
   .btn-secondary {
-    @apply bg-surface-overlay text-slate-200 px-4 py-2 rounded-md hover:bg-slate-600 transition-colors duration-150 font-semibold text-sm border border-border-subtle;
+    @apply bg-white text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors duration-150 font-semibold text-sm border border-slate-200;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 bg-surface-raised border border-border-default rounded-md text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all text-sm;
+    @apply w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all text-sm;
   }
 
   .card {
-    @apply bg-surface-card border border-border-subtle rounded-lg p-5;
+    @apply bg-white border border-slate-200 rounded-2xl p-5 shadow-sm;
   }
 
   .card-hover {
-    @apply bg-surface-card border border-border-subtle rounded-lg p-5 hover:border-accent/30 hover:bg-surface-overlay/50 transition-all duration-200;
+    @apply bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-accent/30 hover:shadow-md transition-all duration-200;
   }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
