@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     IMAGE_DIR: str = "./storage/images"
 
     REMINDER_LEADS_HOURS: list[int] = [72, 24, 6]
+    
+    # AI Settings
+    primary_model: str = os.getenv("PRIMARY_MODEL", "gpt-4o")
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings
