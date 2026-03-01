@@ -12,6 +12,7 @@ from app.routers.academic.submissions import router as submissions_router
 from app.routers.academic.templates import router as templates_router
 from app.routers.academic.deadlines import router as deadlines_router
 from app.routers.academic.copilot_hooks import router as copilot_router
+from app.routers.academic.progress import router as progress_router
 
 
 def create_app() -> FastAPI:
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(templates_router)
     app.include_router(deadlines_router)
     app.include_router(copilot_router)
+    app.include_router(progress_router)
 
     return app
 
