@@ -2,26 +2,39 @@ import React, { useState } from "react";
 import { AgentChat } from "@/components/AgentChat";
 import { useAgent } from "@/hooks/useAgent";
 import { Agent } from "@/types";
-import { Bot, Settings, Users } from "lucide-react";
+import {
+  Bot,
+  Settings,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Brain,
+} from "lucide-react";
 
 const availableAgents: Agent[] = [
   {
     id: "1",
-    name: "Researcher",
-    description: "Research assistant who finds and summarizes information",
-    systemPrompt: "You are a research assistant...",
+    name: "Study Buddy",
+    description:
+      "Your personal learning assistant that explains concepts, answers questions, and helps you study effectively.",
+    systemPrompt:
+      "You are an expert educational AI tutor called Study Buddy. Help students learn by explaining concepts clearly, providing examples, and asking thought-provoking questions. Be encouraging and patient. Use analogies when helpful. Format your responses with clear structure.",
   },
   {
     id: "2",
-    name: "Coder",
-    description: "Programming expert who writes and explains code",
-    systemPrompt: "You are a coding expert...",
+    name: "Code Coach",
+    description:
+      "Programming mentor that writes, explains, and debugs code across multiple languages.",
+    systemPrompt:
+      "You are Code Coach, an expert programming tutor. Help students learn to code by explaining concepts, writing clean annotated code, debugging issues, and teaching best practices. Always explain your reasoning step by step.",
   },
   {
     id: "3",
-    name: "Critic",
-    description: "Critical thinker who evaluates ideas",
-    systemPrompt: "You are a critical thinker...",
+    name: "Essay Reviewer",
+    description:
+      "Academic writing assistant that reviews, critiques, and improves essays and papers.",
+    systemPrompt:
+      "You are Essay Reviewer, an academic writing expert. Help students improve their writing by providing constructive feedback on structure, argumentation, clarity, and style. Suggest specific improvements with examples.",
   },
 ];
 
@@ -35,38 +48,44 @@ export const AgentPage: React.FC = () => {
     selectAgent(agent);
   };
 
+  const agentIcons: Record<string, React.ReactNode> = {
+    "1": <GraduationCap className="w-4 h-4" />,
+    "2": <BookOpen className="w-4 h-4" />,
+    "3": <Brain className="w-4 h-4" />,
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Agentic AI</h1>
-        <p className="text-gray-500 mt-1">
-          Interact with specialized AI agents that can use tools and collaborate
+        <h1 className="text-xl font-bold text-white">AI Tutor</h1>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Chat with specialized learning agents powered by GPT-4o
         </p>
       </div>
 
       {/* Agent Selection */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
-        <div className="flex items-center space-x-4 overflow-x-auto pb-2">
+      <div className="bg-surface-card border border-border-subtle rounded-lg p-3">
+        <div className="flex items-center gap-2 overflow-x-auto">
           {availableAgents.map((agent) => (
             <button
               key={agent.id}
               onClick={() => handleAgentChange(agent)}
-              className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-md transition-all text-sm font-medium shrink-0 ${
                 selectedAgent.id === agent.id
-                  ? "bg-primary-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-accent text-white"
+                  : "text-slate-400 hover:bg-surface-hover hover:text-slate-200"
               }`}
             >
-              <Bot className="w-4 h-4" />
-              <span className="text-sm font-medium">{agent.name}</span>
+              {agentIcons[agent.id] || <Bot className="w-4 h-4" />}
+              <span>{agent.name}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Main Chat Area */}
-      <div className="h-[600px]">
+      <div className="h-[560px]">
         <AgentChat
           messages={messages}
           onSendMessage={processTask}
@@ -76,24 +95,21 @@ export const AgentPage: React.FC = () => {
       </div>
 
       {/* Agent Info */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-surface-card border border-border-subtle rounded-lg p-5">
+        <h2 className="text-sm font-semibold text-white mb-2">
           About {selectedAgent.name}
         </h2>
-        <p className="text-gray-600 mb-4">{selectedAgent.description}</p>
-
-        <div className="flex items-center space-x-6 text-sm">
-          <div className="flex items-center space-x-2">
-            <Settings className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-600">
-              Tools: Calculator, Search, Code
-            </span>
+        <p className="text-[13px] text-slate-400 mb-3">
+          {selectedAgent.description}
+        </p>
+        <div className="flex items-center gap-5 text-[12px]">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Settings className="w-3.5 h-3.5" />
+            <span>Model: GPT-4o</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Users className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-600">
-              Can collaborate with other agents
-            </span>
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Users className="w-3.5 h-3.5" />
+            <span>Context-aware responses</span>
           </div>
         </div>
       </div>

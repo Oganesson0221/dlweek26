@@ -1,27 +1,72 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Azure-inspired blue accent */
+  --color-accent: #0078d4;
+  --color-accent-light: #2899f5;
+  --color-accent-dark: #005a9e;
+  --color-accent-subtle: rgba(0, 120, 212, 0.08);
+  --color-accent-muted: rgba(0, 120, 212, 0.15);
+
+  /* Gold / warning accent */
+  --color-gold: #ffb900;
+  --color-gold-light: #ffd455;
+  --color-gold-dark: #d49800;
+  --color-gold-subtle: rgba(255, 185, 0, 0.1);
+
+  /* Fluent neutral surfaces (slate-based) */
+  --color-surface: #0f172a;
+  --color-surface-raised: #1e293b;
+  --color-surface-card: #1e293b;
+  --color-surface-overlay: #334155;
+  --color-surface-hover: #334155;
+
+  /* Fluent semantic tokens */
+  --color-success: #107c10;
+  --color-error: #d83b01;
+  --color-warning: #ffb900;
+
+  /* Border */
+  --color-border-subtle: rgba(148, 163, 184, 0.12);
+  --color-border-default: rgba(148, 163, 184, 0.2);
+
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
 @layer base {
+  html {
+    font-family:
+      "Segoe UI",
+      "Segoe UI Web",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Roboto",
+      "Helvetica Neue",
+      sans-serif;
+  }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-surface text-slate-200 antialiased;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors duration-200 font-medium;
+    @apply bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-light transition-colors duration-150 font-semibold text-sm;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium;
+    @apply bg-surface-overlay text-slate-200 px-4 py-2 rounded-md hover:bg-slate-600 transition-colors duration-150 font-semibold text-sm border border-border-subtle;
   }
 
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
+    @apply w-full px-3 py-2 bg-surface-raised border border-border-default rounded-md text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all text-sm;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-md p-6;
+    @apply bg-surface-card border border-border-subtle rounded-lg p-5;
+  }
+
+  .card-hover {
+    @apply bg-surface-card border border-border-subtle rounded-lg p-5 hover:border-accent/30 hover:bg-surface-overlay/50 transition-all duration-200;
   }
 }

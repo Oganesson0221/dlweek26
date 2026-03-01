@@ -1,128 +1,124 @@
 import { useState, useCallback } from "react";
-import axios from "axios";
 
-const api = axios.create({
-  baseURL: "/api",
-  headers: {
+function getHeaders(): Record<string, string> {
+  const apiKey = localStorage.getItem("openai_api_key") || "";
+  const orgId = localStorage.getItem("openai_org_id") || "";
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-  },
-});
-
-export function useApi<T>() {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const get = useCallback(async (url: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get<T>(url);
-      setData(response.data);
-      return response.data;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const post = useCallback(async (url: string, body: any) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.post<T>(url, body);
-      setData(response.data);
-      return response.data;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const uploadFile = useCallback(
-    async (url: string, file: File, additionalData?: any) => {
-      setLoading(true);
-      setError(null);
-
-      const formData = new FormData();
-      formData.append("file", file);
-      if (additionalData) {
-        Object.keys(additionalData).forEach((key) => {
-          formData.append(key, additionalData[key]);
-        });
-      }
-
-      try {
-        const response = await axios.post<T>(url, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        setData(response.data);
-        return response.data;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
-
-  return { data, error, loading, get, post, uploadFile };
+    Authorization: `Bearer ${apiKey}`,
+  };
+  if (orgId) headers["OpenAI-Organization"] = orgId;
+  return headers;
 }
 
-export function useAgentApi() {
-  const { loading, error, post } = useApi<any>();
-
-  const sendTask = useCallback(
-    async (task: AgentTask) => {
-      return post("/agent/task", task);
-    },
-    [post],
-  );
-
-  const getAgents = useCallback(async () => {
-    return post("/agent/list", {});
-  }, [post]);
-
-  return { loading, error, sendTask, getAgents };
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 export function useVisionApi() {
-  const { loading, error, uploadFile, post } = useApi<any>();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const callVision = useCallback(async (file: File, prompt: string) => {
+    const apiKey = localStorage.getItem("openai_api_key");
+    if (!apiKey) {
+      throw new Error(
+        "No API key configured. Please go to Settings to add your OpenAI API key.",
+      );
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: base64 } },
+              ],
+            },
+          ],
+          max_tokens: 1024,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `API error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      return text;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setError(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const analyzeImage = useCallback(
-    async (file: File, prompt?: string) => {
-      return uploadFile("/vision/analyze", file, { prompt });
+    async (file: File) => {
+      const text = await callVision(
+        file,
+        "Analyze this image in detail. Describe what you see, identify any objects, and note any text visible.",
+      );
+      return { description: text, objects: [], text: "" };
     },
-    [uploadFile],
+    [callVision],
   );
 
   const detectObjects = useCallback(
     async (file: File) => {
-      return uploadFile("/vision/detect", file);
+      const text = await callVision(
+        file,
+        "List all objects you can detect in this image. Format as a comma-separated list, then provide a brief description.",
+      );
+      const parts = text.split("\n");
+      const firstLine = parts[0] || "";
+      const objects = firstLine
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      return { description: parts.slice(1).join("\n"), objects, text: "" };
     },
-    [uploadFile],
+    [callVision],
   );
 
   const extractText = useCallback(
     async (file: File) => {
-      return uploadFile("/vision/extract-text", file);
+      const text = await callVision(
+        file,
+        "Extract all visible text from this image. Return only the text content you can read.",
+      );
+      return { description: "", objects: [], text };
     },
-    [uploadFile],
+    [callVision],
   );
 
   const describeScene = useCallback(
     async (file: File) => {
-      return uploadFile("/vision/describe", file);
+      const text = await callVision(
+        file,
+        "Provide a detailed description of this scene. What is happening? What are the key elements? What is the context or setting?",
+      );
+      return { description: text, objects: [], text: "" };
     },
-    [uploadFile],
+    [callVision],
   );
 
   return {

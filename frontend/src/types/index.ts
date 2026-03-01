@@ -3,14 +3,14 @@ export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
-  toolsused?: string[];
+  toolsUsed?: string[];
 }
 
 export interface Agent {
   id: string;
   name: string;
   description: string;
-  systemprompt: string;
+  systemPrompt: string;
 }
 
 export interface VisionAnalysis {
@@ -28,8 +28,8 @@ export interface ApiResponse<T> {
 
 export interface AgentTask {
   task: string;
-  agentname: string;
-  usetools?: boolean;
+  agentName: string;
+  useTools?: boolean;
 }
 
 export interface UploadedFile {

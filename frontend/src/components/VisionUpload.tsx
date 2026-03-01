@@ -66,9 +66,9 @@ export const VisionUpload: React.FC<VisionUploadProps> = ({
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        Computer Vision Analysis
+    <div className="bg-surface-card border border-border-subtle rounded-lg p-5">
+      <h2 className="text-[14px] font-semibold text-white mb-4">
+        Vision Analysis
       </h2>
 
       {/* Upload Area */}
@@ -77,44 +77,44 @@ export const VisionUpload: React.FC<VisionUploadProps> = ({
           {...getRootProps()}
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
             isDragActive
-              ? "border-primary-500 bg-primary-50"
-              : "border-gray-300 hover:border-primary-400 hover:bg-gray-50"
+              ? "border-accent bg-accent/5"
+              : "border-border-default hover:border-accent/50 hover:bg-surface-overlay/30"
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+          <Upload className="w-10 h-10 text-slate-500 mx-auto mb-3" />
           {isDragActive ? (
-            <p className="text-primary-600">Drop the image here...</p>
+            <p className="text-accent text-sm">Drop the image here...</p>
           ) : (
             <>
-              <p className="text-gray-600">
+              <p className="text-slate-300 text-sm">
                 Drag & drop an image here, or click to select
               </p>
-              <p className="text-sm text-gray-400 mt-2">
-                Supports PNG, JPG, GIF up to 10MB
+              <p className="text-xs text-slate-600 mt-1.5">
+                Supports PNG, JPG, GIF, WEBP up to 10MB
               </p>
             </>
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Preview */}
-          <div className="relative rounded-lg overflow-hidden border border-gray-200">
+          <div className="relative rounded-lg overflow-hidden border border-border-subtle">
             <img
               src={file.preview}
               alt={file.name}
-              className="w-full h-64 object-contain bg-gray-50"
+              className="w-full h-64 object-contain bg-surface-raised"
             />
             <button
               onClick={clearFile}
-              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+              className="absolute top-2 right-2 p-1.5 bg-red-500/80 backdrop-blur-sm text-white rounded-full hover:bg-red-500 transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Analysis Options */}
-          <div className="flex space-x-2">
+          <div className="flex gap-2">
             {analysisOptions.map((option) => {
               const Icon = option.icon;
               const isSelected = analysisType === option.id;
@@ -122,13 +122,13 @@ export const VisionUpload: React.FC<VisionUploadProps> = ({
                 <button
                   key={option.id}
                   onClick={() => setAnalysisType(option.id)}
-                  className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isSelected
-                      ? "bg-primary-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-accent text-white"
+                      : "bg-surface-overlay text-slate-400 hover:text-slate-200 hover:bg-surface-overlay/80"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{option.label}</span>
                 </button>
               );
@@ -142,7 +142,7 @@ export const VisionUpload: React.FC<VisionUploadProps> = ({
             className="w-full btn-primary disabled:opacity-50"
           >
             {isProcessing ? (
-              <span className="flex items-center justify-center space-x-2">
+              <span className="flex items-center justify-center gap-2">
                 <Loader className="w-4 h-4 animate-spin" />
                 <span>Analyzing...</span>
               </span>
@@ -155,25 +155,29 @@ export const VisionUpload: React.FC<VisionUploadProps> = ({
 
       {/* Analysis Results */}
       {analysis && (
-        <div className="mt-6 space-y-4">
-          <h3 className="font-medium text-gray-900">Analysis Results</h3>
+        <div className="mt-5 space-y-4">
+          <h3 className="text-[13px] font-semibold text-white">
+            Analysis Results
+          </h3>
 
           {analysis.description && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-700">{analysis.description}</p>
+            <div className="bg-surface-overlay rounded-lg p-4">
+              <p className="text-[13px] text-slate-300 leading-relaxed">
+                {analysis.description}
+              </p>
             </div>
           )}
 
           {analysis.objects && analysis.objects.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <h4 className="text-xs font-medium text-slate-400 mb-2">
                 Detected Objects
               </h4>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {analysis.objects.map((obj, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                    className="px-2.5 py-1 bg-accent/15 text-accent-light rounded-full text-xs"
                   >
                     {obj}
                   </span>
@@ -184,11 +188,11 @@ export const VisionUpload: React.FC<VisionUploadProps> = ({
 
           {analysis.text && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <h4 className="text-xs font-medium text-slate-400 mb-2">
                 Extracted Text
               </h4>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-700 font-mono">
+              <div className="bg-surface-overlay rounded-lg p-4">
+                <p className="text-[13px] text-slate-300 font-mono leading-relaxed">
                   {analysis.text}
                 </p>
               </div>

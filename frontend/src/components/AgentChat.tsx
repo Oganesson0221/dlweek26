@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader, Tool, AlertCircle } from "lucide-react";
+import { Send, Bot, User, Loader, Wrench, AlertCircle } from "lucide-react";
 import { Message } from "@/types";
 
 interface AgentChatProps {
@@ -39,47 +39,36 @@ export const AgentChat: React.FC<AgentChatProps> = ({
   const getMessageIcon = (role: string) => {
     switch (role) {
       case "user":
-        return <User className="w-5 h-5" />;
+        return <User className="w-4 h-4" />;
       case "assistant":
-        return <Bot className="w-5 h-5" />;
+        return <Bot className="w-4 h-4" />;
       default:
-        return <AlertCircle className="w-5 h-5" />;
-    }
-  };
-
-  const getMessageColor = (role: string) => {
-    switch (role) {
-      case "user":
-        return "bg-primary-50 text-primary-800";
-      case "assistant":
-        return "bg-gray-50 text-gray-800";
-      default:
-        return "bg-yellow-50 text-yellow-800";
+        return <AlertCircle className="w-4 h-4" />;
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl shadow-sm">
+    <div className="flex flex-col h-full bg-surface-card border border-border-subtle rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          <Bot className="w-5 h-5 text-primary-600" />
-          <h2 className="font-semibold text-gray-900">{agentName}</h2>
-          <span className="ml-auto text-xs text-gray-500">
+      <div className="px-5 py-3 border-b border-border-subtle bg-surface-raised/50">
+        <div className="flex items-center gap-2">
+          <Bot className="w-4 h-4 text-accent" />
+          <h2 className="text-[13px] font-semibold text-white">{agentName}</h2>
+          <span className="ml-auto text-[11px] text-slate-500">
             {messages.length} messages
           </span>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-5 space-y-3">
         {messages.length === 0 ? (
           <div className="text-center py-12">
-            <Bot className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">
+            <Bot className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <p className="text-sm text-slate-400">
               Start a conversation with {agentName}
             </p>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-xs text-slate-600 mt-1">
               Ask me anything or give me a task to complete
             </p>
           </div>
@@ -87,32 +76,38 @@ export const AgentChat: React.FC<AgentChatProps> = ({
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex items-start space-x-3 ${
-                message.role === "user"
-                  ? "flex-row-reverse space-x-reverse"
-                  : ""
+              className={`flex items-start gap-2.5 ${
+                message.role === "user" ? "flex-row-reverse" : ""
               }`}
             >
               <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.role === "user" ? "bg-primary-100" : "bg-gray-100"
+                className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                  message.role === "user"
+                    ? "bg-accent/20 text-accent-light"
+                    : "bg-surface-overlay text-slate-400"
                 }`}
               >
                 {getMessageIcon(message.role)}
               </div>
               <div
-                className={`flex-1 max-w-3xl rounded-lg p-4 ${getMessageColor(
-                  message.role,
-                )}`}
+                className={`flex-1 max-w-3xl rounded-lg px-4 py-3 ${
+                  message.role === "user"
+                    ? "bg-accent/15 text-slate-200"
+                    : message.role === "assistant"
+                      ? "bg-surface-overlay text-slate-300"
+                      : "bg-gold/10 text-gold"
+                }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-[13px] whitespace-pre-wrap leading-relaxed">
+                  {message.content}
+                </p>
                 {message.toolsUsed && message.toolsUsed.length > 0 && (
-                  <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
-                    <Tool className="w-3 h-3" />
-                    <span>Tools used: {message.toolsUsed.join(", ")}</span>
+                  <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <Wrench className="w-3 h-3" />
+                    <span>Tools: {message.toolsUsed.join(", ")}</span>
                   </div>
                 )}
-                <span className="text-xs text-gray-400 mt-1 block">
+                <span className="text-[10px] text-slate-600 mt-1.5 block">
                   {message.timestamp.toLocaleTimeString()}
                 </span>
               </div>
@@ -120,17 +115,20 @@ export const AgentChat: React.FC<AgentChatProps> = ({
           ))
         )}
         {isProcessing && (
-          <div className="flex items-center space-x-2 text-gray-500">
-            <Loader className="w-4 h-4 animate-spin" />
-            <span className="text-sm">{agentName} is thinking...</span>
+          <div className="flex items-center gap-2 text-accent">
+            <Loader className="w-3.5 h-3.5 animate-spin" />
+            <span className="text-xs">{agentName} is thinking...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200">
-        <div className="flex items-center space-x-2">
+      <form
+        onSubmit={handleSubmit}
+        className="p-3 border-t border-border-subtle"
+      >
+        <div className="flex items-center gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -148,8 +146,8 @@ export const AgentChat: React.FC<AgentChatProps> = ({
             <Send className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          Press Enter to send • Agent can use tools automatically
+        <p className="text-[11px] text-slate-600 mt-1.5">
+          Press Enter to send · Agent responds with GPT-4o
         </p>
       </form>
     </div>

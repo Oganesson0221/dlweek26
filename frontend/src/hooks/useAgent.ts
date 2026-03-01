@@ -33,24 +33,61 @@ export function useAgent(initialAgent?: Agent) {
       addMessage("user", task);
 
       try {
-        // Simulate API call - replace with actual API
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const apiKey = localStorage.getItem("openai_api_key");
+        const orgId = localStorage.getItem("openai_org_id");
 
-        const response = `I've processed your task: "${task}" using ${currentAgent.name}`;
-        addMessage("assistant", response, ["default-tool"]);
+        if (!apiKey) {
+          addMessage(
+            "system",
+            "⚠️ No API key configured. Please go to Settings and add your OpenAI API key.",
+          );
+          return;
+        }
 
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        };
+        if (orgId) headers["OpenAI-Organization"] = orgId;
+
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: currentAgent.systemPrompt,
+              },
+              ...messages
+                .filter((m) => m.role !== "system")
+                .map((m) => ({ role: m.role, content: m.content })),
+              { role: "user", content: task },
+            ],
+            max_tokens: 1024,
+            temperature: 0.7,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || `API error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const response = data.choices?.[0]?.message?.content || "No response.";
+        addMessage("assistant", response, ["openai-chat"]);
         return response;
       } catch (error) {
-        addMessage(
-          "system",
-          `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        const msg = error instanceof Error ? error.message : "Unknown error";
+        addMessage("system", `❌ Error: ${msg}`);
         throw error;
       } finally {
         setIsProcessing(false);
       }
     },
-    [currentAgent, addMessage],
+    [currentAgent, addMessage, messages],
   );
 
   const clearMessages = useCallback(() => {
