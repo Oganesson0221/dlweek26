@@ -57,7 +57,7 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({
           "Weakest areas by urgency:\n\n1. Sampling Distributions (STAT 200) — 28%\n2. Eigenvalues (MATH 240) — 30%\n3. DC Circuits (PHYS 201) — 35%\n4. Graph Traversals (CS 301) — 45%\n\nPrioritize CS 301 and MATH 240 — midterms next week.";
       } else {
         response =
-          "I can help with study planning and identifying focus areas. Try:\n\n• \"I have 2 hours, what should I study?\"\n• \"Help me prepare for midterms\"\n• \"What are my weakest topics?\"";
+          'I can help with study planning and identifying focus areas. Try:\n\n• "I have 2 hours, what should I study?"\n• "Help me prepare for midterms"\n• "What are my weakest topics?"';
       }
       setChatMessages((prev) => [
         ...prev,
