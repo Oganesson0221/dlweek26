@@ -5,6 +5,11 @@ import { Dashboard } from "./pages/Dashboard";
 import { AgentPage } from "./pages/AgentPage";
 import { VisionPage } from "./pages/VisionPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { CommitHistory } from "./pages/CommitHistory";
+import { BranchView } from "./pages/BranchView";
+import { BlameView } from "./pages/BlameView";
+import { PullRequests } from "./pages/PullRequests";
+import { CopilotAssistant } from "./components/CopilotAssistant";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -20,6 +25,14 @@ function App() {
         return <VisionPage />;
       case "settings":
         return <SettingsPage />;
+      case "commits":
+        return <CommitHistory />;
+      case "branches":
+        return <BranchView />;
+      case "blame":
+        return <BlameView />;
+      case "pullrequests":
+        return <PullRequests />;
       default:
         return <Dashboard onNavigate={setCurrentPage} />;
     }
@@ -40,6 +53,8 @@ function App() {
         <Header />
         <main className="p-6">{renderPage()}</main>
       </div>
+
+      <CopilotAssistant />
     </div>
   );
 }

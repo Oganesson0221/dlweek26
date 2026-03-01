@@ -8,7 +8,10 @@ import {
   ChevronRight,
   GraduationCap,
   BarChart3,
-  BookOpen,
+  GitCommitHorizontal,
+  GitBranch,
+  GitPullRequest,
+  Eye,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -26,6 +29,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: "dashboard", label: "Home", icon: LayoutDashboard },
+    { id: "commits", label: "Commits", icon: GitCommitHorizontal },
+    { id: "branches", label: "Branches", icon: GitBranch },
+    { id: "pullrequests", label: "Pull Requests", icon: GitPullRequest },
+    { id: "blame", label: "Blame", icon: Eye },
     { id: "agent", label: "AI Tutor", icon: Bot, badge: "AI" },
     { id: "vision", label: "Vision Lab", icon: Camera },
     { id: "settings", label: "Settings", icon: Settings },

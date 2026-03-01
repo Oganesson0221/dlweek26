@@ -47,6 +47,53 @@
   body {
     @apply bg-surface text-slate-200 antialiased;
   }
+
+  /* Light mode overrides */
+  html[data-theme="light"] body {
+    @apply text-slate-800;
+  }
+}
+
+/* Light mode CSS variable overrides */
+html[data-theme="light"] {
+  --color-surface: #f8fafc;
+  --color-surface-raised: #ffffff;
+  --color-surface-card: #ffffff;
+  --color-surface-overlay: #f1f5f9;
+  --color-surface-hover: #e2e8f0;
+  --color-accent-subtle: rgba(0, 120, 212, 0.06);
+  --color-accent-muted: rgba(0, 120, 212, 0.12);
+  --color-gold-subtle: rgba(255, 185, 0, 0.08);
+  --color-border-subtle: rgba(100, 116, 139, 0.15);
+  --color-border-default: rgba(100, 116, 139, 0.25);
+}
+
+html[data-theme="light"] .text-white {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .text-slate-200 {
+  color: #334155;
+}
+
+html[data-theme="light"] .text-slate-300 {
+  color: #475569;
+}
+
+html[data-theme="light"] .text-slate-400 {
+  color: #64748b;
+}
+
+html[data-theme="light"] .text-slate-500 {
+  color: #94a3b8;
+}
+
+html[data-theme="light"] .bg-slate-800 {
+  background-color: #e2e8f0;
+}
+
+html[data-theme="light"] .bg-slate-700 {
+  background-color: #cbd5e1;
 }
 
 @layer components {
