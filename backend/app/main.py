@@ -14,6 +14,11 @@ from app.routers.academic.deadlines import router as deadlines_router
 from app.routers.academic.copilot_hooks import router as copilot_router
 from app.routers.academic.progress import router as progress_router
 
+# AI routers
+from app.routers.ai.course_tools import router as course_tools_router
+from app.routers.ai.improving import router as improving_router
+from app.routers.ai.quiz_gen import router as quiz_gen_router
+
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.APP_NAME)
@@ -43,6 +48,13 @@ def create_app() -> FastAPI:
     app.include_router(deadlines_router)
     app.include_router(copilot_router)
     app.include_router(progress_router)
+
+    # Mount AI routers
+    app.include_router(course_tools_router)
+    app.include_router(improving_router)
+    app.include_router(quiz_gen_router)
+
+
 
     return app
 

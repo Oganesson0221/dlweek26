@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     DEFAULT_MODEL: str = "gpt-4.1"
     TEMPERATURE: float = 0.2
     REMINDER_LEADS_HOURS: list[int] = [72, 24, 6]
+    
+    # AI Settings
+    primary_model: str = os.getenv("PRIMARY_MODEL", "gpt-4o")
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings
