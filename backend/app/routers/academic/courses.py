@@ -66,76 +66,102 @@ def get_course(course_code: str, session: Session = Depends(get_session)):
     """
     return get_course_or_404(session, course_code)
 
+# -----------------------------
+# OUTLINE (DB read/write)
+# -----------------------------
+@router.get("/{course_code}/outline")
+def outline_get(course_code: str, session: Session = Depends(get_session)):
+    course = get_course_or_404(session, course_code)
 
-# =====================================================
-# 4. Course Outline
-# =====================================================
+    outline = session.exec(
+        select(CourseOutline).where(CourseOutline.course_id == course.id)
+    ).first()
+
+    if not outline:
+        return {
+            "course_code": course.code,
+            "outline": None
+        }
+
+    return {
+        "course_code": course.code,
+        "outline": {
+            "description": outline.description,
+            "instructor": outline.instructor,
+            "last_updated_at": outline.last_updated_at
+        }
+    }
+
+
 @router.put("/{course_code}/outline")
 def outline_upsert(course_code: str, body: OutlineUpsert, session: Session = Depends(get_session)):
     """
-    Save or update course outline information.
+    Purpose:
+    Allows manual overwrite/edit of the outline after ingestion.
     """
     course = get_course_or_404(session, course_code)
     return upsert_outline(session, course.id, body.description, body.instructor)
 
 
-@router.get("/{course_code}/outline")
-def outline_get(course_code: str, session: Session = Depends(get_session)):
-    """
-    Get course outline.
-    """
+# -----------------------------
+# COMPONENTS (DB read/write)
+# -----------------------------
+@router.get("/{course_code}/components")
+def components_get(course_code: str, session: Session = Depends(get_session)):
     course = get_course_or_404(session, course_code)
-    return session.exec(
-        select(CourseOutline).where(CourseOutline.course_id == course.id)
-    ).first()
+
+    comps = session.exec(
+        select(CourseComponent).where(CourseComponent.course_id == course.id)
+    ).all()
+
+    return {
+        "course_code": course.code,
+        "components": [
+            {
+                "name": c.name,
+                "weight": c.weight
+            }
+            for c in comps
+        ]
+    }
 
 
-# =====================================================
-# 5. Weightage Components
-# =====================================================
 @router.put("/{course_code}/components")
 def components_replace(course_code: str, body: list[ComponentItem], session: Session = Depends(get_session)):
     """
-    Replace assessment weightage.
-    Example: Final 40%, Project 30%
+    Purpose:
+    Allows manual overwrite/edit of grading breakdown after ingestion.
+    Replaces all components for that course.
     """
     course = get_course_or_404(session, course_code)
     comps = [(c.name, c.weight) for c in body]
     return replace_components(session, course.id, comps)
 
 
-@router.get("/{course_code}/components")
-def components_get(course_code: str, session: Session = Depends(get_session)):
-    """
-    Get assessment weightage.
-    """
-    course = get_course_or_404(session, course_code)
-    return session.exec(
-        select(CourseComponent).where(CourseComponent.course_id == course.id)
-    ).all()
-
-
-# =====================================================
-# 6. Topic Hierarchy (Concept Tree)
-# =====================================================
-@router.post("/{course_code}/topics")
-def topic_add(course_code: str, body: TopicCreate, session: Session = Depends(get_session)):
-    """
-    Add topic or subtopic.
-    Used for concept maps / learning structure.
-    """
-    course = get_course_or_404(session, course_code)
-    return add_topic(session, course.id, body.parent_id, body.title, body.order_index)
-
-
+# -----------------------------
+# TOPICS (DB read/write)
+# -----------------------------
 @router.get("/{course_code}/topics")
 def topics_get(course_code: str, session: Session = Depends(get_session)):
     """
-    Get full topic hierarchy for the course.
+    Purpose:
+    Read topic hierarchy saved during ingestion.
+    Used for concept maps and navigation UI.
     """
     course = get_course_or_404(session, course_code)
     return get_topics(session, course.id)
 
+
+@router.post("/{course_code}/topics")
+def topic_add(course_code: str, body: TopicCreate, session: Session = Depends(get_session)):
+    """
+    Purpose:
+    Allows manual adding of topics/subtopics after ingestion.
+    """
+    course = get_course_or_404(session, course_code)
+    return add_topic(session, course.id, body.parent_id, body.title, body.order_index)
+
+#upload files + openai parsing
 
 @router.post("/upload")
 async def create_with_upload(

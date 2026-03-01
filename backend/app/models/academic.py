@@ -34,7 +34,7 @@ class CourseComponent(SQLModel, table=True):
     course_id: int = Field(index=True)
     name: str
     weight: float = 0.0  # 0..1
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    # created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class TopicNode(SQLModel, table=True):
