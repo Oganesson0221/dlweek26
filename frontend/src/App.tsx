@@ -7,6 +7,7 @@ import { QuizPage } from "./pages/QuizPage";
 import { SubmissionsPage } from "./pages/SubmissionsPage";
 import { TrackingPage } from "./pages/TrackingPage";
 import { ConceptMapPage } from "./pages/ConceptMapPage";
+import NotesPage from "./pages/NotesPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("overview");
@@ -25,17 +26,17 @@ function App() {
         return <TrackingPage />;
       case "concepts":
         return <ConceptMapPage />;
+      case "notes":
+        return <NotesPage />;
       default:
         return <OverviewPage onNavigate={setCurrentPage} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-[#fafafa]">
       <NavHeader activePage={currentPage} onNavigate={setCurrentPage} />
-      <main className="pt-[72px] px-6 pb-10 max-w-[1440px] mx-auto">
-        {renderPage()}
-      </main>
+      <main className="px-6 py-6 max-w-[1280px] mx-auto">{renderPage()}</main>
       <CopilotCompanion />
     </div>
   );

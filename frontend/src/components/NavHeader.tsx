@@ -2,14 +2,13 @@ import React from "react";
 import {
   Search,
   Bell,
-  User,
   Map,
   LayoutDashboard,
   FileQuestion,
   FileText,
   BarChart3,
   Network,
-  GraduationCap,
+  StickyNote,
 } from "lucide-react";
 
 interface NavHeaderProps {
@@ -19,28 +18,31 @@ interface NavHeaderProps {
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "journey", label: "Journey Map", icon: Map },
+  { id: "journey", label: "Journey", icon: Map },
   { id: "quiz", label: "Quiz", icon: FileQuestion },
   { id: "submissions", label: "Submissions", icon: FileText },
   { id: "tracking", label: "Tracking", icon: BarChart3 },
   { id: "concepts", label: "Concepts", icon: Network },
+  { id: "notes", label: "Notes", icon: StickyNote },
 ];
 
-export const NavHeader: React.FC<NavHeaderProps> = ({ activePage, onNavigate }) => {
+export const NavHeader: React.FC<NavHeaderProps> = ({
+  activePage,
+  onNavigate,
+}) => {
   return (
-    <header className="h-14 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+    <header className="h-12 bg-white border-b border-neutral-200 px-5 flex items-center justify-between sticky top-0 z-30">
       {/* Logo */}
       <div className="flex items-center gap-2.5 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-[#0078d4] flex items-center justify-center shadow-sm">
-          <GraduationCap className="w-4.5 h-4.5 text-white" />
-        </div>
-        <span className="text-[15px] font-bold text-slate-800 tracking-tight">
+        <img src="/logo.png" alt="Microsoft" className="h-4 object-contain" />
+        <div className="w-px h-4 bg-neutral-200" />
+        <span className="text-sm font-semibold tracking-tight text-neutral-900">
           LearnLens
         </span>
       </div>
 
       {/* Center navigation */}
-      <nav className="flex items-center gap-1 bg-slate-100/80 rounded-xl px-1.5 py-1">
+      <nav className="flex items-center gap-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -48,10 +50,10 @@ export const NavHeader: React.FC<NavHeaderProps> = ({ activePage, onNavigate }) 
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
                 isActive
-                  ? "bg-white text-[#0078d4] shadow-sm"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50"
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -62,31 +64,24 @@ export const NavHeader: React.FC<NavHeaderProps> = ({ activePage, onNavigate }) 
       </nav>
 
       {/* Right side */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <div className="relative hidden md:block">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
           <input
             type="text"
             placeholder="Search..."
-            className="w-44 pl-8 pr-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-[12px] text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-[#0078d4]/20 focus:border-[#0078d4]/40 outline-none transition-all"
+            className="w-40 pl-8 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-md text-xs text-neutral-700 placeholder-neutral-400 focus:outline-none focus:border-neutral-300"
           />
         </div>
 
-        <button className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+        <button className="relative p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 rounded-md">
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d83b01] rounded-full border-2 border-white" />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
         </button>
 
-        <div className="w-px h-6 bg-slate-200 mx-0.5" />
-
-        <button className="flex items-center gap-2 hover:bg-slate-100 rounded-lg px-2 py-1 transition-colors">
-          <div className="w-7 h-7 rounded-full bg-[#0078d4]/10 border border-[#0078d4]/20 flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-[#0078d4]" />
-          </div>
-          <span className="text-[12px] font-medium text-slate-600 hidden sm:inline">
-            Student
-          </span>
-        </button>
+        <div className="w-6 h-6 rounded-full bg-neutral-200 flex items-center justify-center ml-1">
+          <span className="text-[10px] font-medium text-neutral-600">S</span>
+        </div>
       </div>
     </header>
   );

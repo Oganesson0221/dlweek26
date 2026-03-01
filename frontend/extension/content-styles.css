@@ -1,0 +1,103 @@
+/* LearnLens Clippy Notes - Content Script Styles */
+
+#learnlens-floating-btn {
+  position: fixed;
+  z-index: 999999;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #0078d4, #106ebe);
+  color: white;
+  border-radius: 20px;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.4);
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#learnlens-floating-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 120, 212, 0.5);
+}
+
+#learnlens-floating-btn:active {
+  transform: scale(0.98);
+}
+
+#learnlens-floating-btn img {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+#learnlens-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+  border-radius: 12px;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#learnlens-toast img {
+  width: 24px;
+  height: 24px;
+}
+
+/* Animation keyframes */
+@keyframes learnlens-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes learnlens-fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+#learnlens-floating-btn.fade-in {
+  animation: learnlens-fadeIn 0.2s ease forwards;
+}
+
+#learnlens-toast.fade-in {
+  animation: learnlens-fadeIn 0.3s ease forwards;
+}
+
+#learnlens-toast.fade-out {
+  animation: learnlens-fadeOut 0.3s ease forwards;
+}

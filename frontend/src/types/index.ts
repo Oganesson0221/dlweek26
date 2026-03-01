@@ -1,9 +1,29 @@
 // ─── LearnLens Types ───
 
-export type CheckpointType = "quiz" | "midterm" | "final" | "assignment" | "project";
-export type CheckpointStatus = "completed" | "in-progress" | "upcoming" | "locked";
-export type SubmissionStatus = "submitted" | "in-progress" | "pending" | "overdue";
+export type CheckpointType =
+  | "quiz"
+  | "midterm"
+  | "final"
+  | "assignment"
+  | "project";
+export type CheckpointStatus =
+  | "completed"
+  | "in-progress"
+  | "upcoming"
+  | "locked";
+export type SubmissionStatus =
+  | "submitted"
+  | "in-progress"
+  | "pending"
+  | "overdue";
 export type CourseStatus = "active" | "completed" | "upcoming";
+
+export interface CourseOutlineComponent {
+  name: string;
+  weight: number;
+  count?: number;
+  description: string;
+}
 
 export interface Course {
   id: string;
@@ -22,6 +42,7 @@ export interface Course {
   assignments: Assignment[];
   schedule: string;
   status: CourseStatus;
+  courseOutline: CourseOutlineComponent[];
 }
 
 export interface CourseTopic {
@@ -141,4 +162,38 @@ export interface SemesterInfo {
   gpa: number;
   totalCredits: number;
   completedCredits: number;
+}
+
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+export interface VisionAnalysis {
+  id: string;
+  imageUrl: string;
+  analysis: string;
+  timestamp: Date;
+  topics: string[];
+}
+
+export interface BlameEntry {
+  id: string;
+  lineStart: number;
+  lineEnd: number;
+  content: string;
+  author: string;
+  date: string;
+  severity: "critical" | "high" | "medium" | "low";
+  message: string;
 }

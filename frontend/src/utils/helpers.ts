@@ -1,6 +1,9 @@
 import { Course, SemesterInfo } from "@/types";
 
-export function getWeekProgress(currentWeek: number, totalWeeks: number): number {
+export function getWeekProgress(
+  currentWeek: number,
+  totalWeeks: number,
+): number {
   return Math.round((currentWeek / totalWeeks) * 100);
 }
 
@@ -12,7 +15,7 @@ export function getEstimatedTimeRemaining(course: Course): number {
 
 export function getNextCheckpoint(course: Course) {
   return course.checkpoints.find(
-    (cp) => cp.status === "upcoming" || cp.status === "in-progress"
+    (cp) => cp.status === "upcoming" || cp.status === "in-progress",
   );
 }
 
@@ -24,7 +27,7 @@ export function getCourseAverage(course: Course): number {
   const scored = course.checkpoints.filter((cp) => cp.score !== undefined);
   if (scored.length === 0) return 0;
   return Math.round(
-    scored.reduce((sum, cp) => sum + (cp.score ?? 0), 0) / scored.length
+    scored.reduce((sum, cp) => sum + (cp.score ?? 0), 0) / scored.length,
   );
 }
 
@@ -52,14 +55,22 @@ export function getDaysUntil(dateStr: string): number {
 export function getOverallGPA(courses: Course[]): number {
   const totalPoints = courses.reduce((sum, c) => {
     const gradePoints: Record<string, number> = {
-      "A+": 4.0, "A": 4.0, "A-": 3.7,
-      "B+": 3.3, "B": 3.0, "B-": 2.7,
-      "C+": 2.3, "C": 2.0, "C-": 1.7,
+      "A+": 4.0,
+      A: 4.0,
+      "A-": 3.7,
+      "B+": 3.3,
+      B: 3.0,
+      "B-": 2.7,
+      "C+": 2.3,
+      C: 2.0,
+      "C-": 1.7,
     };
     return sum + (gradePoints[c.grade] || 0) * c.credits;
   }, 0);
   const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
-  return totalCredits > 0 ? Math.round((totalPoints / totalCredits) * 100) / 100 : 0;
+  return totalCredits > 0
+    ? Math.round((totalPoints / totalCredits) * 100) / 100
+    : 0;
 }
 
 export function getStatusColor(status: string): string {
@@ -84,14 +95,22 @@ export function getStatusColor(status: string): string {
 
 export function getStatusLabel(status: string): string {
   switch (status) {
-    case "completed": return "Completed";
-    case "submitted": return "Submitted";
-    case "in-progress": return "In Progress";
-    case "upcoming": return "Upcoming";
-    case "pending": return "Pending";
-    case "locked": return "Locked";
-    case "overdue": return "Overdue";
-    default: return status;
+    case "completed":
+      return "Completed";
+    case "submitted":
+      return "Submitted";
+    case "in-progress":
+      return "In Progress";
+    case "upcoming":
+      return "Upcoming";
+    case "pending":
+      return "Pending";
+    case "locked":
+      return "Locked";
+    case "overdue":
+      return "Overdue";
+    default:
+      return status;
   }
 }
 
