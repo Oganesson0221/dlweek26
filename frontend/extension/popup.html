@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clippy Notes</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="icons/clippy-48.png" alt="Clippy" class="clippy-icon">
+        <div class="title-section">
+          <h1>Clippy Notes</h1>
+          <span class="subtitle">Your study companion</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="add">Add Note</button>
+      <button class="tab" data-tab="notes">My Notes</button>
+    </nav>
+
+    <!-- Add Note Tab -->
+    <section id="add-tab" class="tab-content active">
+      <div class="selection-info" id="selection-info">
+        <p class="empty-state">👆 Select text on any webpage, then click "Save Selection"</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="subject-select">Subject</label>
+        <select id="subject-select">
+          <option value="CS 101">CS 101 - Introduction to Programming</option>
+          <option value="Data Structures">Data Structures</option>
+          <option value="Machine Learning">Machine Learning</option>
+          <option value="Web Development">Web Development</option>
+          <option value="Database Systems">Database Systems</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="note-input">Note Content</label>
+        <textarea id="note-input" placeholder="Type your note or use selected text..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="tags-input">Tags (comma-separated)</label>
+        <input type="text" id="tags-input" placeholder="e.g., important, exam, concept">
+      </div>
+
+      <div class="button-group">
+        <button id="get-selection-btn" class="btn btn-secondary">
+          📋 Get Selection
+        </button>
+        <button id="save-note-btn" class="btn btn-primary">
+          💾 Save Note
+        </button>
+      </div>
+
+      <div id="save-status" class="status"></div>
+    </section>
+
+    <!-- Notes Tab -->
+    <section id="notes-tab" class="tab-content">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="🔍 Search notes...">
+      </div>
+      
+      <div class="filter-section">
+        <select id="filter-subject">
+          <option value="all">All Subjects</option>
+          <option value="CS 101">CS 101</option>
+          <option value="Data Structures">Data Structures</option>
+          <option value="Machine Learning">Machine Learning</option>
+          <option value="Web Development">Web Development</option>
+          <option value="Database Systems">Database Systems</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div id="notes-list" class="notes-list">
+        <p class="empty-state">📝 No notes yet. Start by adding your first note!</p>
+      </div>
+
+      <div class="export-section">
+        <button id="export-btn" class="btn btn-secondary">
+          📤 Export All Notes
+        </button>
+        <button id="clear-btn" class="btn btn-danger">
+          🗑️ Clear All
+        </button>
+      </div>
+    </section>
+
+    <!-- Clippy Helper -->
+    <div class="clippy-helper" id="clippy-helper">
+      <img src="icons/clippy-48.png" alt="Clippy">
+      <div class="speech-bubble" id="clippy-speech">
+        Hi! I'm here to help you save notes! 📚
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

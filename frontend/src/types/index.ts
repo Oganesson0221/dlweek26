@@ -163,3 +163,37 @@ export interface SemesterInfo {
   totalCredits: number;
   completedCredits: number;
 }
+
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+export interface VisionAnalysis {
+  id: string;
+  imageUrl: string;
+  analysis: string;
+  timestamp: Date;
+  topics: string[];
+}
+
+export interface BlameEntry {
+  id: string;
+  lineStart: number;
+  lineEnd: number;
+  content: string;
+  author: string;
+  date: string;
+  severity: "critical" | "high" | "medium" | "low";
+  message: string;
+}

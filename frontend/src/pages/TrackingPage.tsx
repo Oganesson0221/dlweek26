@@ -92,84 +92,113 @@ export const TrackingPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-5 max-w-[1080px] mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-neutral-900">
-            Performance Tracking
-          </h1>
-          <p className="text-[13px] text-neutral-500 mt-0.5">
-            Monitor your progress across all courses
-          </p>
-        </div>
-        <div className="flex items-center gap-1 border border-neutral-200 rounded-lg p-0.5">
-          {(["overview", "courses"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setSelectedView(v)}
-              className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
-                selectedView === v
-                  ? "bg-neutral-900 text-white"
-                  : "text-neutral-500 hover:text-neutral-700"
-              }`}
-            >
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            title: "Total Study Hours",
-            value: `${totalStudyHours.toFixed(1)}h`,
-            sub: "Last 2 weeks",
-            icon: Clock,
-          },
-          {
-            title: "Avg Quiz Score",
-            value: `${avgQuizScore}%`,
-            sub: `${quizResults.length} quizzes taken`,
-            icon: Target,
-          },
-          {
-            title: "Assignments",
-            value: `${completedAssignments}/${totalAssignments}`,
-            sub: "Completed",
-            icon: Award,
-          },
-          {
-            title: "Overall Progress",
-            value: `${Math.round(courses.reduce((s, c) => s + c.progress, 0) / courses.length)}%`,
-            sub: "Across all courses",
-            icon: TrendingUp,
-          },
-        ].map((m) => {
-          const Icon = m.icon;
-          return (
-            <div
-              key={m.title}
-              className="bg-white rounded-lg border border-neutral-200 p-4"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Icon className="w-4 h-4 text-neutral-400" />
-                <span className="text-[12px] text-neutral-500">{m.title}</span>
+    <div className="relative min-h-screen">
+      {/* Background Image with Gradient Overlay */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/tracking.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+        }}
+      />
+      {/* Microsoft-style gradient overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#0078d4]/10 via-white/90 to-[#00cc6a]/10" />
+      
+      {/* Content container */}
+      <div className="relative z-10 space-y-5 max-w-[1080px] mx-auto py-8 px-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className="backdrop-blur-sm bg-white/60 rounded-xl p-4 border border-white/50 shadow-lg">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#00cc6a] flex items-center justify-center shadow-md">
+                <BarChart3 className="w-5 h-5 text-white" />
               </div>
-              <p className="text-xl font-semibold text-neutral-900 tabular-nums">{m.value}</p>
-              <p className="text-[11px] text-neutral-400 mt-0.5">{m.sub}</p>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#0078d4] to-[#00cc6a] bg-clip-text text-transparent">
+                  Performance Tracking
+                </h1>
+                <p className="text-sm text-neutral-600">
+                  Monitor your progress across all courses
+                </p>
+              </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+          <div className="flex items-center gap-1 backdrop-blur-md bg-white/60 rounded-xl p-1.5 border border-white/50 shadow-lg">
+            {(["overview", "courses"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setSelectedView(v)}
+                className={`px-4 py-2 rounded-lg text-[12px] font-medium transition-all ${
+                  selectedView === v
+                    ? "bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white shadow-md"
+                    : "text-neutral-600 hover:bg-[#0078d4]/10 hover:text-[#0078d4]"
+                }`}
+              >
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary Cards with Microsoft Fluent Design */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              title: "Total Study Hours",
+              value: `${totalStudyHours.toFixed(1)}h`,
+              sub: "Last 2 weeks",
+              icon: Clock,
+              color: "from-[#0078d4] to-[#50e6ff]",
+            },
+            {
+              title: "Avg Quiz Score",
+              value: `${avgQuizScore}%`,
+              sub: `${quizResults.length} quizzes taken`,
+              icon: Target,
+              color: "from-[#ff8c00] to-[#ffb900]",
+            },
+            {
+              title: "Assignments",
+              value: `${completedAssignments}/${totalAssignments}`,
+              sub: "Completed",
+              icon: Award,
+              color: "from-[#5c2d91] to-[#b4a0ff]",
+            },
+            {
+              title: "Overall Progress",
+              value: `${Math.round(courses.reduce((s, c) => s + c.progress, 0) / courses.length)}%`,
+              sub: "Across all courses",
+              icon: TrendingUp,
+              color: "from-[#107c10] to-[#00cc6a]",
+            },
+          ].map((m) => {
+            const Icon = m.icon;
+            return (
+              <div
+                key={m.title}
+                className="group backdrop-blur-md bg-white/70 rounded-xl border border-white/50 p-5 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+              >
+                <div className={`w-10 h-10 mb-3 rounded-lg bg-gradient-to-br ${m.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-2xl font-bold text-neutral-800 tabular-nums">{m.value}</p>
+                <p className="text-[12px] text-neutral-500 mt-1 font-medium">{m.title}</p>
+                <p className="text-[11px] text-neutral-400 mt-0.5">{m.sub}</p>
+              </div>
+            );
+          })}
+        </div>
 
       {selectedView === "overview" ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Weekly Study Hours */}
-            <div className="bg-white rounded-lg border border-neutral-200 p-5">
-              <h2 className="text-[13px] font-semibold text-neutral-800 mb-4">
+            <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+              <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-white" />
+                </div>
                 Weekly Study Hours
               </h2>
               <div className="h-52">
@@ -206,8 +235,11 @@ export const TrackingPage: React.FC = () => {
             </div>
 
             {/* Course Performance Radar */}
-            <div className="bg-white rounded-lg border border-neutral-200 p-5">
-              <h2 className="text-[13px] font-semibold text-neutral-800 mb-4">
+            <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+              <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#5c2d91] to-[#b4a0ff] flex items-center justify-center">
+                  <Target className="w-3.5 h-3.5 text-white" />
+                </div>
                 Course Performance
               </h2>
               <div className="h-52">
@@ -242,46 +274,71 @@ export const TrackingPage: React.FC = () => {
           </div>
 
           {/* Study Hours by Course */}
-          <div className="bg-white rounded-lg border border-neutral-200 p-5">
-            <h2 className="text-[13px] font-semibold text-neutral-800 mb-4">
+          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+            <h2 className="text-[14px] font-semibold text-neutral-800 mb-4 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center">
+                <Award className="w-3.5 h-3.5 text-white" />
+              </div>
               Study Hours by Course (Last 2 Weeks)
             </h2>
             <div className="grid grid-cols-5 gap-3">
-              {studyByCourseLast7.map((s) => (
-                <div
-                  key={s.course}
-                  className="text-center p-3 rounded-lg border border-neutral-100"
-                >
-                  <p className="text-lg font-semibold text-neutral-800 tabular-nums">
-                    {s.hours}h
-                  </p>
-                  <p className="text-[11px] text-neutral-500 mt-1">
-                    {s.course}
-                  </p>
-                </div>
-              ))}
+              {studyByCourseLast7.map((s, idx) => {
+                const colors = [
+                  "from-[#0078d4] to-[#50e6ff]",
+                  "from-[#107c10] to-[#00cc6a]",
+                  "from-[#ff8c00] to-[#ffb900]",
+                  "from-[#5c2d91] to-[#b4a0ff]",
+                  "from-[#d83b01] to-[#ff6f61]",
+                ];
+                return (
+                  <div
+                    key={s.course}
+                    className="text-center p-4 rounded-xl backdrop-blur-sm bg-white/50 border border-white/50 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
+                  >
+                    <div className={`w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center`}>
+                      <Clock className="w-4 h-4 text-white" />
+                    </div>
+                    <p className="text-xl font-bold text-neutral-800 tabular-nums">
+                      {s.hours}h
+                    </p>
+                    <p className="text-[11px] text-neutral-500 mt-1 font-medium">
+                      {s.course}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </>
       ) : (
-        <div className="space-y-3">
-          {courses.map((course) => {
+        <div className="space-y-4">
+          {courses.map((course, idx) => {
             const avg = getCourseAverage(course);
+            const colors = [
+              "from-[#0078d4] to-[#50e6ff]",
+              "from-[#107c10] to-[#00cc6a]",
+              "from-[#ff8c00] to-[#ffb900]",
+              "from-[#5c2d91] to-[#b4a0ff]",
+              "from-[#d83b01] to-[#ff6f61]",
+            ];
             return (
               <div
                 key={course.id}
-                className="bg-white rounded-lg border border-neutral-200 p-5"
+                className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg hover:shadow-xl transition-all"
               >
                 <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-md`}>
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
                   <div>
-                    <h3 className="text-[13px] font-semibold text-neutral-800">
+                    <h3 className="text-[14px] font-semibold text-neutral-800">
                       {course.name}
                     </h3>
-                    <p className="text-[11px] text-neutral-400">
+                    <p className="text-[11px] text-neutral-500">
                       {course.code} · {course.instructor}
                     </p>
                   </div>
-                  <span className="text-[13px] font-semibold text-neutral-600 ml-auto">
+                  <span className={`text-[14px] font-bold ml-auto px-3 py-1 rounded-lg bg-gradient-to-r ${colors[idx % colors.length]} text-white shadow-md`}>
                     {course.grade}
                   </span>
                 </div>
@@ -341,6 +398,7 @@ export const TrackingPage: React.FC = () => {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };

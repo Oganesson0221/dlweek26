@@ -8,6 +8,7 @@ import {
   FileText,
   BarChart3,
   Network,
+  StickyNote,
 } from "lucide-react";
 
 interface NavHeaderProps {
@@ -22,6 +23,7 @@ const navItems = [
   { id: "submissions", label: "Submissions", icon: FileText },
   { id: "tracking", label: "Tracking", icon: BarChart3 },
   { id: "concepts", label: "Concepts", icon: Network },
+  { id: "notes", label: "Notes", icon: StickyNote },
 ];
 
 export const NavHeader: React.FC<NavHeaderProps> = ({
@@ -31,7 +33,9 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
   return (
     <header className="h-12 bg-white border-b border-neutral-200 px-5 flex items-center justify-between sticky top-0 z-30">
       {/* Logo */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
+        <img src="/logo.png" alt="Microsoft" className="h-4 object-contain" />
+        <div className="w-px h-4 bg-neutral-200" />
         <span className="text-sm font-semibold tracking-tight text-neutral-900">
           LearnLens
         </span>

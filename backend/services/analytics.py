@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Dict, Tuple, Optional
 from sqlmodel import Session, select
-from ..models import QuizAttempt
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models import QuizAttempt
 
 def mastery_by_topic(session: Session, course_id: int) -> Dict[str, float]:
     attempts = session.exec(select(QuizAttempt).where(QuizAttempt.course_id == course_id)).all()

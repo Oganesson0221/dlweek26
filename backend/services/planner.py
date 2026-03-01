@@ -1,7 +1,10 @@
 from datetime import datetime
 from sqlmodel import Session, select
-from ..models import Checkpoint
-from .analytics import mastery_by_topic
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models import Checkpoint
+from services.analytics import mastery_by_topic
 
 def compute_study_plan(session: Session, course_id: int, minutes_available: int) -> dict:
     mastery = mastery_by_topic(session, course_id)

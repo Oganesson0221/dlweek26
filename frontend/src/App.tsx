@@ -7,6 +7,7 @@ import { QuizPage } from "./pages/QuizPage";
 import { SubmissionsPage } from "./pages/SubmissionsPage";
 import { TrackingPage } from "./pages/TrackingPage";
 import { ConceptMapPage } from "./pages/ConceptMapPage";
+import NotesPage from "./pages/NotesPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("overview");
@@ -25,6 +26,8 @@ function App() {
         return <TrackingPage />;
       case "concepts":
         return <ConceptMapPage />;
+      case "notes":
+        return <NotesPage />;
       default:
         return <OverviewPage onNavigate={setCurrentPage} />;
     }

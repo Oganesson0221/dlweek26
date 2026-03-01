@@ -138,8 +138,8 @@
 #         }
 
 from sqlmodel import Session
-from .services.planner import compute_study_plan
-from .services.analytics import improvement_trend
+from services.planner import compute_study_plan
+from services.analytics import improvement_trend
 
 def handle_agent_message(session: Session, course_id: int | None, page: str, message: str) -> dict:
     text = message.lower().strip()

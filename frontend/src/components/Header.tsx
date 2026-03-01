@@ -1,9 +1,9 @@
 import React from "react";
-import { Search, Bell, Github, User, Sun, Moon } from "lucide-react";
+import { Search, Bell, Github, User, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 
 export const Header: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <header className="h-14 bg-surface-raised/80 backdrop-blur-sm border-b border-border-subtle px-6 flex items-center justify-between sticky top-0 z-20">
@@ -22,20 +22,10 @@ export const Header: React.FC = () => {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 text-slate-500 hover:text-slate-300 hover:bg-surface-hover rounded-md transition-colors"
-          title={
-            theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-          }
-        >
-          {theme === "dark" ? (
-            <Sun className="w-4 h-4" />
-          ) : (
-            <Moon className="w-4 h-4" />
-          )}
-        </button>
+        {/* Theme indicator (light mode only) */}
+        <div className="p-2 text-slate-400 rounded-md" title="Light mode">
+          <Sun className="w-4 h-4" />
+        </div>
 
         <a
           href="https://github.com/Oganesson0221/dlweek26"

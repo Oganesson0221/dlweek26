@@ -152,20 +152,26 @@
 # if __name__ == "__main__":
 #     main()
 
-from fastapi import FastAPI, Depends, UploadFile, File, Form
+from fastapi import FastAPI, Depends, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
+from pydantic import BaseModel
+from typing import Optional, List
 
-from .db import init_db, get_session
-from .models import Course, Checkpoint, StudyEvent, QuizAttempt, Submission, UploadDoc
-from .schemas import (
+from db import init_db, get_session
+from models import Course, Checkpoint, StudyEvent, QuizAttempt, Submission, UploadDoc
+from schemas import (
     CourseCreate, CheckpointCreate, StudyEventCreate, QuizAttemptCreate,
     SubmissionCreate, AgentMessage
 )
-from .services.analytics import mastery_by_topic, improvement_trend
-from .services.planner import compute_study_plan
-from .agent import handle_agent_message
-from .vision import save_image, analyze_image_mock
+from services.analytics import mastery_by_topic, improvement_trend
+from services.planner import compute_study_plan
+from agent import handle_agent_message
+from vision import save_image, analyze_image_mock
+from mongo_notes import (
+    create_note, get_all_notes, get_note_by_id, 
+    update_note, delete_note, delete_all_notes
+)
 
 from pathlib import Path
 from datetime import datetime
@@ -288,3 +294,84 @@ def agent_chat(body: AgentMessage, session: Session = Depends(get_session)):
 def vision_analyze(file: UploadFile = File(...)):
     path = save_image(file)
     return analyze_image_mock(path)
+
+# ============ CLIPPY NOTES API ============
+
+class NoteCreate(BaseModel):
+    content: str
+    subject: str = "Other"
+    tags: List[str] = []
+    source: Optional[dict] = None
+    timestamp: Optional[str] = None
+
+class NoteUpdate(BaseModel):
+    content: Optional[str] = None
+    subject: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+@app.post("/notes")
+def api_create_note(body: NoteCreate):
+    """Create a new note (from extension or web app)"""
+    try:
+        note = create_note(body.dict())
+        return {"success": True, "note": note}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/notes")
+def api_get_notes(subject: Optional[str] = None, search: Optional[str] = None):
+    """Get all notes, optionally filtered by subject or search term"""
+    try:
+        notes = get_all_notes(subject=subject, search=search)
+        return {"success": True, "notes": notes, "count": len(notes)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/notes/{note_id}")
+def api_get_note(note_id: str):
+    """Get a single note by ID"""
+    try:
+        note = get_note_by_id(note_id)
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return {"success": True, "note": note}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/notes/{note_id}")
+def api_update_note(note_id: str, body: NoteUpdate):
+    """Update a note"""
+    try:
+        updates = {k: v for k, v in body.dict().items() if v is not None}
+        note = update_note(note_id, updates)
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return {"success": True, "note": note}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/notes/{note_id}")
+def api_delete_note(note_id: str):
+    """Delete a note"""
+    try:
+        success = delete_note(note_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return {"success": True, "message": "Note deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/notes")
+def api_delete_all_notes():
+    """Delete all notes (use with caution)"""
+    try:
+        count = delete_all_notes()
+        return {"success": True, "deleted": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
