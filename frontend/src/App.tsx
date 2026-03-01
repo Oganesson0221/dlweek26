@@ -31,9 +31,9 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-[#fafafa]">
       <NavHeader activePage={currentPage} onNavigate={setCurrentPage} />
-      <main className="pt-[72px] px-6 pb-10 max-w-[1440px] mx-auto">
+      <main className="px-6 py-6 max-w-[1280px] mx-auto">
         {renderPage()}
       </main>
       <CopilotCompanion />

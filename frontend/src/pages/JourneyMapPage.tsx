@@ -1,19 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
-  MapPin,
-  Flag,
-  Clock,
-  ChevronRight,
-  CheckCircle2,
-  Circle,
+  Check,
   Lock,
-  AlertCircle,
-  Zap,
-  Target,
-  BookOpen,
+  Circle,
+  Clock,
+  Calendar,
 } from "lucide-react";
-import { courses, semesterInfo } from "@/data/learnLensData";
-import type { Course, Checkpoint } from "@/types";
+import { courses } from "@/data/learnLensData";
+import type { Course, CourseTopic, Checkpoint } from "@/types";
 import {
   formatDate,
   getDaysUntil,
@@ -21,437 +15,560 @@ import {
   getCompletedTopicsCount,
 } from "@/utils/helpers";
 
-interface JourneyMapPageProps {
-  onNavigate: (page: string) => void;
+type RouteNode =
+  | { kind: "topic"; data: CourseTopic; index: number }
+  | { kind: "checkpoint"; data: Checkpoint; index: number };
+
+function buildRoute(course: Course): RouteNode[] {
+  const nodes: RouteNode[] = [];
+  let idx = 0;
+  course.topics.forEach((t) =>
+    nodes.push({ kind: "topic", data: t, index: idx++ }),
+  );
+  course.checkpoints.forEach((cp) =>
+    nodes.push({ kind: "checkpoint", data: cp, index: idx++ }),
+  );
+  nodes.sort((a, b) => {
+    const wA = a.data.weekNumber;
+    const wB = b.data.weekNumber;
+    if (wA !== wB) return wA - wB;
+    return a.kind === "checkpoint" ? 1 : -1;
+  });
+  nodes.forEach((n, i) => (n.index = i));
+  return nodes;
 }
 
-const checkpointIcons: Record<string, React.ReactNode> = {
-  completed: <CheckCircle2 className="w-5 h-5" />,
-  "in-progress": <AlertCircle className="w-5 h-5" />,
-  upcoming: <Circle className="w-5 h-5" />,
-  locked: <Lock className="w-5 h-5" />,
-};
+function getNodeState(
+  node: RouteNode,
+  i: number,
+  route: RouteNode[],
+): "completed" | "current" | "upcoming" | "locked" {
+  if (node.kind === "topic") {
+    const t = node.data;
+    if (t.completed) return "completed";
+    if (t.mastery > 0) return "current";
+    if (
+      i === 0 ||
+      (route[i - 1].kind === "topic" &&
+        (route[i - 1].data as CourseTopic).completed) ||
+      (route[i - 1].kind === "checkpoint" &&
+        (route[i - 1].data as Checkpoint).status === "completed")
+    )
+      return "upcoming";
+    return "locked";
+  }
+  const cp = node.data;
+  if (cp.status === "completed") return "completed";
+  if (cp.status === "upcoming" || cp.status === "in-progress") return "current";
+  return "locked";
+}
 
-function RouteVisualization({
-  course,
-  isExpanded,
-  onToggle,
-}: {
-  course: Course;
-  isExpanded: boolean;
-  onToggle: () => void;
-}) {
+function getNodePositions(count: number) {
+  const positions: { x: number; y: number }[] = [];
+  const xPattern = [25, 50, 75, 50];
+  const startY = 48;
+  const gap = 88;
+  for (let i = 0; i < count; i++) {
+    positions.push({
+      x: xPattern[i % xPattern.length],
+      y: startY + i * gap,
+    });
+  }
+  return positions;
+}
+
+export const JourneyMapPage: React.FC = () => {
+  const [selectedCourseId, setSelectedCourseId] = useState(
+    courses[0]?.id ?? "",
+  );
+  const [expandedNode, setExpandedNode] = useState<number | null>(null);
+
+  const course = courses.find((c) => c.id === selectedCourseId)!;
+  const route = useMemo(() => buildRoute(course), [course]);
+  const positions = useMemo(
+    () => getNodePositions(route.length),
+    [route.length],
+  );
   const completedTopics = getCompletedTopicsCount(course);
   const totalTopics = course.topics.length;
-  const estTimeRemaining = getEstimatedTimeRemaining(course);
-  const nextCheckpoint = course.checkpoints.find(
-    (cp) => cp.status === "upcoming" || cp.status === "in-progress"
-  );
+  const estRemaining = getEstimatedTimeRemaining(course);
+  const svgH =
+    positions.length > 0 ? positions[positions.length - 1].y + 60 : 300;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-      {/* Course Header */}
-      <button
-        onClick={onToggle}
-        className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50/50 transition-colors"
-      >
-        {/* Course icon */}
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-          style={{ backgroundColor: course.color }}
-        >
-          <Flag className="w-5 h-5 text-white" />
-        </div>
+    <div className="max-w-[1080px] mx-auto space-y-5">
+      {/* Page header */}
+      <div>
+        <h1 className="text-lg font-semibold text-neutral-900">
+          Learning Path
+        </h1>
+        <p className="text-[13px] text-neutral-500 mt-0.5">
+          {completedTopics} of {totalTopics} topics completed &middot;{" "}
+          {estRemaining}h remaining
+        </p>
+      </div>
 
-        <div className="flex-1 text-left">
-          <div className="flex items-center gap-2">
-            <h3 className="text-[14px] font-semibold text-slate-800">
-              {course.name}
-            </h3>
-            <span className="text-[11px] font-medium text-slate-400">
-              {course.code}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-[11px] text-slate-500">
-              {course.progress}% complete
-            </span>
-            <span className="text-[11px] text-slate-400">|</span>
-            <span className="text-[11px] text-slate-500 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {estTimeRemaining}h remaining
-            </span>
-            {nextCheckpoint && (
-              <>
-                <span className="text-[11px] text-slate-400">|</span>
-                <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                  <Target className="w-3 h-3" />
-                  Next: {nextCheckpoint.name}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Grade */}
-        <span
-          className="text-[15px] font-bold px-3 py-1 rounded-lg"
-          style={{
-            color: course.color,
-            backgroundColor: `${course.color}10`,
-          }}
-        >
-          {course.grade}
-        </span>
-
-        {/* Progress ring */}
-        <div className="relative w-12 h-12 shrink-0">
-          <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              fill="none"
-              stroke="#e2e8f0"
-              strokeWidth="3"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              fill="none"
-              stroke={course.color}
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray={`${(course.progress / 100) * 125.6} 125.6`}
-            />
-          </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-slate-700">
-            {course.progress}%
-          </span>
-        </div>
-
-        <ChevronRight
-          className={`w-5 h-5 text-slate-300 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
-        />
-      </button>
-
-      {/* Expanded route */}
-      {isExpanded && (
-        <div className="px-5 pb-5 border-t border-slate-100">
-          {/* Route progress bar */}
-          <div className="mt-4 mb-6 relative">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-slate-500">
-                Start
+      {/* Course tabs */}
+      <div className="flex gap-1 border-b border-neutral-200">
+        {courses.map((c) => {
+          const active = selectedCourseId === c.id;
+          return (
+            <button
+              key={c.id}
+              onClick={() => {
+                setSelectedCourseId(c.id);
+                setExpandedNode(null);
+              }}
+              className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+                active
+                  ? "border-neutral-900 text-neutral-900"
+                  : "border-transparent text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              {c.code}
+              <span className="ml-1.5 text-[11px] text-neutral-400">
+                {c.progress}%
               </span>
-              <span className="text-[11px] font-medium text-slate-500">
-                Course Complete
-              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* LEFT: The Path */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-[15px] font-semibold text-neutral-800">
+                {course.name}
+              </h2>
+              <p className="text-xs text-neutral-400">
+                {course.instructor} · {course.schedule}
+              </p>
             </div>
-            <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+            <span className="text-sm font-semibold text-neutral-700">
+              {course.grade}
+            </span>
+          </div>
+
+          <div className="mb-5">
+            <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full transition-all duration-700 relative"
-                style={{
-                  width: `${course.progress}%`,
-                  background: `linear-gradient(90deg, ${course.color}, ${course.color}cc)`,
-                }}
-              >
-                <div
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-[3px] shadow-sm"
-                  style={{ borderColor: course.color }}
-                />
-              </div>
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${course.progress}%` }}
+              />
             </div>
-            {/* Checkpoint markers on the bar */}
-            {course.checkpoints.map((cp) => {
-              const position = (cp.weekNumber / course.totalWeeks) * 100;
+          </div>
+
+          <div
+            className="relative bg-white border border-neutral-200 rounded-lg p-4"
+            style={{ minHeight: svgH + 20 }}
+          >
+            {/* SVG connector lines */}
+            <svg
+              className="absolute inset-0 w-full pointer-events-none"
+              style={{ height: svgH + 20 }}
+              viewBox={`0 0 100 ${svgH + 20}`}
+              preserveAspectRatio="xMidYMid meet"
+            >
+              {positions.map((pos, i) => {
+                if (i === 0) return null;
+                const prev = positions[i - 1];
+                const prevState = getNodeState(route[i - 1], i - 1, route);
+                const done = prevState === "completed";
+                const midY = (prev.y + pos.y) / 2;
+                return (
+                  <path
+                    key={i}
+                    d={`M ${prev.x} ${prev.y} C ${prev.x} ${midY}, ${pos.x} ${midY}, ${pos.x} ${pos.y}`}
+                    fill="none"
+                    stroke={done ? "#0078d4" : "#e5e5e5"}
+                    strokeWidth={done ? "1.2" : "0.8"}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+            </svg>
+
+            {/* Nodes */}
+            {route.map((node, i) => {
+              const pos = positions[i];
+              const state = getNodeState(node, i, route);
+              const isCheckpoint = node.kind === "checkpoint";
+              const isExpanded = expandedNode === i;
+              const label =
+                node.kind === "topic" ? node.data.name : node.data.name;
+              const size = isCheckpoint ? 36 : 28;
+              const bg =
+                state === "completed"
+                  ? "#0078d4"
+                  : state === "current"
+                    ? "#ffffff"
+                    : state === "upcoming"
+                      ? "#ffffff"
+                      : "#f5f5f5";
+              const border =
+                state === "completed"
+                  ? "#0078d4"
+                  : state === "current"
+                    ? "#0078d4"
+                    : state === "upcoming"
+                      ? "#d4d4d4"
+                      : "#e5e5e5";
+              const iconColor =
+                state === "completed"
+                  ? "#fff"
+                  : state === "current"
+                    ? "#0078d4"
+                    : "#a3a3a3";
+
               return (
                 <div
-                  key={cp.id}
-                  className="absolute top-[26px]"
-                  style={{ left: `${position}%`, transform: "translateX(-50%)" }}
+                  key={i}
+                  className="absolute"
+                  style={{
+                    left: `${pos.x}%`,
+                    top: pos.y,
+                    transform: "translate(-50%, -50%)",
+                    zIndex: isExpanded ? 20 : 10,
+                  }}
                 >
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-sm ${
-                      cp.status === "completed"
-                        ? "bg-[#107c10]"
-                        : cp.status === "upcoming"
-                          ? "bg-[#ffb900]"
-                          : "bg-slate-300"
-                    }`}
-                  />
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() =>
+                        setExpandedNode(isExpanded ? null : i)
+                      }
+                      disabled={state === "locked"}
+                      className={`relative flex items-center justify-center rounded-full border-2 ${
+                        state === "locked"
+                          ? "cursor-default"
+                          : "cursor-pointer hover:shadow-md"
+                      } ${isExpanded ? "ring-2 ring-accent/20 ring-offset-1" : ""}`}
+                      style={{
+                        width: size,
+                        height: size,
+                        backgroundColor: bg,
+                        borderColor: border,
+                      }}
+                    >
+                      {state === "completed" && (
+                        <Check
+                          className="w-3.5 h-3.5"
+                          style={{ color: iconColor }}
+                          strokeWidth={3}
+                        />
+                      )}
+                      {state === "current" && (
+                        <Circle
+                          className="w-3 h-3"
+                          style={{ color: iconColor, fill: iconColor }}
+                        />
+                      )}
+                      {state === "upcoming" && (
+                        <Circle
+                          className="w-2.5 h-2.5"
+                          style={{ color: "#d4d4d4" }}
+                        />
+                      )}
+                      {state === "locked" && (
+                        <Lock
+                          className="w-3 h-3"
+                          style={{ color: iconColor }}
+                        />
+                      )}
+                      {isCheckpoint && (
+                        <span className="absolute -top-1 -right-2 text-[8px] font-semibold bg-neutral-800 text-white px-1 py-0 rounded">
+                          {node.data.weight}%
+                        </span>
+                      )}
+                    </button>
+
+                    <span
+                      className={`mt-1.5 text-[10px] text-center max-w-[90px] leading-tight ${
+                        state === "completed" || state === "current"
+                          ? "text-neutral-600 font-medium"
+                          : "text-neutral-400"
+                      }`}
+                    >
+                      {label.length > 22 ? label.slice(0, 20) + "\u2026" : label}
+                    </span>
+                    {node.kind === "topic" && (
+                      <span className="text-[9px] text-neutral-400">
+                        W{node.data.weekNumber}
+                      </span>
+                    )}
+                    {node.kind === "checkpoint" && (
+                      <span className="text-[9px] text-neutral-400">
+                        {node.data.type}
+                      </span>
+                    )}
+                  </div>
+
+                  {isExpanded && (
+                    <div className="absolute z-30 top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-white border border-neutral-200 rounded-lg shadow-lg p-3.5">
+                      {node.kind === "topic" ? (
+                        <TopicDetail
+                          t={node.data}
+                          onClose={() => setExpandedNode(null)}
+                        />
+                      ) : (
+                        <CheckpointDetail
+                          cp={node.data}
+                          onClose={() => setExpandedNode(null)}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+        </div>
 
-          {/* Route / checkpoints */}
-          <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200" />
-
-            {/* Start node */}
-            <div className="relative flex items-center gap-4 mb-4">
-              <div className="relative z-10 w-12 h-12 rounded-full bg-[#107c10] flex items-center justify-center shadow-md">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-slate-700">
-                  Semester Start
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  {formatDate(semesterInfo.startDate)} -- Week 1
-                </p>
-              </div>
-            </div>
-
-            {/* Topics & Checkpoints interleaved by week */}
-            {(() => {
-              const items: Array<
-                | { type: "topic"; data: (typeof course.topics)[0] }
-                | { type: "checkpoint"; data: Checkpoint }
-              > = [];
-
-              course.topics.forEach((t) =>
-                items.push({ type: "topic", data: t })
-              );
-              course.checkpoints.forEach((cp) =>
-                items.push({ type: "checkpoint", data: cp as any })
-              );
-              items.sort((a, b) => {
-                const weekA =
-                  a.type === "topic" ? a.data.weekNumber : (a.data as any).weekNumber;
-                const weekB =
-                  b.type === "topic" ? b.data.weekNumber : (b.data as any).weekNumber;
-                if (weekA !== weekB) return weekA - weekB;
-                return a.type === "checkpoint" ? 1 : -1;
-              });
-
-              return items.map((item) => {
-                if (item.type === "topic") {
-                  const topic = item.data;
-                  return (
-                    <div key={topic.id} className="relative flex items-start gap-4 mb-2">
-                      {/* Node */}
-                      <div
-                        className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center border-2 shrink-0 ${
-                          topic.completed
-                            ? "bg-[#107c10]/10 border-[#107c10]"
-                            : topic.mastery > 0
-                              ? "bg-[#ffb900]/10 border-[#ffb900]"
-                              : "bg-slate-50 border-slate-200"
-                        }`}
-                      >
-                        {topic.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-[#107c10]" />
-                        ) : topic.mastery > 0 ? (
-                          <Zap className="w-5 h-5 text-[#ffb900]" />
-                        ) : (
-                          <BookOpen className="w-5 h-5 text-slate-300" />
-                        )}
-                      </div>
-                      <div className="flex-1 py-1">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={`text-[12px] font-medium ${
-                              topic.completed ? "text-slate-600" : topic.mastery > 0 ? "text-slate-700" : "text-slate-400"
-                            }`}
-                          >
-                            {topic.name}
-                          </p>
-                          <span className="text-[10px] text-slate-400">
-                            W{topic.weekNumber}
-                          </span>
-                        </div>
-                        {topic.mastery > 0 && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${topic.mastery}%`,
-                                  backgroundColor:
-                                    topic.mastery >= 80
-                                      ? "#107c10"
-                                      : topic.mastery >= 50
-                                        ? "#ffb900"
-                                        : "#d83b01",
-                                }}
-                              />
-                            </div>
-                            <span className="text-[10px] text-slate-400">
-                              {topic.mastery}%
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Checkpoint
-                const cp = item.data as Checkpoint;
-                const daysLeft = getDaysUntil(cp.date);
-                return (
-                  <div
-                    key={cp.id}
-                    className="relative flex items-start gap-4 my-3"
-                  >
-                    <div
-                      className={`relative z-10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
-                        cp.status === "completed"
-                          ? "bg-[#107c10]"
-                          : cp.status === "upcoming"
-                            ? "bg-[#ffb900]"
-                            : "bg-slate-200"
-                      }`}
-                    >
-                      <span className="text-white">
-                        {checkpointIcons[cp.status]}
-                      </span>
-                    </div>
-                    <div className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-[12px] font-semibold text-slate-700">
-                              {cp.name}
-                            </p>
-                            <span
-                              className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
-                                cp.type === "final"
-                                  ? "bg-[#d83b01]/8 text-[#d83b01]"
-                                  : cp.type === "midterm"
-                                    ? "bg-[#ffb900]/8 text-[#ffb900]"
-                                    : "bg-[#0078d4]/8 text-[#0078d4]"
-                              }`}
-                            >
-                              {cp.type.charAt(0).toUpperCase() + cp.type.slice(1)}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-400 mt-0.5">
-                            {cp.description}
-                          </p>
-                        </div>
-                        {cp.score !== undefined && (
-                          <span className="text-[14px] font-bold text-[#107c10]">
-                            {cp.score}/{cp.maxScore}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-400">
-                        <span>{formatDate(cp.date)} (W{cp.weekNumber})</span>
-                        <span>Weight: {cp.weight}%</span>
-                        {cp.status === "upcoming" && (
-                          <span className="font-medium text-[#ffb900]">
-                            {daysLeft} days away -- {cp.estimatedPrepTime}h prep
-                          </span>
-                        )}
-                      </div>
-                    </div>
+        {/* RIGHT: Sidebar */}
+        <div className="space-y-4">
+          <div className="bg-white border border-neutral-200 rounded-lg p-4">
+            <h3 className="text-[13px] font-semibold text-neutral-800 mb-3">
+              Grade Breakdown
+            </h3>
+            <div className="space-y-2.5">
+              {course.courseOutline.map((comp, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-neutral-700">
+                      {comp.name}
+                      {comp.count && (
+                        <span className="text-neutral-400 ml-1">
+                          ({comp.count})
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-[10px] text-neutral-400 truncate">
+                      {comp.description}
+                    </p>
                   </div>
-                );
-              });
-            })()}
+                  <span className="text-xs font-semibold text-neutral-600 ml-3 tabular-nums">
+                    {comp.weight}%
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-neutral-100 text-xs">
+              <span className="text-neutral-400">Total</span>
+              <span className="font-semibold text-neutral-700">
+                {course.courseOutline.reduce((s, c) => s + c.weight, 0)}%
+              </span>
+            </div>
+          </div>
 
-            {/* Destination */}
-            <div className="relative flex items-center gap-4 mt-4">
-              <div
-                className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center shadow-md"
-                style={{ backgroundColor: course.color }}
-              >
-                <Flag className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-slate-700">
-                  Course Complete
+          <div className="bg-white border border-neutral-200 rounded-lg p-4">
+            <h3 className="text-[13px] font-semibold text-neutral-800 mb-3">
+              Progress
+            </h3>
+            <div className="space-y-2">
+              <SidebarRow label="Topics" value={`${completedTopics} / ${totalTopics}`} />
+              <SidebarRow label="Time left" value={`${estRemaining}h`} />
+              <SidebarRow
+                label="Checkpoints"
+                value={`${course.checkpoints.filter((cp) => cp.status === "completed").length} / ${course.checkpoints.length}`}
+              />
+              {course.checkpoints
+                .filter((cp) => cp.status === "completed" && cp.score !== undefined)
+                .map((cp) => (
+                  <SidebarRow
+                    key={cp.id}
+                    label={cp.name}
+                    value={`${cp.score}/${cp.maxScore}`}
+                    accent
+                  />
+                ))}
+            </div>
+          </div>
+
+          {(() => {
+            const next = course.checkpoints.find(
+              (cp) => cp.status === "upcoming",
+            );
+            if (!next) return null;
+            const daysLeft = getDaysUntil(next.date);
+            return (
+              <div className="bg-white border border-neutral-200 rounded-lg p-4">
+                <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-2">
+                  Next milestone
                 </p>
-                <p className="text-[11px] text-slate-400">
-                  {formatDate(semesterInfo.endDate)} -- Final destination
+                <p className="text-[13px] font-semibold text-neutral-800">
+                  {next.name}
                 </p>
+                <p className="text-[11px] text-neutral-500 mt-0.5">
+                  {next.description}
+                </p>
+                <div className="flex items-center gap-3 mt-2.5 text-[11px] text-neutral-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(next.date)}
+                  </span>
+                  <span
+                    className={`font-medium ${daysLeft <= 7 ? "text-red-600" : "text-neutral-600"}`}
+                  >
+                    {daysLeft}d
+                  </span>
+                  <span>{next.estimatedPrepTime}h prep</span>
+                </div>
               </div>
+            );
+          })()}
+
+          <div className="px-1 text-[10px] text-neutral-400 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-accent inline-block" />
+              Completed
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full border-2 border-accent inline-block" />
+              In progress
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full border-2 border-neutral-300 inline-block" />
+              Available
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-neutral-100 border-2 border-neutral-200 inline-block" />
+              Locked
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-export const JourneyMapPage: React.FC<JourneyMapPageProps> = ({ onNavigate }) => {
-  const [expandedCourse, setExpandedCourse] = useState<string>(courses[0]?.id ?? "");
-
-  const totalUpcoming = courses.reduce(
-    (sum, c) => sum + c.checkpoints.filter((cp) => cp.status === "upcoming").length,
-    0
-  );
-
-  const totalEstTime = courses.reduce(
-    (sum, c) => sum + getEstimatedTimeRemaining(c),
-    0
-  );
-
-  return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800">Journey Map</h1>
-          <p className="text-[13px] text-slate-500 mt-0.5">
-            Your learning routes -- {courses.length} courses, {totalUpcoming}{" "}
-            upcoming checkpoints
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-slate-200 text-[11px] text-slate-500">
-            <Clock className="w-3.5 h-3.5" />
-            {totalEstTime}h total remaining
-          </div>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-5 text-[11px] text-slate-500 bg-white rounded-xl border border-slate-200 px-4 py-2.5">
-        <span className="flex items-center gap-1.5">
-          <div className="w-8 h-1.5 bg-gradient-to-r from-[#107c10] to-[#107c10] rounded-full" />
-          Completed
-        </span>
-        <span className="flex items-center gap-1.5">
-          <div className="w-8 h-1.5 bg-[#ffb900] rounded-full" style={{ backgroundImage: "repeating-linear-gradient(90deg, #ffb900 0, #ffb900 4px, transparent 4px, transparent 8px)" }} />
-          In Progress
-        </span>
-        <span className="flex items-center gap-1.5">
-          <div className="w-8 h-1.5 bg-slate-200 rounded-full" />
-          Upcoming
-        </span>
-        <span className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-[#107c10]" />
-          Passed
-        </span>
-        <span className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-[#ffb900]" />
-          Next
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Lock className="w-3 h-3 text-slate-400" />
-          Locked
-        </span>
-      </div>
-
-      {/* Course Routes */}
-      <div className="space-y-4">
-        {courses.map((course) => (
-          <RouteVisualization
-            key={course.id}
-            course={course}
-            isExpanded={expandedCourse === course.id}
-            onToggle={() =>
-              setExpandedCourse(expandedCourse === course.id ? "" : course.id)
-            }
-          />
-        ))}
       </div>
     </div>
   );
 };
+
+function SidebarRow({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <span className="text-neutral-500">{label}</span>
+      <span
+        className={`font-medium tabular-nums ${accent ? "text-accent" : "text-neutral-700"}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function TopicDetail({
+  t,
+  onClose,
+}: {
+  t: CourseTopic;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-[13px] font-semibold text-neutral-800">
+          {t.name}
+        </h4>
+        <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 text-sm">
+          ×
+        </button>
+      </div>
+      <p className="text-[11px] text-neutral-500 mb-2.5">{t.description}</p>
+      <div className="space-y-1.5 text-xs">
+        <div className="flex justify-between">
+          <span className="text-neutral-400">Week</span>
+          <span className="text-neutral-700">{t.weekNumber}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-neutral-400">Status</span>
+          <span
+            className={
+              t.completed
+                ? "text-green-600"
+                : t.mastery > 0
+                  ? "text-accent"
+                  : "text-neutral-400"
+            }
+          >
+            {t.completed ? "Completed" : t.mastery > 0 ? "In Progress" : "Locked"}
+          </span>
+        </div>
+        {t.mastery > 0 && (
+          <>
+            <div className="flex justify-between">
+              <span className="text-neutral-400">Mastery</span>
+              <span className="text-neutral-700">{t.mastery}%</span>
+            </div>
+            <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${t.mastery}%` }}
+              />
+            </div>
+          </>
+        )}
+        <div className="flex justify-between">
+          <span className="text-neutral-400">Est. hours</span>
+          <span className="text-neutral-700">{t.estimatedHours}h</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function CheckpointDetail({
+  cp,
+  onClose,
+}: {
+  cp: Checkpoint;
+  onClose: () => void;
+}) {
+  const daysLeft = getDaysUntil(cp.date);
+  return (
+    <>
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-[13px] font-semibold text-neutral-800">
+          {cp.name}
+        </h4>
+        <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 text-sm">
+          ×
+        </button>
+      </div>
+      <p className="text-[11px] text-neutral-500 mb-2.5">{cp.description}</p>
+      <div className="space-y-1.5 text-xs">
+        <div className="flex justify-between">
+          <span className="text-neutral-400">Type</span>
+          <span className="text-neutral-700 capitalize">{cp.type}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-neutral-400">Date</span>
+          <span className="text-neutral-700">{formatDate(cp.date)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-neutral-400">Weight</span>
+          <span className="font-semibold text-neutral-700">{cp.weight}%</span>
+        </div>
+        {cp.score !== undefined && (
+          <div className="flex justify-between">
+            <span className="text-neutral-400">Score</span>
+            <span className="font-semibold text-green-600">
+              {cp.score}/{cp.maxScore}
+            </span>
+          </div>
+        )}
+        {cp.status === "upcoming" && (
+          <div className="mt-1.5 p-2 bg-neutral-50 rounded text-[11px] text-neutral-500">
+            {daysLeft > 0 ? `${daysLeft} days away` : "Today"} · {cp.estimatedPrepTime}h recommended prep
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import {
-  Sparkles,
+  MessageSquare,
   X,
-  ChevronUp,
   Send,
   AlertTriangle,
   BookOpen,
   Lightbulb,
-  Clock,
   Bell,
   Target,
 } from "lucide-react";
@@ -19,30 +17,16 @@ interface CopilotCompanionProps {
 }
 
 const iconMap: Record<string, React.ReactNode> = {
-  warning: <AlertTriangle className="w-4 h-4" />,
-  study: <BookOpen className="w-4 h-4" />,
-  insight: <Lightbulb className="w-4 h-4" />,
-  reminder: <Bell className="w-4 h-4" />,
-  tip: <Target className="w-4 h-4" />,
+  warning: <AlertTriangle className="w-3.5 h-3.5" />,
+  study: <BookOpen className="w-3.5 h-3.5" />,
+  insight: <Lightbulb className="w-3.5 h-3.5" />,
+  reminder: <Bell className="w-3.5 h-3.5" />,
+  tip: <Target className="w-3.5 h-3.5" />,
 };
 
-const colorMap: Record<string, string> = {
-  warning: "text-[#d83b01]",
-  study: "text-[#0078d4]",
-  insight: "text-[#107c10]",
-  reminder: "text-[#ffb900]",
-  tip: "text-[#8661c5]",
-};
-
-const bgMap: Record<string, string> = {
-  warning: "bg-[#d83b01]/8",
-  study: "bg-[#0078d4]/8",
-  insight: "bg-[#107c10]/8",
-  reminder: "bg-[#ffb900]/8",
-  tip: "bg-[#8661c5]/8",
-};
-
-export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }) => {
+export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({
+  onNavigate,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [chatInput, setChatInput] = useState("");
@@ -59,73 +43,79 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
     setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
     setChatInput("");
 
-    // Simulate AI response
     setTimeout(() => {
       let response = "";
       const lower = userMsg.toLowerCase();
       if (lower.includes("2 hours") || lower.includes("two hours")) {
         response =
-          "With 2 hours available, I recommend:\n\n1. Graph Traversals (CS 301) - 45 min: Focus on BFS implementation since your midterm is in 5 days.\n\n2. Eigenvalues (MATH 240) - 45 min: Practice characteristic equations. Review determinant properties first.\n\n3. Quick review of DC Circuits (PHYS 201) - 30 min: Kirchhoff's laws are high-priority for the midterm.\n\nThis covers your three weakest areas before midterm week.";
+          "With 2 hours, I'd suggest:\n\n1. Graph Traversals (CS 301) — 45 min, focus on BFS. Midterm in 5 days.\n2. Eigenvalues (MATH 240) — 45 min, practice characteristic equations.\n3. DC Circuits (PHYS 201) — 30 min, Kirchhoff's laws review.\n\nCovers your three weakest areas before midterms.";
       } else if (lower.includes("midterm") || lower.includes("exam")) {
         response =
-          "You have 3 midterms in Week 8 (March 5-6):\n\n- CS 301 Midterm (Mar 6): Focus on Graphs, Trees, and Hash Tables. Estimated prep: 12 hours.\n- MATH 240 Midterm (Mar 5): Eigenvalues need the most work (30% mastery). Estimated prep: 15 hours.\n- PHYS 201 Midterm (Mar 6): DC Circuits is weakest (35% mastery). Estimated prep: 14 hours.\n\nTotal: ~41 hours. I recommend spreading this over the next 5 days at 8 hours/day.";
+          "3 midterms in Week 8 (Mar 5–6):\n\n• CS 301 (Mar 6): Graphs, Trees, Hash Tables — ~12h prep\n• MATH 240 (Mar 5): Eigenvalues at 30% mastery — ~15h prep\n• PHYS 201 (Mar 6): DC Circuits at 35% — ~14h prep\n\nTotal ~41h. Spread over 5 days at 8h/day.";
       } else if (lower.includes("weak") || lower.includes("improve")) {
         response =
-          "Your weakest areas ranked by urgency:\n\n1. Sampling Distributions (STAT 200) - 28% mastery\n2. Eigenvalues (MATH 240) - 30% mastery\n3. DC Circuits (PHYS 201) - 35% mastery\n4. Graph Traversals (CS 301) - 45% mastery\n\nPrioritize CS 301 and MATH 240 since their midterms are next week.";
+          "Weakest areas by urgency:\n\n1. Sampling Distributions (STAT 200) — 28%\n2. Eigenvalues (MATH 240) — 30%\n3. DC Circuits (PHYS 201) — 35%\n4. Graph Traversals (CS 301) — 45%\n\nPrioritize CS 301 and MATH 240 — midterms next week.";
       } else {
         response =
-          "I can help you with study planning, quiz practice, and identifying areas that need attention. Try asking:\n\n- 'I have 2 hours, what should I study?'\n- 'What should I focus on for midterms?'\n- 'What are my weakest topics?'\n- 'Generate a quiz for [topic]'";
+          "I can help with study planning and identifying focus areas. Try:\n\n• \"I have 2 hours, what should I study?\"\n• \"Help me prepare for midterms\"\n• \"What are my weakest topics?\"";
       }
-      setChatMessages((prev) => [...prev, { role: "assistant", content: response }]);
-    }, 800);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: response },
+      ]);
+    }, 600);
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-5 right-5 z-50">
       {isOpen && (
-        <div className="mb-3 w-[360px] bg-white rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200 overflow-hidden">
+        <div className="mb-2 w-[340px] bg-white rounded-lg shadow-lg border border-neutral-200 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[#0078d4]/5 to-transparent flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#0078d4] flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
-            <div className="flex-1">
-              <span className="text-[13px] font-semibold text-slate-800">
-                Copilot Companion
+          <div className="px-4 py-2.5 border-b border-neutral-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] font-semibold text-neutral-800">
+                Copilot
               </span>
-              <p className="text-[10px] text-slate-400">Your learning assistant</p>
+              <div className="flex gap-0.5">
+                <button
+                  onClick={() => setShowChat(false)}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                    !showChat
+                      ? "bg-neutral-100 text-neutral-700"
+                      : "text-neutral-400 hover:text-neutral-600"
+                  }`}
+                >
+                  Suggestions
+                </button>
+                <button
+                  onClick={() => setShowChat(true)}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                    showChat
+                      ? "bg-neutral-100 text-neutral-700"
+                      : "text-neutral-400 hover:text-neutral-600"
+                  }`}
+                >
+                  Chat
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setShowChat(!showChat)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                  showChat
-                    ? "bg-[#0078d4] text-white"
-                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                }`}
-              >
-                Chat
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-1 text-neutral-400 hover:text-neutral-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {showChat ? (
-            /* Chat Mode */
-            <div className="flex flex-col h-80">
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <div className="flex flex-col h-72">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
                 {chatMessages.length === 0 && (
-                  <div className="text-center py-6">
-                    <Sparkles className="w-8 h-8 text-[#0078d4]/30 mx-auto mb-2" />
-                    <p className="text-[12px] text-slate-400">
-                      Ask me anything about your studies
+                  <div className="py-6 px-2">
+                    <p className="text-xs text-neutral-400 mb-3">
+                      Ask about your courses, study planning, or weak areas.
                     </p>
-                    <div className="mt-3 space-y-1.5">
+                    <div className="space-y-1.5">
                       {[
                         "I have 2 hours, what should I study?",
                         "Help me prepare for midterms",
@@ -133,10 +123,8 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
                       ].map((q) => (
                         <button
                           key={q}
-                          onClick={() => {
-                            setChatInput(q);
-                          }}
-                          className="block w-full text-left px-3 py-2 bg-slate-50 hover:bg-[#0078d4]/5 rounded-lg text-[11px] text-slate-500 hover:text-[#0078d4] transition-colors border border-slate-100"
+                          onClick={() => setChatInput(q)}
+                          className="block w-full text-left px-3 py-2 bg-neutral-50 hover:bg-neutral-100 rounded-md text-[11px] text-neutral-600 border border-neutral-100"
                         >
                           {q}
                         </button>
@@ -150,10 +138,10 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[85%] px-3 py-2 rounded-xl text-[12px] leading-relaxed ${
+                      className={`max-w-[85%] px-3 py-2 rounded-md text-[12px] leading-relaxed ${
                         msg.role === "user"
-                          ? "bg-[#0078d4] text-white"
-                          : "bg-slate-100 text-slate-700"
+                          ? "bg-accent text-white"
+                          : "bg-neutral-50 text-neutral-700 border border-neutral-100"
                       }`}
                     >
                       {msg.content.split("\n").map((line, j) => (
@@ -166,19 +154,19 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
                   </div>
                 ))}
               </div>
-              <div className="p-3 border-t border-slate-100">
-                <div className="flex items-center gap-2">
+              <div className="p-2.5 border-t border-neutral-100">
+                <div className="flex items-center gap-1.5">
                   <input
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Ask Copilot..."
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[12px] text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-[#0078d4]/20 focus:border-[#0078d4]/40 outline-none"
+                    className="flex-1 px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-md text-xs text-neutral-700 placeholder-neutral-400 focus:outline-none focus:border-neutral-300"
                   />
                   <button
                     onClick={handleSend}
-                    className="p-2 bg-[#0078d4] text-white rounded-lg hover:bg-[#0078d4]/90 transition-colors"
+                    className="p-1.5 bg-accent text-white rounded-md hover:bg-accent-light"
                   >
                     <Send className="w-3.5 h-3.5" />
                   </button>
@@ -186,32 +174,26 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
               </div>
             </div>
           ) : (
-            /* Suggestions Mode */
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-72 overflow-y-auto">
               {suggestions.length === 0 ? (
                 <div className="p-6 text-center">
-                  <p className="text-[13px] text-slate-500">All caught up</p>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    No new suggestions right now.
-                  </p>
+                  <p className="text-xs text-neutral-500">All caught up.</p>
                 </div>
               ) : (
                 suggestions.map((s) => (
                   <div
                     key={s.id}
-                    className="px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50/80 transition-colors group"
+                    className="px-4 py-3 border-b border-neutral-50 last:border-0 hover:bg-neutral-50 group"
                   >
                     <div className="flex items-start gap-2.5">
-                      <div
-                        className={`mt-0.5 shrink-0 p-1.5 rounded-md ${bgMap[s.type]} ${colorMap[s.type]}`}
-                      >
+                      <div className="mt-0.5 shrink-0 text-neutral-400">
                         {iconMap[s.type]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold text-slate-700">
+                        <p className="text-[12px] font-medium text-neutral-700">
                           {s.title}
                         </p>
-                        <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                        <p className="text-[11px] text-neutral-500 mt-0.5 leading-relaxed">
                           {s.body}
                         </p>
                         {s.actionLabel && (
@@ -222,17 +204,19 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
                                 setIsOpen(false);
                               }
                             }}
-                            className="mt-1.5 text-[11px] font-medium text-[#0078d4] hover:underline"
+                            className="mt-1.5 text-[11px] font-medium text-accent hover:underline"
                           >
                             {s.actionLabel}
                           </button>
                         )}
                       </div>
                       <button
-                        onClick={() => setDismissed((prev) => new Set([...prev, s.id]))}
-                        className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-slate-500 transition-all shrink-0"
+                        onClick={() =>
+                          setDismissed((prev) => new Set([...prev, s.id]))
+                        }
+                        className="opacity-0 group-hover:opacity-100 text-neutral-300 hover:text-neutral-500 shrink-0"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -240,30 +224,21 @@ export const CopilotCompanion: React.FC<CopilotCompanionProps> = ({ onNavigate }
               )}
             </div>
           )}
-
-          {/* Footer */}
-          <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50">
-            <p className="text-[10px] text-slate-400 text-center">
-              Powered by Copilot -- Personalized learning guidance
-            </p>
-          </div>
         </div>
       )}
 
       {/* FAB */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative w-12 h-12 rounded-full bg-[#0078d4] hover:bg-[#0078d4]/90 text-white shadow-lg shadow-[#0078d4]/20 flex items-center justify-center transition-all duration-300 ${
-          isOpen ? "" : "hover:scale-105"
-        }`}
+        className="w-10 h-10 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center shadow-md"
       >
         {isOpen ? (
-          <ChevronUp className="w-5 h-5" />
+          <X className="w-4 h-4" />
         ) : (
-          <Sparkles className="w-5 h-5" />
+          <MessageSquare className="w-4 h-4" />
         )}
         {!isOpen && suggestions.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#d83b01] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
             {suggestions.length}
           </span>
         )}

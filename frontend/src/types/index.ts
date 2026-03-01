@@ -1,9 +1,29 @@
 // ─── LearnLens Types ───
 
-export type CheckpointType = "quiz" | "midterm" | "final" | "assignment" | "project";
-export type CheckpointStatus = "completed" | "in-progress" | "upcoming" | "locked";
-export type SubmissionStatus = "submitted" | "in-progress" | "pending" | "overdue";
+export type CheckpointType =
+  | "quiz"
+  | "midterm"
+  | "final"
+  | "assignment"
+  | "project";
+export type CheckpointStatus =
+  | "completed"
+  | "in-progress"
+  | "upcoming"
+  | "locked";
+export type SubmissionStatus =
+  | "submitted"
+  | "in-progress"
+  | "pending"
+  | "overdue";
 export type CourseStatus = "active" | "completed" | "upcoming";
+
+export interface CourseOutlineComponent {
+  name: string;
+  weight: number;
+  count?: number;
+  description: string;
+}
 
 export interface Course {
   id: string;
@@ -22,6 +42,7 @@ export interface Course {
   assignments: Assignment[];
   schedule: string;
   status: CourseStatus;
+  courseOutline: CourseOutlineComponent[];
 }
 
 export interface CourseTopic {
