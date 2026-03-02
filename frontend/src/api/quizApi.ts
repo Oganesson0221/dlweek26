@@ -72,6 +72,68 @@ export interface ClippyContentResponse {
   summary_prompt: string;
 }
 
+// Saved material types
+export interface SavedMaterial {
+  id: string;
+  filename: string;
+  title: string;
+  course_code?: string;
+  total_slides: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Summary and Keyword types
+export interface SummaryResponse {
+  id: string;
+  filename: string;
+  course_name: string;
+  total_pages: number;
+  summary: string;
+  created_at: string;
+}
+
+export interface KeywordsResponse {
+  id: string;
+  filename: string;
+  course_name: string;
+  total_pages: number;
+  keywords: string[];
+  created_at: string;
+}
+
+// Concept Map types
+export interface ConceptMapResponse {
+  id: string;
+  filename: string;
+  course_name: string;
+  total_pages: number;
+  concept_map_data: string;
+  created_at: string;
+}
+
+// Weak topic types
+export interface WeakTopic {
+  topic: string;
+  count: number;
+  percentage: number;
+}
+
+// Quiz result types
+export interface QuizResult {
+  id: string;
+  user_id: string;
+  quiz_id: string;
+  score: number;
+  total_questions: number;
+  correct_answers: number;
+  wrong_answers: number;
+  time_spent_minutes: number;
+  course_code?: string;
+  topics_covered: string[];
+  created_at: string;
+}
+
 /**
  * Upload and parse a file (PDF/PPTX) for quiz generation
  */
@@ -171,15 +233,6 @@ export async function generateImprovementQuiz(
 }
 
 /**
- * Weak topic structure from backend
- */
-export interface WeakTopic {
-  topic: string;
-  count: number;
-  percentage: number;
-}
-
-/**
  * Get weak topics based on wrong answers
  */
 export async function getWeakTopics(
@@ -225,23 +278,6 @@ export async function clearWrongQuestions(
 }
 
 /**
- * Quiz result structure from backend
- */
-export interface QuizResult {
-  id: string;
-  user_id: string;
-  quiz_id: string;
-  score: number;
-  total_questions: number;
-  correct_answers: number;
-  wrong_answers: number;
-  time_spent_minutes: number;
-  course_code?: string;
-  topics_covered: string[];
-  created_at: string;
-}
-
-/**
  * Get quiz results for a user from MongoDB
  */
 export async function getQuizResults(
@@ -283,19 +319,6 @@ export async function extractConcepts(
 }
 
 // ============ SAVED MATERIALS ============
-
-/**
- * Saved material structure from backend
- */
-export interface SavedMaterial {
-  id: string;
-  filename: string;
-  title: string;
-  course_code?: string;
-  total_slides: number;
-  created_at?: string;
-  updated_at?: string;
-}
 
 /**
  * Save a material for later quiz generation
@@ -369,4 +392,133 @@ export async function deleteSavedMaterial(
     `/ai/files/saved-materials/${materialId}?user_id=${userId}`,
   );
   return res.data;
+}
+
+// ============ FILE-BASED SUMMARY AND KEYWORD EXTRACTION ============
+
+/**
+ * Upload a file and generate a summary (saved to MongoDB)
+ */
+export async function summarizeFile(
+  file: File,
+  courseName: string = "Untitled Course",
+): Promise<SummaryResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("course_name", courseName);
+
+  const res = await apiClient.post("/ai/files/summarize", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000, // 2 minutes for file processing
+  });
+  return res.data;
+}
+
+/**
+ * Get all saved summaries
+ */
+export async function getSummaries(): Promise<SummaryResponse[]> {
+  const res = await apiClient.get("/ai/files/summaries");
+  return res.data;
+}
+
+/**
+ * Get a specific summary by ID
+ */
+export async function getSummaryById(id: string): Promise<SummaryResponse> {
+  const res = await apiClient.get(`/ai/files/summaries/${id}`);
+  return res.data;
+}
+
+/**
+ * Delete a summary by ID
+ */
+export async function deleteSummary(id: string): Promise<void> {
+  await apiClient.delete(`/ai/files/summaries/${id}`);
+}
+
+/**
+ * Upload a file and extract keywords (saved to MongoDB)
+ */
+export async function extractKeywordsFromFile(
+  file: File,
+  courseName: string = "Untitled Course",
+): Promise<KeywordsResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("course_name", courseName);
+
+  const res = await apiClient.post("/ai/files/extract-keywords", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000, // 2 minutes for file processing
+  });
+  return res.data;
+}
+
+/**
+ * Get all saved keywords records
+ */
+export async function getKeywords(): Promise<KeywordsResponse[]> {
+  const res = await apiClient.get("/ai/files/keywords");
+  return res.data;
+}
+
+/**
+ * Get a specific keywords record by ID
+ */
+export async function getKeywordsById(id: string): Promise<KeywordsResponse> {
+  const res = await apiClient.get(`/ai/files/keywords/${id}`);
+  return res.data;
+}
+
+/**
+ * Delete a keywords record by ID
+ */
+export async function deleteKeywordsRecord(id: string): Promise<void> {
+  await apiClient.delete(`/ai/files/keywords/${id}`);
+}
+
+// ============ CONCEPT MAPS ============
+
+/**
+ * Upload a file and generate a concept map (saved to MongoDB)
+ */
+export async function generateConceptMapFromFile(
+  file: File,
+  courseName: string = "Untitled Course",
+): Promise<ConceptMapResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("course_name", courseName);
+
+  const res = await apiClient.post("/ai/files/generate-concept-map", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000, // 2 minutes for file processing
+  });
+  return res.data;
+}
+
+/**
+ * Get all saved concept maps
+ */
+export async function getConceptMaps(): Promise<ConceptMapResponse[]> {
+  const res = await apiClient.get("/ai/files/concept-maps");
+  return res.data;
+}
+
+/**
+ * Get a specific concept map by ID
+ */
+export async function getConceptMapById(
+  id: string,
+): Promise<ConceptMapResponse> {
+  const res = await apiClient.get(`/ai/files/concept-maps/${id}`);
+  return res.data;
+}
+
+/**
+ * Delete a concept map by ID
+ */
+export async function deleteConceptMap(id: string): Promise<void> {
+  await apiClient.delete(`/ai/files/concept-maps/${id}`);
 }

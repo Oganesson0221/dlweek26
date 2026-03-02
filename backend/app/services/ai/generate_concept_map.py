@@ -9,32 +9,51 @@ from typing import List
 
 # Client is lazy-loaded via get_ai_client()
 
+from typing import List
+from fastapi import HTTPException
+
 async def generate_concept_map_bytes(slides: List[SlideContent], filename: str) -> bytes:
     """
-    Generates a visual concept map image from slides and returns the raw image bytes.
-    Utilizes gpt-4o via the image generation API.
+    Generates a terminology concept map (cn1, cn2, ...) from slides and returns raw UTF-8 bytes.
     """
     settings = get_settings()
     client = get_ai_client()
     content_string = build_content_string(slides)
+
     prompt = f"{CONCEPT_MAP_VISUALIZATION_PROMPT}\n\nSlide Content:\n{content_string}"
 
     try:
-        # Step 1: Request image generation from gpt-4o 
-        # (This uses the schematic Images endpoint which gpt-4o can populate)
-        response = await client.images.generate(
-            model="gpt-4o", # Ensure this is gpt-4o for best visualization
-            prompt=prompt,
-            n=1,
-            size="1024x1024", # Or another supported size
-            response_format="url", 
+        # Text generation using chat completions
+        resp = await client.chat.completions.create(
+            model=settings.DEFAULT_MODEL,
+            messages=[
+                {"role": "system", "content": "You are an expert at extracting terminology and concepts from educational content."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
         )
-        temporary_image_url = response.data[0].url
 
-        # Step 2: Download only the image bytes
-        async with httpx.AsyncClient() as http_client:
-            image_response = await http_client.get(temporary_image_url)
-            return image_response.content # Return *only* bytes, no metadata
+        text = (resp.choices[0].message.content or "").strip()
+        if not text:
+            raise HTTPException(502, "Model returned empty output.")
+        
+        # Remove markdown code fences if present
+        if text.startswith("```"):
+            text = text.replace("```javascript\n", "").replace("```js\n", "").replace("```\n", "").replace("\n```", "").strip()
+        
+        # Debug preview (first 500 chars)
+        preview = text[:500].replace("\n", " ")
+        print(f"[Concept Map] Generated {len(text)} chars. Preview: {preview}")
+
+        if "cn1" not in text or "term" not in text:
+            raise HTTPException(
+                502,
+                f"Model output did not match expected cnX format. Preview: {preview}"
+            )
+
+        return text.encode("utf-8")
+
+    except HTTPException:
+        raise
     except Exception as e:
-        # Keep consistent error handling
-        raise HTTPException(502, f"Error generating map image bytes: {e}")
+        raise HTTPException(502, f"Error generating concept map bytes: {e}")
