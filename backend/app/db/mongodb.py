@@ -304,6 +304,7 @@ def get_courses_with_progress() -> list:
         })
     return result
 
+<<<<<<< HEAD
 # ============ WRONG QUESTIONS (Quiz Weak Topics) ============
 
 def save_wrong_questions(questions: List[Dict[str, Any]], user_id: str = "default", course_code: Optional[str] = None) -> dict:
@@ -457,10 +458,39 @@ def get_course_material_by_id(material_id: str) -> Optional[Dict[str, Any]]:
     db = get_db()
     try:
         doc = db.course_materials.find_one({"_id": ObjectId(material_id)})
+=======
+# ============ SUMMARIES ============
+
+def create_summary(course_name: str, filename: str, summary: str, total_pages: int) -> dict:
+    """Create a new summary record"""
+    db = get_db()
+    doc = {
+        "course_name": course_name,
+        "filename": filename,
+        "summary": summary,
+        "total_pages": total_pages,
+        "created_at": datetime.utcnow()
+    }
+    result = db.summaries.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize_doc(doc)
+
+def get_all_summaries() -> list:
+    """Get all summaries sorted by creation date"""
+    db = get_db()
+    return serialize_docs(db.summaries.find().sort("created_at", -1))
+
+def get_summary_by_id(summary_id: str) -> Optional[dict]:
+    """Get a summary by ID"""
+    db = get_db()
+    try:
+        doc = db.summaries.find_one({"_id": ObjectId(summary_id)})
+>>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
         return serialize_doc(doc) if doc else None
     except:
         return None
 
+<<<<<<< HEAD
 def delete_course_material(material_id: str, user_id: str = "default") -> bool:
     """Delete a course material."""
     db = get_db()
@@ -469,6 +499,91 @@ def delete_course_material(material_id: str, user_id: str = "default") -> bool:
             "_id": ObjectId(material_id),
             "user_id": user_id
         })
+=======
+def delete_summary(summary_id: str) -> bool:
+    """Delete a summary by ID"""
+    db = get_db()
+    try:
+        result = db.summaries.delete_one({"_id": ObjectId(summary_id)})
+        return result.deleted_count > 0
+    except:
+        return False
+
+# ============ KEYWORDS ============
+
+def create_keywords(course_name: str, filename: str, keywords: List[str], total_pages: int) -> dict:
+    """Create a new keywords record"""
+    db = get_db()
+    doc = {
+        "course_name": course_name,
+        "filename": filename,
+        "keywords": keywords,
+        "total_pages": total_pages,
+        "created_at": datetime.utcnow()
+    }
+    result = db.keywords.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize_doc(doc)
+
+def get_all_keywords() -> list:
+    """Get all keywords records sorted by creation date"""
+    db = get_db()
+    return serialize_docs(db.keywords.find().sort("created_at", -1))
+
+def get_keywords_by_id(keywords_id: str) -> Optional[dict]:
+    """Get a keywords record by ID"""
+    db = get_db()
+    try:
+        doc = db.keywords.find_one({"_id": ObjectId(keywords_id)})
+        return serialize_doc(doc) if doc else None
+    except:
+        return None
+
+def delete_keywords(keywords_id: str) -> bool:
+    """Delete a keywords record by ID"""
+    db = get_db()
+    try:
+        result = db.keywords.delete_one({"_id": ObjectId(keywords_id)})
+        return result.deleted_count > 0
+    except:
+        return False
+
+# ============ CONCEPT MAPS ============
+
+def create_concept_map(course_name: str, filename: str, concept_map_data: str, total_pages: int = 0) -> dict:
+    """Create a new concept map record"""
+    db = get_db()
+    doc = {
+        "course_name": course_name,
+        "filename": filename,
+        "concept_map_data": concept_map_data,
+        "total_pages": total_pages,
+        "created_at": datetime.utcnow()
+    }
+    result = db.concept_maps.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize_doc(doc)
+
+def get_all_concept_maps() -> list:
+    """Get all concept maps sorted by creation date"""
+    db = get_db()
+    return serialize_docs(db.concept_maps.find().sort("created_at", -1))
+
+def get_concept_map_by_id(concept_map_id: str) -> Optional[dict]:
+    """Get a concept map by ID"""
+    db = get_db()
+    try:
+        doc = db.concept_maps.find_one({"_id": ObjectId(concept_map_id)})
+        return serialize_doc(doc) if doc else None
+    except:
+        return None
+
+def delete_concept_map(concept_map_id: str) -> bool:
+    """Delete a concept map by ID"""
+    db = get_db()
+    try:
+        result = db.concept_maps.delete_one({"_id": ObjectId(concept_map_id)})
+>>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
         return result.deleted_count > 0
     except:
         return False

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -9,9 +9,32 @@ import {
   Sparkles,
   BookOpen,
   ChevronRight,
+  Upload,
+  FileText,
+  Key,
+  Loader,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
 } from "lucide-react";
-import { courses, conceptNodes, conceptLinks } from "@/data/learnLensData";
+// Removed hardcoded imports - now using backend-generated data only
+// import { courses, conceptNodes, conceptLinks } from "@/data/learnLensData";
 import { getMasteryColor } from "@/utils/helpers";
+import {
+  summarizeFile,
+  extractKeywordsFromFile,
+  getSummaries,
+  getKeywords,
+  deleteSummary,
+  deleteKeywordsRecord,
+  generateConceptMapFromFile,
+  getConceptMaps,
+  deleteConceptMap,
+  SummaryResponse,
+  KeywordsResponse,
+  ConceptMapResponse,
+} from "@/api/quizApi";
 
 // Define terminology data for each concept node
 interface TermDefinition {
@@ -21,6 +44,8 @@ interface TermDefinition {
   relatedTerms: string[];
 }
 
+// HARDCODED DATA - COMMENTED OUT - NOW USING BACKEND-GENERATED DATA
+/*
 const terminologyData: Record<string, TermDefinition> = {
   cn1: {
     term: "Arrays",
@@ -129,30 +154,326 @@ const terminologyData: Record<string, TermDefinition> = {
     relatedTerms: ["cn10"],
   },
 };
+*/
+
+// History item interfaces (match API response)
+interface SummaryHistoryItem {
+  id: string;
+  course_name: string;
+  filename: string;
+  summary: string;
+  total_pages: number;
+  created_at: string;
+}
+
+interface KeywordsHistoryItem {
+  id: string;
+  course_name: string;
+  filename: string;
+  keywords: string[];
+  total_pages: number;
+  created_at: string;
+}
+
+interface ConceptMapHistoryItem {
+  id: string;
+  course_name: string;
+  filename: string;
+  concept_map_data: string;
+  total_pages: number;
+  created_at: string;
+}
+
+// Define node and link interfaces for dynamic visualization
+interface ConceptNode {
+  id: string;
+  name: string;
+  courseId: string;
+  mastery: number;
+  x: number;
+  y: number;
+  dependencies: string[];
+  description: string;
+  isGap: boolean;
+}
+
+interface ConceptLink {
+  source: string;
+  target: string;
+  strength: number;
+}
 
 export const ConceptMapPage: React.FC = () => {
-  const [selectedCourse, setSelectedCourse] = useState<string>(
-    courses[0]?.id ?? "",
-  );
+  const [selectedCourse, setSelectedCourse] = useState<string>("backend-generated");
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [expandedTerm, setExpandedTerm] = useState<string | null>(null);
   const [connectionPath, setConnectionPath] = useState<string[]>([]);
 
-  const course = courses.find((c) => c.id === selectedCourse);
-  const nodes = conceptNodes.filter((n) => n.courseId === selectedCourse);
-  const links = conceptLinks.filter(
-    (l) =>
-      nodes.some((n) => n.id === l.source) &&
-      nodes.some((n) => n.id === l.target),
-  );
+  // Summary section state
+  const [summaryCourseName, setSummaryCourseName] = useState("");
+  const [summaryFile, setSummaryFile] = useState<File | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryResult, setSummaryResult] = useState<SummaryResponse | null>(null);
+  const [summaryHistory, setSummaryHistory] = useState<SummaryHistoryItem[]>([]);
+  const [summaryExpanded, setSummaryExpanded] = useState(true);
+  const [selectedSummaryHistory, setSelectedSummaryHistory] = useState<SummaryHistoryItem | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  // Keywords section state
+  const [keywordsCourseName, setKeywordsCourseName] = useState("");
+  const [keywordsFile, setKeywordsFile] = useState<File | null>(null);
+  const [keywordsLoading, setKeywordsLoading] = useState(false);
+  const [keywordsResult, setKeywordsResult] = useState<KeywordsResponse | null>(null);
+  const [keywordsHistory, setKeywordsHistory] = useState<KeywordsHistoryItem[]>([]);
+  const [keywordsExpanded, setKeywordsExpanded] = useState(true);
+  const [selectedKeywordsHistory, setSelectedKeywordsHistory] = useState<KeywordsHistoryItem | null>(null);
+  const [keywordsError, setKeywordsError] = useState<string | null>(null);
+
+  // Concept Map section state
+  const [conceptMapCourseName, setConceptMapCourseName] = useState("");
+  const [conceptMapFile, setConceptMapFile] = useState<File | null>(null);
+  const [conceptMapLoading, setConceptMapLoading] = useState(false);
+  const [conceptMapResult, setConceptMapResult] = useState<ConceptMapResponse | null>(null);
+  const [conceptMapHistory, setConceptMapHistory] = useState<ConceptMapHistoryItem[]>([]);
+  const [conceptMapExpanded, setConceptMapExpanded] = useState(true);
+  const [selectedConceptMapHistory, setSelectedConceptMapHistory] = useState<ConceptMapHistoryItem | null>(null);
+  const [conceptMapError, setConceptMapError] = useState<string | null>(null);
+  const [dynamicTerminologyData, setDynamicTerminologyData] = useState<Record<string, TermDefinition> | null>(null);
+
+  // Load history from MongoDB on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const [summaries, keywords, conceptMaps] = await Promise.all([
+          getSummaries(),
+          getKeywords(),
+          getConceptMaps(),
+        ]);
+        setSummaryHistory(summaries as unknown as SummaryHistoryItem[]);
+        setKeywordsHistory(keywords as unknown as KeywordsHistoryItem[]);
+        setConceptMapHistory(conceptMaps as unknown as ConceptMapHistoryItem[]);
+      } catch (error) {
+        console.error("Failed to load history:", error);
+      }
+    };
+    loadHistory();
+  }, []);
+
+  // Handle summary file upload and generation
+  const handleSummarySubmit = async () => {
+    if (!summaryFile || !summaryCourseName.trim()) return;
+    
+    setSummaryLoading(true);
+    setSummaryError(null);
+    try {
+      const result = await summarizeFile(summaryFile, summaryCourseName);
+      setSummaryResult(result);
+      
+      // Add the new result to history (API already saved to MongoDB)
+      setSummaryHistory((prev) => [result as unknown as SummaryHistoryItem, ...prev]);
+      
+      // Reset form
+      setSummaryCourseName("");
+      setSummaryFile(null);
+    } catch (error: any) {
+      console.error("Failed to generate summary:", error);
+      setSummaryError(error?.response?.data?.detail || error?.message || "Failed to generate summary. Please try again.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  // Handle keywords file upload and extraction
+  const handleKeywordsSubmit = async () => {
+    if (!keywordsFile || !keywordsCourseName.trim()) return;
+    
+    setKeywordsLoading(true);
+    setKeywordsError(null);
+    try {
+      const result = await extractKeywordsFromFile(keywordsFile, keywordsCourseName);
+      setKeywordsResult(result);
+      
+      // Add the new result to history (API already saved to MongoDB)
+      setKeywordsHistory((prev) => [result as unknown as KeywordsHistoryItem, ...prev]);
+      
+      // Reset form
+      setKeywordsCourseName("");
+      setKeywordsFile(null);
+    } catch (error: any) {
+      console.error("Failed to extract keywords:", error);
+      setKeywordsError(error?.response?.data?.detail || error?.message || "Failed to extract keywords. Please try again.");
+    } finally {
+      setKeywordsLoading(false);
+    }
+  };
+
+  // Handle deleting a summary
+  const handleDeleteSummary = async (id: string) => {
+    try {
+      await deleteSummary(id);
+      setSummaryHistory((prev) => prev.filter((item) => item.id !== id));
+      if (selectedSummaryHistory?.id === id) {
+        setSelectedSummaryHistory(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete summary:", error);
+    }
+  };
+
+  // Handle deleting keywords
+  const handleDeleteKeywords = async (id: string) => {
+    try {
+      await deleteKeywordsRecord(id);
+      setKeywordsHistory((prev) => prev.filter((item) => item.id !== id));
+      if (selectedKeywordsHistory?.id === id) {
+        setSelectedKeywordsHistory(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete keywords:", error);
+    }
+  };
+
+  // Handle concept map file upload and generation
+  const handleConceptMapSubmit = async () => {
+    if (!conceptMapFile || !conceptMapCourseName.trim()) return;
+    
+    setConceptMapLoading(true);
+    setConceptMapError(null);
+    try {
+      console.log("Uploading file for concept map generation...");
+      const result = await generateConceptMapFromFile(conceptMapFile, conceptMapCourseName);
+      console.log("Received concept map result:", result);
+      setConceptMapResult(result);
+      
+      // Parse the concept_map_data and set it as dynamic terminology
+      console.log("Parsing concept map data...");
+      const parsed = parseConceptMapData(result.concept_map_data);
+      console.log("Parsed data has", Object.keys(parsed).length, "concepts");
+      setDynamicTerminologyData(parsed);
+      
+      // Add the new result to history (API already saved to MongoDB)
+      setConceptMapHistory((prev) => [result as unknown as ConceptMapHistoryItem, ...prev]);
+      
+      // Reset form
+      setConceptMapCourseName("");
+      setConceptMapFile(null);
+    } catch (error: any) {
+      console.error("Failed to generate concept map:", error);
+      setConceptMapError(error?.response?.data?.detail || error?.message || "Failed to generate concept map. Please try again.");
+    } finally {
+      setConceptMapLoading(false);
+    }
+  };
+
+  // Handle deleting a concept map
+  const handleDeleteConceptMap = async (id: string) => {
+    try {
+      await deleteConceptMap(id);
+      setConceptMapHistory((prev) => prev.filter((item) => item.id !== id));
+      if (selectedConceptMapHistory?.id === id) {
+        setSelectedConceptMapHistory(null);
+        setDynamicTerminologyData(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete concept map:", error);
+    }
+  };
+
+  // Load a concept map from history
+  const handleLoadConceptMap = (item: ConceptMapHistoryItem) => {
+    setSelectedConceptMapHistory(item);
+    const parsed = parseConceptMapData(item.concept_map_data);
+    setDynamicTerminologyData(parsed);
+  };
+
+  // Parse JavaScript object literal into TermDefinition format
+  const parseConceptMapData = (data: string): Record<string, TermDefinition> => {
+    try {
+      console.log("Raw concept map data:", data.substring(0, 200));
+      
+      // Remove markdown code fences if present
+      let cleanData = data.trim();
+      if (cleanData.startsWith("```")) {
+        cleanData = cleanData.replace(/```[a-z]*\n?/g, '').replace(/```$/g, '').trim();
+      }
+      
+      // The AI returns a JavaScript object literal without outer braces
+      // e.g., "cn1: {...}, cn2: {...}"
+      const jsonString = `{${cleanData}}`;
+      console.log("Attempting to parse:", jsonString.substring(0, 200));
+      
+      const parsed = eval(`(${jsonString})`);
+      console.log("Successfully parsed concept map with keys:", Object.keys(parsed));
+      return parsed;
+    } catch (error) {
+      console.error("Failed to parse concept map data:", error);
+      console.error("Raw data was:", data);
+      return {};
+    }
+  };
+
+  // Generate nodes and links dynamically from backend terminology data
+  const { nodes, links } = useMemo(() => {
+    if (!dynamicTerminologyData || Object.keys(dynamicTerminologyData).length === 0) {
+      return { nodes: [], links: [] };
+    }
+
+    const termIds = Object.keys(dynamicTerminologyData);
+    const generatedNodes: ConceptNode[] = [];
+    const generatedLinks: ConceptLink[] = [];
+
+    // Generate nodes with auto-positioned coordinates in a circular layout
+    const centerX = 500;
+    const centerY = 190;
+    const radius = 300;
+    const angleStep = (2 * Math.PI) / termIds.length;
+
+    termIds.forEach((id, index) => {
+      const term = dynamicTerminologyData[id];
+      const angle = index * angleStep - Math.PI / 2; // Start from top
+      const x = centerX + radius * Math.cos(angle) - 50; // Offset for node width
+      const y = centerY + radius * Math.sin(angle) - 30; // Offset for node height
+
+      generatedNodes.push({
+        id,
+        name: term.term,
+        courseId: selectedCourse,
+        mastery: 50, // Default mastery for backend-generated nodes
+        x,
+        y,
+        dependencies: term.relatedTerms || [],
+        description: term.definition.substring(0, 100) + "...",
+        isGap: false,
+      });
+
+      // Generate links from relatedTerms
+      if (term.relatedTerms) {
+        term.relatedTerms.forEach((relatedId) => {
+          if (termIds.includes(relatedId)) {
+            generatedLinks.push({
+              source: id,
+              target: relatedId,
+              strength: 0.7,
+            });
+          }
+        });
+      }
+    });
+
+    return { nodes: generatedNodes, links: generatedLinks };
+  }, [dynamicTerminologyData, selectedCourse]);
+
+  // Use ONLY backend-generated dynamic terminology data
+  const activeTerminologyData = dynamicTerminologyData || {};
+  console.log("Active terminology data:", activeTerminologyData);
+  console.log("Number of concepts loaded:", Object.keys(activeTerminologyData).length);
+  console.log("Generated nodes:", nodes.length);
+  console.log("Generated links:", links.length);
 
   const selectedNodeData = selectedNode
     ? nodes.find((n) => n.id === selectedNode)
     : null;
-
-  const gaps = nodes.filter((n) => n.isGap);
-  const mastered = nodes.filter((n) => n.mastery >= 80);
 
   // Handle terminology click - show definition and add to path
   const handleTermClick = useCallback(
@@ -235,28 +556,17 @@ export const ConceptMapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Course selector with Microsoft tab style */}
+        {/* Course info display - no switching needed since backend generates per course */}
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="inline-flex items-center gap-1 backdrop-blur-md bg-white/60 rounded-xl p-1.5 border border-white/50 shadow-lg">
-            {courses.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setSelectedCourse(c.id);
-                  setSelectedNode(null);
-                  setExpandedTerm(null);
-                  setConnectionPath([]);
-                }}
-                className={`px-4 py-2 text-[12px] font-medium rounded-lg transition-all ${
-                  selectedCourse === c.id
-                    ? "bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white shadow-md"
-                    : "text-neutral-600 hover:bg-[#5c2d91]/10 hover:text-[#5c2d91]"
-                }`}
-              >
-                {c.code}
-              </button>
-            ))}
-          </div>
+          {conceptMapResult && (
+            <div className="inline-flex items-center gap-2 backdrop-blur-md bg-white/60 rounded-xl px-4 py-2 border border-white/50 shadow-lg">
+              <BookOpen className="w-4 h-4 text-[#5c2d91]" />
+              <span className="text-sm font-semibold text-neutral-800">
+                {conceptMapResult.course_name}
+              </span>
+              <span className="text-xs text-neutral-500">({conceptMapResult.total_pages} pages)</span>
+            </div>
+          )}
 
           {/* Path trail indicator */}
           {connectionPath.length > 0 && (
@@ -282,7 +592,7 @@ export const ConceptMapPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-[#5c2d91]" />
                 <h2 className="text-[14px] font-semibold text-neutral-800">
-                  {course?.name} · Interactive Terminology Map
+                  {conceptMapResult?.course_name || "Concept Map"} · Interactive Terminology Map
                 </h2>
               </div>
               <div className="flex items-center gap-3 text-[10px] text-neutral-400 flex-wrap">
@@ -306,10 +616,21 @@ export const ConceptMapPage: React.FC = () => {
             </div>
 
             <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-neutral-50 to-white border border-neutral-100">
-              <div
-                className="overflow-x-auto overflow-y-hidden"
-                style={{ maxWidth: "100%" }}
-              >
+              {nodes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#5c2d91]/10 to-[#0078d4]/10 flex items-center justify-center mb-4">
+                    <Upload className="w-8 h-8 text-[#5c2d91]/50" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-700 mb-2">No Concept Map Loaded</h3>
+                  <p className="text-sm text-neutral-500 text-center max-w-md">
+                    Upload a PDF or PPTX file below to generate an AI-powered concept map with interactive terminology definitions.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="overflow-x-auto overflow-y-hidden"
+                  style={{ maxWidth: "100%" }}
+                >
                 <svg
                   width="100%"
                   height="380"
@@ -401,7 +722,7 @@ export const ConceptMapPage: React.FC = () => {
                     const isSelected = selectedNode === node.id;
                     const isExpanded = expandedTerm === node.id;
                     const isInPath = connectionPath.includes(node.id);
-                    const termData = terminologyData[node.id];
+                    const termData = activeTerminologyData[node.id];
 
                     return (
                       <g
@@ -521,11 +842,12 @@ export const ConceptMapPage: React.FC = () => {
                     );
                   })}
                 </svg>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Expanded Definition Panel (NotebookLM style) */}
-            {expandedTerm && terminologyData[expandedTerm] && (
+            {expandedTerm && activeTerminologyData[expandedTerm] && (
               <div className="mt-4 p-5 bg-gradient-to-br from-[#5c2d91]/5 to-[#0078d4]/5 rounded-xl border border-[#5c2d91]/20 animate-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -533,7 +855,7 @@ export const ConceptMapPage: React.FC = () => {
                       <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <h3 className="text-lg font-bold text-neutral-800">
-                      {terminologyData[expandedTerm].term}
+                      {activeTerminologyData[expandedTerm].term}
                     </h3>
                   </div>
                   <button
@@ -545,16 +867,16 @@ export const ConceptMapPage: React.FC = () => {
                 </div>
 
                 <p className="text-[14px] text-neutral-700 leading-relaxed mb-4">
-                  {terminologyData[expandedTerm].definition}
+                  {activeTerminologyData[expandedTerm].definition}
                 </p>
 
-                {terminologyData[expandedTerm].examples && (
+                {activeTerminologyData[expandedTerm].examples && (
                   <div className="mb-4">
                     <p className="text-[12px] font-semibold text-neutral-500 mb-2 uppercase tracking-wide">
                       Examples
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {terminologyData[expandedTerm].examples?.map(
+                      {activeTerminologyData[expandedTerm].examples?.map(
                         (ex, idx) => (
                           <span
                             key={idx}
@@ -569,16 +891,16 @@ export const ConceptMapPage: React.FC = () => {
                 )}
 
                 {/* Related Terms - NotebookLM style navigation */}
-                {terminologyData[expandedTerm].relatedTerms.length > 0 && (
+                {activeTerminologyData[expandedTerm].relatedTerms.length > 0 && (
                   <div>
                     <p className="text-[12px] font-semibold text-neutral-500 mb-2 uppercase tracking-wide flex items-center gap-1">
                       <ArrowRight className="w-3 h-3" /> Continue Learning
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {terminologyData[expandedTerm].relatedTerms.map(
+                      {activeTerminologyData[expandedTerm].relatedTerms.map(
                         (relId) => {
                           const relNode = nodes.find((n) => n.id === relId);
-                          const relTerm = terminologyData[relId];
+                          const relTerm = activeTerminologyData[relId];
                           if (!relNode || !relTerm) return null;
                           const isVisited = connectionPath.includes(relId);
                           return (
@@ -605,6 +927,105 @@ export const ConceptMapPage: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Generate New Concept Map */}
+            <div className="mt-5 pt-5 border-t border-neutral-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-[#16a34a]" />
+                  <h3 className="text-sm font-semibold text-neutral-800">Generate Concept Map from File</h3>
+                </div>
+                <button
+                  onClick={() => setConceptMapExpanded(!conceptMapExpanded)}
+                  className="text-xs text-neutral-500 hover:text-[#16a34a] transition-colors"
+                >
+                  {conceptMapExpanded ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              {conceptMapExpanded && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={conceptMapCourseName}
+                      onChange={(e) => setConceptMapCourseName(e.target.value)}
+                      placeholder="Course name (e.g., Data Structures)"
+                      className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a]/30 focus:border-[#16a34a]"
+                    />
+                    <input
+                      type="file"
+                      accept=".pdf,.pptx"
+                      onChange={(e) => setConceptMapFile(e.target.files?.[0] || null)}
+                      className="text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#16a34a]/10 file:text-[#16a34a] file:font-medium hover:file:bg-[#16a34a]/20 file:cursor-pointer"
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={handleConceptMapSubmit}
+                    disabled={!conceptMapFile || !conceptMapCourseName.trim() || conceptMapLoading}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-all"
+                  >
+                    {conceptMapLoading ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate Terminology Map
+                      </>
+                    )}
+                  </button>
+
+                  {conceptMapError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-red-800">Error</p>
+                        <p className="text-xs text-red-600">{conceptMapError}</p>
+                      </div>
+                      <button onClick={() => setConceptMapError(null)} className="p-1 hover:bg-red-100 rounded transition-colors">
+                        <X className="w-3 h-3 text-red-400" />
+                      </button>
+                    </div>
+                  )}
+
+                  {conceptMapResult && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        ✓ Generated concept map for <strong>{conceptMapResult.course_name}</strong> ({conceptMapResult.total_pages} pages)
+                      </p>
+                    </div>
+                  )}
+
+                  {conceptMapHistory.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-500 mb-2 uppercase tracking-wide">
+                        Previously Generated Maps
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {conceptMapHistory.slice(0, 4).map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => handleLoadConceptMap(item)}
+                            className={`p-2 rounded-lg border text-left transition-all hover:shadow-sm ${
+                              selectedConceptMapHistory?.id === item.id
+                                ? "border-[#16a34a] bg-[#16a34a]/5"
+                                : "border-neutral-200 hover:border-[#16a34a]/50"
+                            }`}
+                          >
+                            <p className="text-xs font-medium text-neutral-800 truncate">{item.course_name}</p>
+                            <p className="text-[10px] text-neutral-400">{new Date(item.created_at).toLocaleDateString()}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -724,67 +1145,440 @@ export const ConceptMapPage: React.FC = () => {
               </div>
             )}
 
-            {/* Knowledge Gaps */}
-            <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-4 shadow-lg">
-              <h3 className="text-[13px] font-semibold text-neutral-800 mb-3 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#d83b01] to-[#ff6f61] flex items-center justify-center">
-                  <AlertTriangle className="w-3.5 h-3.5 text-white" />
+            {/* Concept Map Stats - Only show when data is loaded */}
+            {nodes.length > 0 && (
+              <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-4 shadow-lg">
+                <h3 className="text-[13px] font-semibold text-neutral-800 mb-3 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center">
+                    <Info className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  Concept Map Stats
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-neutral-500">Total Concepts:</span>
+                    <span className="font-semibold text-neutral-700">{nodes.length}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-neutral-500">Connections:</span>
+                    <span className="font-semibold text-neutral-700">{links.length}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-neutral-500">Explored:</span>
+                    <span className="font-semibold text-neutral-700">{connectionPath.length}</span>
+                  </div>
                 </div>
-                Knowledge Gaps ({gaps.length})
-              </h3>
-              <div className="space-y-1.5">
-                {gaps.map((n) => (
-                  <button
-                    key={n.id}
-                    onClick={() => handleTermClick(n.id)}
-                    className="w-full flex items-center gap-2 p-2 rounded-md text-left hover:bg-neutral-50 transition-colors"
-                  >
-                    <Circle className="w-2.5 h-2.5 text-red-500 shrink-0" />
-                    <div>
-                      <p className="text-[11px] font-medium text-neutral-700">
-                        {n.name}
-                      </p>
-                      <p className="text-[10px] text-neutral-400 tabular-nums">
-                        {n.mastery}% mastery
-                      </p>
-                    </div>
-                  </button>
-                ))}
-                {gaps.length === 0 && (
-                  <p className="text-[11px] text-neutral-400 text-center py-2">
-                    No knowledge gaps detected
-                  </p>
-                )}
               </div>
-            </div>
-
-            {/* Mastered */}
-            <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-4 shadow-lg">
-              <h3 className="text-[13px] font-semibold text-neutral-800 mb-3 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                </div>
-                Mastered ({mastered.length})
-              </h3>
-              <div className="space-y-1">
-                {mastered.map((n) => (
-                  <button
-                    key={n.id}
-                    onClick={() => handleTermClick(n.id)}
-                    className="w-full flex items-center gap-2 p-2 rounded-md text-left hover:bg-neutral-50 transition-colors"
-                  >
-                    <CheckCircle2 className="w-2.5 h-2.5 text-green-600 shrink-0" />
-                    <span className="text-[11px] text-neutral-600">
-                      {n.name}
-                    </span>
-                    <span className="text-[10px] text-green-600 ml-auto tabular-nums">
-                      {n.mastery}%
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
+        </div>
+
+        {/* Summary Section */}
+        <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+          <button
+            onClick={() => setSummaryExpanded(!summaryExpanded)}
+            className="w-full flex items-center justify-between mb-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0078d4] to-[#50e6ff] flex items-center justify-center shadow-md">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-lg font-bold text-neutral-800">Document Summary</h2>
+                <p className="text-sm text-neutral-500">Upload a PDF to generate an AI summary</p>
+              </div>
+            </div>
+            {summaryExpanded ? (
+              <ChevronUp className="w-5 h-5 text-neutral-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-neutral-400" />
+            )}
+          </button>
+
+          {summaryExpanded && (
+            <div className="space-y-4">
+              {/* Upload Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    Course Name
+                  </label>
+                  <input
+                    type="text"
+                    value={summaryCourseName}
+                    onChange={(e) => setSummaryCourseName(e.target.value)}
+                    placeholder="e.g., Data Structures"
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0078d4]/30 focus:border-[#0078d4]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    PDF File
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".pdf,.pptx"
+                      onChange={(e) => setSummaryFile(e.target.files?.[0] || null)}
+                      className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#0078d4]/10 file:text-[#0078d4] file:font-medium hover:file:bg-[#0078d4]/20 file:cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleSummarySubmit}
+                disabled={!summaryFile || !summaryCourseName.trim() || summaryLoading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#0078d4] to-[#50e6ff] text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-all"
+              >
+                {summaryLoading ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Generating Summary...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    Generate Summary
+                  </>
+                )}
+              </button>
+
+              {/* Error Display */}
+              {summaryError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800">Error</p>
+                    <p className="text-xs text-red-600">{summaryError}</p>
+                  </div>
+                  <button
+                    onClick={() => setSummaryError(null)}
+                    className="p-1 hover:bg-red-100 rounded transition-colors"
+                  >
+                    <X className="w-3 h-3 text-red-400" />
+                  </button>
+                </div>
+              )}
+
+              {/* Current Result */}
+              {summaryResult && !selectedSummaryHistory && (
+                <div className="p-4 bg-gradient-to-br from-[#0078d4]/5 to-[#50e6ff]/5 rounded-xl border border-[#0078d4]/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-semibold text-neutral-800">
+                      {summaryResult.course_name}
+                    </span>
+                    <span className="text-xs text-neutral-400">
+                      ({summaryResult.total_pages} pages)
+                    </span>
+                  </div>
+                  <p className="text-sm text-neutral-700 leading-relaxed">
+                    {summaryResult.summary}
+                  </p>
+                </div>
+              )}
+
+              {/* Selected History Item */}
+              {selectedSummaryHistory && (
+                <div className="p-4 bg-gradient-to-br from-[#0078d4]/5 to-[#50e6ff]/5 rounded-xl border border-[#0078d4]/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#0078d4]" />
+                      <span className="text-sm font-semibold text-neutral-800">
+                        {selectedSummaryHistory.course_name}
+                      </span>
+                      <span className="text-xs text-neutral-400">
+                        ({selectedSummaryHistory.total_pages} pages)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeleteSummary(selectedSummaryHistory.id)}
+                        className="p-1 hover:bg-red-100 rounded transition-colors"
+                        title="Delete this summary"
+                      >
+                        <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedSummaryHistory(null)}
+                        className="p-1 hover:bg-neutral-100 rounded transition-colors"
+                      >
+                        <X className="w-3 h-3 text-neutral-400" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-neutral-500 mb-2">
+                    {new Date(selectedSummaryHistory.created_at).toLocaleDateString()} · {selectedSummaryHistory.filename}
+                  </p>
+                  <p className="text-sm text-neutral-700 leading-relaxed">
+                    {selectedSummaryHistory.summary}
+                  </p>
+                </div>
+              )}
+
+              {/* History */}
+              {summaryHistory.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-neutral-700 mb-2 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Previous Summaries
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {summaryHistory.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-3 rounded-lg border text-left transition-all hover:shadow-md relative group ${
+                          selectedSummaryHistory?.id === item.id
+                            ? "border-[#0078d4] bg-[#0078d4]/5"
+                            : "border-neutral-200 hover:border-[#0078d4]/50"
+                        }`}
+                      >
+                        <button
+                          onClick={() => {
+                            setSelectedSummaryHistory(item);
+                            setSummaryResult(null);
+                          }}
+                          className="w-full text-left"
+                        >
+                          <p className="text-sm font-medium text-neutral-800 truncate pr-6">
+                            {item.course_name}
+                          </p>
+                          <p className="text-xs text-neutral-400 truncate">
+                            {item.filename}
+                          </p>
+                          <p className="text-xs text-neutral-400 mt-1">
+                            {new Date(item.created_at).toLocaleDateString()}
+                          </p>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSummary(item.id);
+                          }}
+                          className="absolute top-2 right-2 p-1 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Keywords Extraction Section */}
+        <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-5 shadow-lg">
+          <button
+            onClick={() => setKeywordsExpanded(!keywordsExpanded)}
+            className="w-full flex items-center justify-between mb-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#5c2d91] to-[#b4a0ff] flex items-center justify-center shadow-md">
+                <Key className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-lg font-bold text-neutral-800">Extract Keywords</h2>
+                <p className="text-sm text-neutral-500">Upload a PDF to extract key concepts</p>
+              </div>
+            </div>
+            {keywordsExpanded ? (
+              <ChevronUp className="w-5 h-5 text-neutral-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-neutral-400" />
+            )}
+          </button>
+
+          {keywordsExpanded && (
+            <div className="space-y-4">
+              {/* Upload Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    Course Name
+                  </label>
+                  <input
+                    type="text"
+                    value={keywordsCourseName}
+                    onChange={(e) => setKeywordsCourseName(e.target.value)}
+                    placeholder="e.g., Linear Algebra"
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5c2d91]/30 focus:border-[#5c2d91]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    PDF File
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".pdf,.pptx"
+                      onChange={(e) => setKeywordsFile(e.target.files?.[0] || null)}
+                      className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#5c2d91]/10 file:text-[#5c2d91] file:font-medium hover:file:bg-[#5c2d91]/20 file:cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleKeywordsSubmit}
+                disabled={!keywordsFile || !keywordsCourseName.trim() || keywordsLoading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-all"
+              >
+                {keywordsLoading ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Extracting Keywords...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    Extract Keywords
+                  </>
+                )}
+              </button>
+
+              {/* Error Display */}
+              {keywordsError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800">Error</p>
+                    <p className="text-xs text-red-600">{keywordsError}</p>
+                  </div>
+                  <button
+                    onClick={() => setKeywordsError(null)}
+                    className="p-1 hover:bg-red-100 rounded transition-colors"
+                  >
+                    <X className="w-3 h-3 text-red-400" />
+                  </button>
+                </div>
+              )}
+
+              {/* Current Result */}
+              {keywordsResult && !selectedKeywordsHistory && (
+                <div className="p-4 bg-gradient-to-br from-[#5c2d91]/5 to-[#b4a0ff]/5 rounded-xl border border-[#5c2d91]/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-semibold text-neutral-800">
+                      {keywordsResult.course_name}
+                    </span>
+                    <span className="text-xs text-neutral-400">
+                      ({keywordsResult.total_pages} pages)
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {keywordsResult.keywords.map((keyword, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1.5 bg-white rounded-lg text-sm text-[#5c2d91] border border-[#5c2d91]/20 font-medium"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Selected History Item */}
+              {selectedKeywordsHistory && (
+                <div className="p-4 bg-gradient-to-br from-[#5c2d91]/5 to-[#b4a0ff]/5 rounded-xl border border-[#5c2d91]/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#5c2d91]" />
+                      <span className="text-sm font-semibold text-neutral-800">
+                        {selectedKeywordsHistory.course_name}
+                      </span>
+                      <span className="text-xs text-neutral-400">
+                        ({selectedKeywordsHistory.total_pages} pages)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeleteKeywords(selectedKeywordsHistory.id)}
+                        className="p-1 hover:bg-red-100 rounded transition-colors"
+                        title="Delete this extraction"
+                      >
+                        <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedKeywordsHistory(null)}
+                        className="p-1 hover:bg-neutral-100 rounded transition-colors"
+                      >
+                        <X className="w-3 h-3 text-neutral-400" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-neutral-500 mb-3">
+                    {new Date(selectedKeywordsHistory.created_at).toLocaleDateString()} · {selectedKeywordsHistory.filename}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedKeywordsHistory.keywords.map((keyword, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1.5 bg-white rounded-lg text-sm text-[#5c2d91] border border-[#5c2d91]/20 font-medium"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* History */}
+              {keywordsHistory.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-neutral-700 mb-2 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Previous Extractions
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {keywordsHistory.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-3 rounded-lg border text-left transition-all hover:shadow-md relative group ${
+                          selectedKeywordsHistory?.id === item.id
+                            ? "border-[#5c2d91] bg-[#5c2d91]/5"
+                            : "border-neutral-200 hover:border-[#5c2d91]/50"
+                        }`}
+                      >
+                        <button
+                          onClick={() => {
+                            setSelectedKeywordsHistory(item);
+                            setKeywordsResult(null);
+                          }}
+                          className="w-full text-left"
+                        >
+                          <p className="text-sm font-medium text-neutral-800 truncate pr-6">
+                            {item.course_name}
+                          </p>
+                          <p className="text-xs text-neutral-400 truncate">
+                            {item.filename}
+                          </p>
+                          <p className="text-xs text-neutral-400 mt-1">
+                            {item.keywords.length} keywords · {new Date(item.created_at).toLocaleDateString()}
+                          </p>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteKeywords(item.id);
+                          }}
+                          className="absolute top-2 right-2 p-1 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
