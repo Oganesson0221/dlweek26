@@ -259,7 +259,7 @@ export const SubmissionsPage: React.FC = () => {
             getCourseOutline(course.code).catch(() => null),
             getCourseComponents(course.code).catch(() => []),
           ]);
-          
+
           return {
             id: course.id || course.code,
             fileName: `${course.code}_outline.pdf`,
@@ -282,14 +282,16 @@ export const SubmissionsPage: React.FC = () => {
             },
           };
         });
-        
+
         const loadedOutlines = await Promise.all(outlinesPromises);
-        setUploadedOutlines(loadedOutlines.filter(o => o.outline.components.length > 0));
+        setUploadedOutlines(
+          loadedOutlines.filter((o) => o.outline.components.length > 0),
+        );
       } catch (error) {
         console.error("Failed to load outlines from backend:", error);
       }
     };
-    
+
     loadOutlines();
   }, []);
 
@@ -419,21 +421,28 @@ export const SubmissionsPage: React.FC = () => {
   }, [emailModalAssignment, emailData, allAssignments]);
 
   /* ── Status toggle handler ── */
-  const handleStatusToggle = useCallback(async (assignmentId: string, currentStatus: string) => {
-    const newStatus = currentStatus === "submitted" ? "in_progress" : "submitted";
-    try {
-      await updateAssignmentStatus(assignmentId as unknown as number, newStatus);
-      // Refetch courses to update UI
-      refetchCourses();
-      setClippyMessages((prev) => [
-        `Assignment marked as ${newStatus === "submitted" ? "submitted" : "in progress"}!`,
-        ...prev.slice(0, 4),
-      ]);
-    } catch (error) {
-      console.error("Failed to update status:", error);
-      alert("Failed to update assignment status");
-    }
-  }, [refetchCourses]);
+  const handleStatusToggle = useCallback(
+    async (assignmentId: string, currentStatus: string) => {
+      const newStatus =
+        currentStatus === "submitted" ? "in_progress" : "submitted";
+      try {
+        await updateAssignmentStatus(
+          assignmentId as unknown as number,
+          newStatus,
+        );
+        // Refetch courses to update UI
+        refetchCourses();
+        setClippyMessages((prev) => [
+          `Assignment marked as ${newStatus === "submitted" ? "submitted" : "in progress"}!`,
+          ...prev.slice(0, 4),
+        ]);
+      } catch (error) {
+        console.error("Failed to update status:", error);
+        alert("Failed to update assignment status");
+      }
+    },
+    [refetchCourses],
+  );
 
   /* ── Template generation with Google Docs links ── */
   const handleTemplateGeneration = async (
@@ -1171,7 +1180,9 @@ export const SubmissionsPage: React.FC = () => {
                                 </button>
 
                                 <button
-                                  onClick={() => handleStatusToggle(a.id, a.status)}
+                                  onClick={() =>
+                                    handleStatusToggle(a.id, a.status)
+                                  }
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[12px] font-medium rounded-md hover:opacity-90 transition-colors"
                                 >
                                   <Check className="w-3 h-3" />

@@ -322,6 +322,7 @@ def save_wrong_questions(questions: List[Dict[str, Any]], user_id: str = "defaul
 def get_wrong_questions(user_id: str = "default", course_code: Optional[str] = None) -> List[Dict[str, Any]]:
     """Get all wrong questions for a user for weak topic practice, optionally filtered by course."""
     db = get_db()
+    query = {"user_id": user_id}
     if course_code:
         query["course_code"] = course_code
     docs = list(db.wrong_questions.find(query).sort("created_at", -1))

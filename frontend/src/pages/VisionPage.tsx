@@ -55,8 +55,8 @@ export const VisionPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-white">Vision Lab</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Upload submissions to review &amp; score, or analyze images with GPT-4o Vision — extract text, detect objects, and
-          describe scenes
+          Upload submissions to review &amp; score, or analyze images with
+          GPT-4o Vision — extract text, detect objects, and describe scenes
         </p>
       </div>
 

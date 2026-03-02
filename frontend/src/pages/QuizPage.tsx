@@ -65,7 +65,9 @@ export const QuizPage: React.FC = () => {
 
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [activeQuiz, setActiveQuiz] = useState<QuizQuestion[] | null>(null);
-  const [backendQuestions, setBackendQuestions] = useState<BackendQuizQuestion[] | null>(null); // Original backend questions for grading
+  const [backendQuestions, setBackendQuestions] = useState<
+    BackendQuizQuestion[] | null
+  >(null); // Original backend questions for grading
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
@@ -83,7 +85,8 @@ export const QuizPage: React.FC = () => {
   const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
   const [totalWrongCount, setTotalWrongCount] = useState(0);
   const [isLoadingWeakTopics, setIsLoadingWeakTopics] = useState(false);
-  const [isGeneratingImprovementQuiz, setIsGeneratingImprovementQuiz] = useState(false);
+  const [isGeneratingImprovementQuiz, setIsGeneratingImprovementQuiz] =
+    useState(false);
 
   // Quiz results from MongoDB
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
@@ -93,7 +96,9 @@ export const QuizPage: React.FC = () => {
   const [savedMaterials, setSavedMaterials] = useState<SavedMaterial[]>([]);
   const [isLoadingSavedMaterials, setIsLoadingSavedMaterials] = useState(false);
   const [isSavingMaterial, setIsSavingMaterial] = useState(false);
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
+    null,
+  );
 
   // Fetch weak topics, quiz results, and saved materials on mount
   useEffect(() => {
@@ -101,15 +106,15 @@ export const QuizPage: React.FC = () => {
       setIsLoadingWeakTopics(true);
       setIsLoadingSavedMaterials(true);
       setIsLoadingQuizResults(true);
-      
+
       try {
         const courseCode = selectedCourse || undefined;
         const [weakTopicsData, resultsData, materialsData] = await Promise.all([
           getWeakTopics("default", courseCode),
           getQuizResults("default", 10),
-          getSavedMaterials("default", courseCode)
+          getSavedMaterials("default", courseCode),
         ]);
-        
+
         setWeakTopics(weakTopicsData.weak_topics || []);
         setTotalWrongCount(weakTopicsData.total_wrong || 0);
         setQuizResults(resultsData.results || []);
@@ -128,7 +133,10 @@ export const QuizPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Start quiz with backend questions for grading
-  const startQuiz = (frontendQs: QuizQuestion[], backendQs?: BackendQuizQuestion[]) => {
+  const startQuiz = (
+    frontendQs: QuizQuestion[],
+    backendQs?: BackendQuizQuestion[],
+  ) => {
     setActiveQuiz(frontendQs);
     setBackendQuestions(backendQs || null);
     setCurrentQ(0);
@@ -153,8 +161,10 @@ export const QuizPage: React.FC = () => {
       // Build student answers - map answer text back to option label
       const studentAnswers = activeQuiz.map((q) => {
         const answerText = answers[q.id] || "";
-        const backendQ = backendQuestions.find(bq => bq.id === q.id);
-        const selectedOption = backendQ?.options?.find(opt => opt.text === answerText);
+        const backendQ = backendQuestions.find((bq) => bq.id === q.id);
+        const selectedOption = backendQ?.options?.find(
+          (opt) => opt.text === answerText,
+        );
         return {
           question_id: q.id,
           answer: selectedOption?.label || answerText, // Send label (A, B, C, D) for grading
@@ -162,21 +172,17 @@ export const QuizPage: React.FC = () => {
       });
 
       // Calculate time spent
-      const timeSpent = quizStartTime 
-        ? Math.round((new Date().getTime() - quizStartTime.getTime()) / 60000) 
+      const timeSpent = quizStartTime
+        ? Math.round((new Date().getTime() - quizStartTime.getTime()) / 60000)
         : 0;
 
       // Grade quiz and save to MongoDB
-      await gradeQuiz(
-        backendQuestions,
-        studentAnswers,
-        {
-          quiz_id: generatedQuiz?.id,
-          course_code: selectedCourse || undefined,
-          time_spent_minutes: timeSpent,
-          user_id: "default",
-        }
-      );
+      await gradeQuiz(backendQuestions, studentAnswers, {
+        quiz_id: generatedQuiz?.id,
+        course_code: selectedCourse || undefined,
+        time_spent_minutes: timeSpent,
+        user_id: "default",
+      });
     } catch (error) {
       console.error("Failed to grade quiz:", error);
       // Still show results even if grading fails
@@ -234,9 +240,16 @@ export const QuizPage: React.FC = () => {
       // Save material first for future reuse
       setIsSavingMaterial(true);
       try {
-        await saveMaterial(uploadedFile, selectedCourse || undefined, uploadedFile.name);
+        await saveMaterial(
+          uploadedFile,
+          selectedCourse || undefined,
+          uploadedFile.name,
+        );
         // Refresh saved materials list
-        const materialsData = await getSavedMaterials("default", selectedCourse || undefined);
+        const materialsData = await getSavedMaterials(
+          "default",
+          selectedCourse || undefined,
+        );
         setSavedMaterials(materialsData.materials || []);
       } catch (saveErr) {
         console.warn("Failed to save material:", saveErr);
@@ -271,11 +284,13 @@ export const QuizPage: React.FC = () => {
         materialId,
         undefined,
         undefined,
-        numQuestions
+        numQuestions,
       );
       setGeneratedQuiz(quiz);
     } catch (err: any) {
-      setUploadError(err.message || "Failed to generate quiz from saved material");
+      setUploadError(
+        err.message || "Failed to generate quiz from saved material",
+      );
     } finally {
       setIsGeneratingQuiz(false);
       setSelectedMaterialId(null);
@@ -317,7 +332,7 @@ export const QuizPage: React.FC = () => {
   // Quiz in progress
   if (activeQuiz && !showResults) {
     const q = activeQuiz[currentQ];
-    
+
     // Defensive check for undefined question
     if (!q) {
       return (
@@ -328,7 +343,7 @@ export const QuizPage: React.FC = () => {
         </PageWrapper>
       );
     }
-    
+
     return (
       <PageWrapper>
         <div className="max-w-3xl mx-auto space-y-5">
@@ -492,8 +507,10 @@ export const QuizPage: React.FC = () => {
               >
                 Back to Quizzes
               </button>
-            <button
-                onClick={() => startQuiz(activeQuiz, backendQuestions || undefined)}
+              <button
+                onClick={() =>
+                  startQuiz(activeQuiz, backendQuestions || undefined)
+                }
                 className="px-5 py-2.5 bg-gradient-to-r from-[#0078d4] to-[#50e6ff] text-white text-[13px] font-semibold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" /> Retry Quiz
@@ -745,16 +762,20 @@ export const QuizPage: React.FC = () => {
                           </p>
                           <p className="text-[11px] text-neutral-500">
                             {material.total_slides} slides
-                            {material.course_code && ` • ${material.course_code}`}
+                            {material.course_code &&
+                              ` • ${material.course_code}`}
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => handleGenerateFromSaved(material.id)}
-                        disabled={isGeneratingQuiz && selectedMaterialId === material.id}
+                        disabled={
+                          isGeneratingQuiz && selectedMaterialId === material.id
+                        }
                         className="px-3 py-1.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white text-[11px] font-semibold rounded-lg hover:shadow-md transition-all disabled:opacity-50"
                       >
-                        {isGeneratingQuiz && selectedMaterialId === material.id ? (
+                        {isGeneratingQuiz &&
+                        selectedMaterialId === material.id ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
                           "Generate Quiz"
@@ -807,14 +828,18 @@ export const QuizPage: React.FC = () => {
                   Quick Practice
                 </h3>
                 <p className="text-[12px] text-neutral-500">
-                  {generatedQuiz ? `${generatedQuiz.questions.length} questions generated` : "Upload materials to generate quiz"}
+                  {generatedQuiz
+                    ? `${generatedQuiz.questions.length} questions generated`
+                    : "Upload materials to generate quiz"}
                 </p>
               </div>
             </div>
             <button
               onClick={() => {
                 if (generatedQuiz) {
-                  const frontendQuestions = generatedQuiz.questions.map(convertToFrontendQuestion);
+                  const frontendQuestions = generatedQuiz.questions.map(
+                    convertToFrontendQuestion,
+                  );
                   const backendQs = generatedQuiz.questions.slice(0, 5);
                   startQuiz(frontendQuestions.slice(0, 5), backendQs);
                 } else {
@@ -823,7 +848,8 @@ export const QuizPage: React.FC = () => {
               }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[14px] font-semibold rounded-xl hover:shadow-lg transition-all"
             >
-              <Play className="w-4 h-4" /> {generatedQuiz ? "Start Quiz" : "Upload to Generate"}
+              <Play className="w-4 h-4" />{" "}
+              {generatedQuiz ? "Start Quiz" : "Upload to Generate"}
             </button>
           </div>
 
@@ -837,13 +863,13 @@ export const QuizPage: React.FC = () => {
                   Weak Area Focus
                 </h3>
                 <p className="text-[12px] text-neutral-500">
-                  {totalWrongCount > 0 
+                  {totalWrongCount > 0
                     ? `${totalWrongCount} wrong answers tracked`
                     : "Practice topics you've struggled with"}
                 </p>
               </div>
             </div>
-            
+
             {/* Show weak topics if available */}
             {isLoadingWeakTopics ? (
               <div className="flex items-center justify-center py-4">
@@ -852,8 +878,8 @@ export const QuizPage: React.FC = () => {
             ) : weakTopics.length > 0 ? (
               <div className="mb-3 space-y-2">
                 {weakTopics.slice(0, 3).map((topic) => (
-                  <div 
-                    key={topic.topic} 
+                  <div
+                    key={topic.topic}
                     className="flex items-center justify-between p-2 bg-red-50 border border-red-200 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
@@ -876,7 +902,7 @@ export const QuizPage: React.FC = () => {
                 </p>
               </div>
             )}
-            
+
             <button
               onClick={async () => {
                 if (totalWrongCount > 0) {
@@ -884,11 +910,18 @@ export const QuizPage: React.FC = () => {
                   try {
                     const courseCode = selectedCourse || undefined;
                     const quiz = await generateImprovementQuiz(courseCode);
-                    const frontendQuestions = quiz.questions.map(convertToFrontendQuestion);
+                    const frontendQuestions = quiz.questions.map(
+                      convertToFrontendQuestion,
+                    );
                     startQuiz(frontendQuestions, quiz.questions);
                   } catch (error) {
-                    console.error("Failed to generate improvement quiz:", error);
-                    setUploadError("Failed to generate improvement quiz. Please try again.");
+                    console.error(
+                      "Failed to generate improvement quiz:",
+                      error,
+                    );
+                    setUploadError(
+                      "Failed to generate improvement quiz. Please try again.",
+                    );
                   } finally {
                     setIsGeneratingImprovementQuiz(false);
                   }
@@ -932,11 +965,15 @@ export const QuizPage: React.FC = () => {
             ) : quizResults.length === 0 ? (
               <div className="text-center py-8 text-neutral-500">
                 <Trophy className="w-8 h-8 mx-auto mb-2 text-neutral-300" />
-                <p className="text-[13px]">No quiz results yet. Take a quiz to see your progress!</p>
+                <p className="text-[13px]">
+                  No quiz results yet. Take a quiz to see your progress!
+                </p>
               </div>
             ) : (
               quizResults.map((result) => {
-                const course = courses.find((c) => c.code === result.course_code);
+                const course = courses.find(
+                  (c) => c.code === result.course_code,
+                );
                 const scoreRounded = Math.round(result.score);
                 return (
                   <div
@@ -956,7 +993,9 @@ export const QuizPage: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-[14px] font-semibold text-neutral-800">
-                        {result.course_code ? `${result.course_code} Quiz` : "Quiz"}
+                        {result.course_code
+                          ? `${result.course_code} Quiz`
+                          : "Quiz"}
                       </p>
                       <div className="flex items-center gap-3 text-[12px] text-neutral-500 mt-1">
                         <span className="flex items-center gap-1">
@@ -967,7 +1006,8 @@ export const QuizPage: React.FC = () => {
                           <span>{result.time_spent_minutes} min</span>
                         )}
                         <span className="font-medium text-[#0078d4]">
-                          {result.correct_answers}/{result.total_questions} correct
+                          {result.correct_answers}/{result.total_questions}{" "}
+                          correct
                         </span>
                       </div>
                     </div>
