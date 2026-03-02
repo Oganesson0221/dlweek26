@@ -30,7 +30,6 @@ Microsoft CoursePilot is an intelligent learning management system that helps st
 - **Framework**: FastAPI (Python 3.11+)
 - **Databases**: 
   - MongoDB (notes, summaries, keywords, concept maps)
-  - SQLite (academic data via SQLModel)
 - **AI Integration**: OpenAI API (GPT-4 for summaries, quizzes, concept maps)
 - **File Processing**: PDF and PPTX parsing capabilities
 
@@ -167,7 +166,7 @@ npm run build
 npm run preview
 ```
 
-## 🌐 Chrome Extension Setup
+## 🌐 Clippy Chrome Extension Setup
 
 ### Installation
 
@@ -204,7 +203,7 @@ dlweek26/
 │   ├── app/
 │   │   ├── main.py              # FastAPI application entry point
 │   │   ├── core/                # Core configuration (CORS, logging, config)
-│   │   ├── db/                  # Database connections (MongoDB, SQLite)
+│   │   ├── db/                  # Database connections (MongoDB)
 │   │   ├── models/              # SQLModel database models
 │   │   ├── schemas/             # Pydantic schemas for API validation
 │   │   ├── routers/             # API route handlers
@@ -355,14 +354,10 @@ npm install docx pptxgenjs
 - Ensure all icon files exist in `frontend/extension/icons/`
 - Check Chrome console for errors at `chrome://extensions/`
 
-## 📝 License
-
-This project is part of an academic assignment for CS course.
-
 ## 👥 Authors
 
-- Team Members: Mahi, Nicole, Shanshan
-- Organization: Oganesson0221
+- Team Members: Mahi, Nicole, Rishika, Shaivi, Shanshan
+- Organization: DLWeek & Microsoft
 
 ## 🙏 Acknowledgments
 
@@ -373,6 +368,6 @@ This project is part of an academic assignment for CS course.
 
 ---
 
-**Made with 💙 by the Microsoft CoursePilot Team**
+**Made with 💙 by the Epoch Warriors**
 
 For more information, visit the [API Documentation](http://localhost:8000/docs) after starting the backend server.
