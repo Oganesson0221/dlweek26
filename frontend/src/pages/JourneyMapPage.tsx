@@ -11,9 +11,10 @@ import {
   Zap,
   TrendingUp,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { courses, semesterInfo } from "@/data/microsoftCoursePilotData";
+import { useCoursesBackend } from "@/hooks/useCoursesBackend";
 import type { Course, CourseTopic, Checkpoint } from "@/types";
 import {
   formatDate,
@@ -85,28 +86,110 @@ function getNodePositions(count: number) {
 }
 
 export const JourneyMapPage: React.FC = () => {
-  const [selectedCourseId, setSelectedCourseId] = useState(
-    courses[0]?.id ?? "",
-  );
+  // Fetch courses from MongoDB backend
+  const { courses = [], loading, error } = useCoursesBackend();
+  
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [expandedNode, setExpandedNode] = useState<number | null>(null);
   const [zoom, setZoom] = useState(100);
 
-  const course = courses.find((c) => c.id === selectedCourseId)!;
-  const route = useMemo(() => buildRoute(course), [course]);
-  const positions = useMemo(
-    () => getNodePositions(route.length),
-    [route.length],
-  );
-  const completedTopics = getCompletedTopicsCount(course);
-  const totalTopics = course.topics.length;
-  const estRemaining = getEstimatedTimeRemaining(course);
-  const svgH =
-    positions.length > 0 ? positions[positions.length - 1].y + 60 : 300;
+  // Set initial course once data loads
+  React.useEffect(() => {
+    if (!loading && courses && courses.length > 0 && !selectedCourseId) {
+      console.log("[JourneyMap] Setting initial course:", courses[0].id);
+      setSelectedCourseId(courses[0].id);
+    }
+  }, [loading, courses, selectedCourseId]);
 
-  // Count weak areas (mastery < 50%)
-  const weakAreas = course.topics.filter(t => !t.completed && t.mastery < 50).length;
+  console.log("[JourneyMap] Render state:", { 
+    loading,
+    error,
+    courseCount: courses?.length || 0,
+    selectedCourseId,
+    courseIds: courses?.map(c => c.id)
+  });
 
-  return (
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <p className="text-slate-600">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    console.error("[JourneyMap] Error:", error);
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4 text-red-600">
+          <AlertTriangle className="w-8 h-8" />
+          <p>Failed to load courses: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state
+  if (!courses || courses.length === 0) {
+    console.warn("[JourneyMap] No courses available");
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-slate-600">No courses found. Please add a course first.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Find the course
+  const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
+  
+  if (!course) {
+    console.error("[JourneyMap] Course not found:", selectedCourseId);
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4 text-red-600">
+          <AlertTriangle className="w-8 h-8" />
+          <p>Course not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Safely handle course data - use defaults if missing
+  const topicsArray = Array.isArray(course.topics) ? course.topics : [];
+  const checkpointsArray = Array.isArray(course.checkpoints) ? course.checkpoints : [];
+  
+  console.log("[JourneyMap] Selected course:", { 
+    id: course.id, 
+    name: course.name, 
+    topicsCount: topicsArray.length,
+    checkpointsCount: checkpointsArray.length
+  });
+
+  try {
+    // Safely build route with error handling
+    let route: RouteNode[] = [];
+    try {
+      route = buildRoute(course);
+    } catch (e) {
+      console.error("[JourneyMap] Error building route:", e);
+      route = [];
+    }
+
+    const positions = getNodePositions(route.length);
+    const completedTopics = getCompletedTopicsCount(course);
+    const totalTopics = Math.max(1, topicsArray.length);
+    const estRemaining = getEstimatedTimeRemaining(course);
+    const svgH = positions.length > 0 ? positions[positions.length - 1].y + 60 : 300;
+    const weakAreas = topicsArray.filter(t => !t.completed && t.mastery < 50).length;
+
+    return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20 selection:bg-indigo-100 relative">
       {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -505,6 +588,18 @@ export const JourneyMapPage: React.FC = () => {
       </div>
     </div>
   );
+  } catch (err) {
+    console.error("[JourneyMap] Render error:", err);
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4 text-red-600">
+          <AlertTriangle className="w-8 h-8" />
+          <p>Error rendering course journey</p>
+          <p className="text-sm text-slate-500">{String(err)}</p>
+        </div>
+      </div>
+    );
+  }
 };
 
 function TopicDetail({

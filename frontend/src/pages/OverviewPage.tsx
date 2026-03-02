@@ -16,10 +16,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  courses as mockCourses,
-  semesterInfo as mockSemesterInfo,
-} from "@/data/microsoftCoursePilotData";
 import { useCoursesBackend } from "@/hooks/useCoursesBackend";
 import {
   getDaysUntil,
@@ -34,22 +30,13 @@ interface OverviewPageProps {
 export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
   const [showDeadlinePopup, setShowDeadlinePopup] = useState(true);
 
-  // Use backend courses with fallback to mock data
+  // Fetch courses from MongoDB backend
   const {
-    courses: backendCourses,
-    semesterInfo: backendSemesterInfo,
+    courses,
+    semesterInfo,
     loading,
     error,
   } = useCoursesBackend();
-  const courses = backendCourses.length > 0 ? backendCourses : mockCourses;
-  const semesterInfo =
-    backendCourses.length > 0
-      ? {
-          ...mockSemesterInfo,
-          currentWeek: backendSemesterInfo.currentWeek,
-          totalWeeks: backendSemesterInfo.totalWeeks,
-        }
-      : mockSemesterInfo;
 
   // Calculate current date info
   const today = new Date(); // Use actual date
@@ -111,6 +98,46 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
     );
     return { weekNum, start, end, checkpoints: weekCheckpoints };
   });
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <p className="text-slate-600">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4 text-red-600">
+          <AlertCircle className="w-8 h-8" />
+          <p>Failed to load courses: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no courses  
+  if (courses.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto pb-20">
+        <div className="flex flex-col gap-6 mt-10">
+          <h1 className="text-5xl font-black text-slate-900 tracking-tight">
+            Welcome, <span className="text-indigo-600">Student.</span>
+          </h1>
+          <div className="bg-slate-100 rounded-[32px] p-8 text-center">
+            <p className="text-slate-600">No courses found yet. Please add courses to get started.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto pb-20 selection:bg-indigo-100 relative">
