@@ -34,6 +34,7 @@ import {
   Globe,
   Check,
   RefreshCcw,
+  Edit3,
 } from "lucide-react";
 import { courses as mockCourses } from "@/data/learnLensData";
 import { useCoursesBackend } from "@/hooks/useCoursesBackend";
@@ -46,6 +47,7 @@ import {
 } from "@/utils/helpers";
 import { renderMarkdownBold } from "@/utils/markdownHelpers";
 import { ClippyAssistant } from "@/components/ClippyAssistant";
+import { TemplateEditor } from "@/components/TemplateEditor";
 import {
   generateAssignmentTemplateWithOpenAI,
   generateSubmissionGuidelinesWithOpenAI,
@@ -249,6 +251,19 @@ export const SubmissionsPage: React.FC = () => {
   const [templateLoading, setTemplateLoading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* ── Template Editor State ── */
+  const [editorAssignment, setEditorAssignment] = useState<{
+    id: string;
+    title: string;
+    courseCode: string;
+    description?: string;
+    dueDate?: string;
+    weight?: number;
+    instructor?: string;
+    initialContent?: string;
+    component?: CourseComponent;
+  } | null>(null);
+
   // Load outlines from backend on mount
   useEffect(() => {
     const loadOutlines = async () => {
@@ -444,7 +459,7 @@ export const SubmissionsPage: React.FC = () => {
     [refetchCourses],
   );
 
-  /* ── Template generation with Google Docs links ── */
+  /* ── Template generation - Opens built-in editor ── */
   const handleTemplateGeneration = async (
     assignmentTitle: string,
     type: TemplateType,
@@ -460,52 +475,50 @@ export const SubmissionsPage: React.FC = () => {
           }
         : undefined;
 
+      // Generate initial template content
+      let initialContent = "";
       if (type === "assignment" && outlineComponent && courseInfo) {
-        // Generate template with OpenAI
-        const template = await generateAssignmentTemplateWithOpenAI(
-          outlineComponent,
-          courseInfo,
-        );
-
-        // Open in Google Docs
-        const url = generateGoogleDocsUrl(
-          `${courseInfo.code}_${outlineComponent.name}`,
-          template,
-        );
-        window.open(url, "_blank");
-
-        setClippyMessages((prev) => [
-          `Template for "${outlineComponent.name}" opened in Google Docs!`,
-          ...prev.slice(0, 4),
-        ]);
+        try {
+          initialContent = await generateAssignmentTemplateWithOpenAI(
+            outlineComponent,
+            courseInfo,
+          );
+        } catch {
+          initialContent = generateFallbackTemplate(
+            assignmentTitle,
+            type,
+            outlineComponent,
+          );
+        }
       } else {
-        // Use fallback template
-        const template = generateFallbackTemplate(
+        initialContent = generateFallbackTemplate(
           assignmentTitle,
           type,
           outlineComponent,
         );
-        const url =
-          type === "pptx"
-            ? generateGoogleSlidesUrl(assignmentTitle, template)
-            : generateGoogleDocsUrl(assignmentTitle, template);
-        window.open(url, "_blank");
       }
+
+      // Open the built-in editor with the generated template
+      setEditorAssignment({
+        id: `temp-${Date.now()}`, // Generate a temporary ID for new templates
+        title: assignmentTitle,
+        courseCode: courseInfo?.code || selectedCourse || "COURSE",
+        description: outlineComponent?.description,
+        dueDate: outlineComponent?.dueDate,
+        weight: outlineComponent?.weight,
+        instructor:
+          courseInfo?.instructor || selectedOutlineData?.outline.instructor,
+        initialContent,
+        component: outlineComponent,
+      });
+
+      setClippyMessages((prev) => [
+        `Template for "${assignmentTitle}" opened in editor!`,
+        ...prev.slice(0, 4),
+      ]);
     } catch (error) {
       console.error("Template generation failed:", error);
-      alert("Failed to generate template. Opening fallback template...");
-
-      // Fallback to basic template
-      const template = generateFallbackTemplate(
-        assignmentTitle,
-        type,
-        outlineComponent,
-      );
-      const url =
-        type === "pptx"
-          ? generateGoogleSlidesUrl(assignmentTitle, template)
-          : generateGoogleDocsUrl(assignmentTitle, template);
-      window.open(url, "_blank");
+      alert("Failed to generate template. Please try again.");
     } finally {
       setTemplateLoading(null);
       setTemplateDropdown(null);
@@ -613,12 +626,15 @@ export const SubmissionsPage: React.FC = () => {
       );
       setGuidelines(guidelinesText);
 
-      // Open in Google Docs
-      const url = generateGoogleDocsUrl(
-        `${outline.courseCode}_Submission_Guidelines`,
-        guidelinesText,
-      );
-      window.open(url, "_blank");
+      // Open in the built-in editor instead of Google Docs
+      setEditorAssignment({
+        id: `guidelines-${Date.now()}`,
+        title: `${outline.courseCode} Submission Guidelines`,
+        courseCode: outline.courseCode,
+        description: "Course submission guidelines and requirements",
+        instructor: outline.outline.instructor,
+        initialContent: guidelinesText,
+      });
 
       setClippyMessages((prev) => [
         `Submission guidelines generated for ${outline.courseCode}!`,
@@ -1181,6 +1197,24 @@ export const SubmissionsPage: React.FC = () => {
 
                                 <button
                                   onClick={() =>
+                                    setEditorAssignment({
+                                      id: a.id,
+                                      title: a.title,
+                                      courseCode: a.courseCode,
+                                      description: a.description,
+                                      dueDate: a.dueDate,
+                                      weight: a.weight,
+                                      instructor: a.instructor,
+                                    })
+                                  }
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white text-[12px] font-medium rounded-md hover:opacity-90 transition-colors"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                  Open Editor
+                                </button>
+
+                                <button
+                                  onClick={() =>
                                     handleStatusToggle(a.id, a.status)
                                   }
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[12px] font-medium rounded-md hover:opacity-90 transition-colors"
@@ -1553,6 +1587,21 @@ export const SubmissionsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Template Editor */}
+      {editorAssignment && (
+        <TemplateEditor
+          assignmentId={editorAssignment.id}
+          assignmentTitle={editorAssignment.title}
+          courseCode={editorAssignment.courseCode}
+          description={editorAssignment.description}
+          dueDate={editorAssignment.dueDate}
+          weight={editorAssignment.weight}
+          instructorName={editorAssignment.instructor}
+          initialContent={editorAssignment.initialContent}
+          onClose={() => setEditorAssignment(null)}
+        />
       )}
     </div>
   );

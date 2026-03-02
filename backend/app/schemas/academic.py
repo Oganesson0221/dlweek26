@@ -47,7 +47,7 @@ class StartDateSuggestRequest(BaseModel):
 
 
 class TemplateGenRequest(BaseModel):
-    assignment_id: int
+    assignment_id: str  # Changed to str to support MongoDB ObjectId
 
 
 class DraftHookRequest(BaseModel):

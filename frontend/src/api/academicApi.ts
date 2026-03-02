@@ -127,14 +127,14 @@ export async function uploadCourseOutline(body: {
   return res.data;
 }
 
-export async function generateWord(assignmentId: number) {
+export async function generateWord(assignmentId: string) {
   const res = await apiClient.post(`/academic/templates/word`, {
     assignment_id: assignmentId,
   });
   return res.data;
 }
 
-export async function generatePpt(assignmentId: number) {
+export async function generatePpt(assignmentId: string) {
   const res = await apiClient.post(`/academic/templates/ppt`, {
     assignment_id: assignmentId,
   });
@@ -144,6 +144,158 @@ export async function generatePpt(assignmentId: number) {
 export function downloadUrl(downloadPath: string) {
   const base = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
   return `${base}${downloadPath}`;
+}
+
+// ============ EDITOR & PROGRESS ENDPOINTS ============
+
+export interface ProgressSection {
+  name: string;
+  status: "not_started" | "in_progress" | "completed";
+  completion_percent: number;
+  feedback: string;
+}
+
+export interface RubricBreakdown {
+  criteria: string;
+  estimated_points: number;
+  max_points: number;
+  feedback: string;
+}
+
+export interface ProgressAnalysis {
+  overall_progress: number;
+  sections: ProgressSection[];
+  strengths: string[];
+  improvements: string[];
+  estimated_score?: number;
+  rubric_breakdown?: RubricBreakdown[];
+}
+
+export interface TemplateSection {
+  name: string;
+  description: string;
+  placeholder: string;
+  points?: number;
+}
+
+export interface TemplateStructure {
+  title: string;
+  sections: TemplateSection[];
+  guidelines: string[];
+  checklist: string[];
+}
+
+export interface EmailDraft {
+  subject: string;
+  body: string;
+}
+
+export async function analyzeProgress(
+  assignmentId: string,
+  content: string,
+  templateStructure?: TemplateStructure,
+): Promise<ProgressAnalysis> {
+  // Sanitize template structure to ensure it's JSON-serializable
+  const sanitizedTemplate = templateStructure
+    ? {
+        title: templateStructure.title || "",
+        sections: (templateStructure.sections || []).map((s) => ({
+          name: s.name || "",
+          description: s.description || "",
+          placeholder: s.placeholder || "",
+        })),
+        guidelines: templateStructure.guidelines || [],
+        checklist: templateStructure.checklist || [],
+      }
+    : undefined;
+
+  const res = await apiClient.post("/academic/editor/analyze-progress", {
+    assignment_id: assignmentId,
+    content: String(content || ""),
+    template_structure: sanitizedTemplate,
+  });
+  return res.data;
+}
+
+export async function generateEmailDraft(
+  assignmentId: string,
+  emailType: string = "submission_confirmation",
+  studentName: string = "Student",
+): Promise<EmailDraft> {
+  const res = await apiClient.post("/academic/editor/generate-email", {
+    assignment_id: assignmentId,
+    email_type: emailType,
+    student_name: studentName,
+  });
+  return res.data;
+}
+
+export async function generateTemplateStructure(
+  assignmentId: string,
+  templateType: string = "word",
+): Promise<TemplateStructure> {
+  const res = await apiClient.post(
+    "/academic/editor/generate-template-structure",
+    {
+      assignment_id: assignmentId,
+      template_type: templateType,
+    },
+  );
+  return res.data;
+}
+
+export async function getTemplateProgress(assignmentId: string) {
+  const res = await apiClient.get(
+    `/academic/editor/assignment/${assignmentId}/template-progress`,
+  );
+  return res.data;
+}
+
+export async function saveTemplateProgress(
+  assignmentId: string,
+  data: {
+    content: string;
+    template_structure?: TemplateStructure;
+    progress_stats?: ProgressAnalysis;
+  },
+) {
+  // Sanitize data to ensure it's JSON-serializable
+  const sanitizedData = {
+    content: String(data.content || ""),
+    template_structure: data.template_structure
+      ? {
+          title: data.template_structure.title || "",
+          sections: (data.template_structure.sections || []).map((s) => ({
+            name: s.name || "",
+            description: s.description || "",
+            placeholder: s.placeholder || "",
+          })),
+          guidelines: data.template_structure.guidelines || [],
+          checklist: data.template_structure.checklist || [],
+        }
+      : undefined,
+    progress_stats: data.progress_stats
+      ? {
+          overall_progress: data.progress_stats.overall_progress || 0,
+          sections: (data.progress_stats.sections || []).map((s) => ({
+            name: s.name || "",
+            status: s.status || "not_started",
+            completion_percent: s.completion_percent || 0,
+            feedback: s.feedback || "",
+          })),
+          strengths: data.progress_stats.strengths || [],
+          improvements: data.progress_stats.improvements || [],
+          estimated_score: data.progress_stats.estimated_score,
+          rubric_breakdown: data.progress_stats.rubric_breakdown,
+        }
+      : undefined,
+  };
+
+  const res = await apiClient.post(
+    `/academic/editor/assignment/${assignmentId}/save-progress`,
+    sanitizedData,
+  );
+  return res.data;
 }
 
 // ============ PROGRESS ENDPOINTS ============
