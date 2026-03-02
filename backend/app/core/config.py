@@ -1,0 +1,51 @@
+import os
+from pathlib import Path
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
+
+# Find .env file - look up from current file to find project root
+def find_env_file():
+    current = Path(__file__).resolve().parent
+    for _ in range(5):  # Search up 5 levels
+        env_path = current / ".env"
+        if env_path.exists():
+            return str(env_path)
+        current = current.parent
+    return ".env"
+
+ENV_FILE = find_env_file()
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding="utf-8", extra="allow")
+
+    APP_NAME: str = "Study Navigator API"
+    ENV: str = os.getenv("ENV", "dev")
+
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./study_navigator.db")
+
+    STORAGE_ROOT: str = "./storage"
+    UPLOAD_DIR: str = "./storage/uploads"
+    GENERATED_DIR: str = "./storage/generated"
+    IMAGE_DIR: str = "./storage/images"
+    OPENAI_API_KEY: str | None = None
+    DEFAULT_MODEL: str = "gpt-4.1"
+    TEMPERATURE: float = 0.2
+    reminder_default_leads_hours: List[int] = [168, 72, 24]  
+    # 168 = 7 days
+    # 72 = 3 days
+    # 24 = 1 day
+    
+    # AI Settings
+    primary_model: str = os.getenv("PRIMARY_MODEL", "gpt-4o")
+    
+    # MongoDB Settings
+    MONGODB_URI: str = os.getenv("VITE_MONGODB_URI", "")
+    OPENROUTER_API: str = os.getenv("OPENROUTER_API", "")
+
+
+settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings

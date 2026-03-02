@@ -1,0 +1,38 @@
+.env
+# Dependencies
+frontend/node_modules
+frontend/package-lock.json
+frontend/yarn.lock
+
+# Build
+frontend/dist
+frontend/dist-ssr    
+*.local
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+frontend/.vscode
+frontend/.idea
+*.swp
+*.swo
+*~
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Python
+venv
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python

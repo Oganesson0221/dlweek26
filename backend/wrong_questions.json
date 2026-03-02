@@ -1,0 +1,73 @@
+[
+  {
+    "id": "q1",
+    "type": "mcq",
+    "question": "What is the primary goal of machine learning systems?",
+    "topic": "Introduction to Machine Learning",
+    "difficulty": "medium",
+    "marks": 1,
+    "options": [
+      {
+        "label": "A",
+        "text": "To memorize the training data",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "To use explicit, rules-based logic",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "To generalize well on new, unseen data",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "To rely solely on human input",
+        "is_correct": false
+      }
+    ],
+    "sample_answer": null,
+    "marking_criteria": null,
+    "explanation": "The ultimate goal of machine learning is to generalize well on new, unseen data rather than just memorizing the training data.",
+    "hint": null,
+    "slide_reference": "Slide 1"
+  },
+  {
+    "id": "q4",
+    "type": "mcq",
+    "question": "What type of target variable is used in a regression task?",
+    "topic": "Supervised Learning: Classification vs. Regression",
+    "difficulty": "medium",
+    "marks": 1,
+    "options": [
+      {
+        "label": "A",
+        "text": "Categorical",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Discrete",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Continuous",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "Binary",
+        "is_correct": false
+      }
+    ],
+    "sample_answer": null,
+    "marking_criteria": null,
+    "explanation": "Regression tasks involve target variables that are continuous or numerical, such as predicting house prices.",
+    "hint": null,
+    "slide_reference": "Slide 3"
+  }
+
+]
