@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 import os
+import sys
+
+# Ensure backend directory is in path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.core.cors import setup_cors
@@ -18,6 +22,10 @@ from app.routers.academic.progress import router as progress_router
 from app.routers.ai.course_tools import router as course_tools_router
 from app.routers.ai.improving import router as improving_router
 from app.routers.ai.quiz_gen import router as quiz_gen_router
+from app.routers.ai.file_upload import router as file_upload_router
+
+# Notes router (MongoDB)
+from app.routers.notes import router as notes_router
 
 
 def create_app() -> FastAPI:
@@ -53,6 +61,10 @@ def create_app() -> FastAPI:
     app.include_router(course_tools_router)
     app.include_router(improving_router)
     app.include_router(quiz_gen_router)
+    app.include_router(file_upload_router)
+
+    # Mount Notes router (MongoDB)
+    app.include_router(notes_router)
 
 
 

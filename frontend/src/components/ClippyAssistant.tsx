@@ -13,8 +13,11 @@ import {
   Volume2,
   VolumeX,
   Send,
+  Paperclip,
+  CheckCircle,
 } from "lucide-react";
 import { renderMarkdownBold } from "@/utils/markdownHelpers";
+import { getContentForClippy } from "@/api/quizApi";
 
 interface ClippyMessage {
   id: string;
@@ -117,9 +120,64 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Document context state
+  const [documentContext, setDocumentContext] = useState<{
+    filename: string;
+    content: string;
+    totalPages: number;
+  } | null>(null);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle document upload for context
+  const handleDocumentUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = [".pdf", ".pptx"];
+    const fileExt = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+
+    if (!validTypes.includes(fileExt)) {
+      setError("Please upload a PDF or PowerPoint (.pptx) file");
+      return;
+    }
+
+    setIsUploadingDoc(true);
+    setError(null);
+
+    try {
+      const response = await getContentForClippy(file);
+      setDocumentContext({
+        filename: response.filename,
+        content: response.content,
+        totalPages: response.total_pages,
+      });
+
+      // Add a system message about the uploaded document
+      const docMessage: ClippyMessage = {
+        id: Date.now().toString(),
+        role: "assistant",
+        text: `I've loaded "${response.filename}" (${response.total_pages} pages). Feel free to ask me questions about it!`,
+      };
+      setChatMessages((prev) => [...prev, docMessage]);
+    } catch (err: any) {
+      setError(err.message || "Failed to process document");
+    } finally {
+      setIsUploadingDoc(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Clear document context
+  const clearDocumentContext = () => {
+    setDocumentContext(null);
+  };
 
   // Initialize speech recognition
   useEffect(() => {
@@ -309,6 +367,17 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
 
       const progressContext = `Student progress: ${stats.submitted}/${stats.total} assignments submitted (${Math.round((stats.submitted / stats.total) * 100)}% completion rate).`;
 
+      // Document context if available
+      const documentContextSection = documentContext
+        ? `\n\nUploaded Document Context:
+The student has uploaded "${documentContext.filename}" (${documentContext.totalPages} pages).
+Document content:
+${documentContext.content.slice(0, 8000)}
+${documentContext.content.length > 8000 ? "\n[...content truncated for context window...]" : ""}
+
+You can answer questions about this document using the content above.`
+        : "";
+
       const systemPrompt = `You are Clippy, a friendly and helpful academic assistant for students. You help with:
 - Study tips and strategies
 - Assignment planning and time management
@@ -318,9 +387,9 @@ export const ClippyAssistant: React.FC<ClippyAssistantProps> = ({
 
 Current context:
 ${assignmentContext}
-${progressContext}
+${progressContext}${documentContextSection}
 
-Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, encouraging tone. If asked about specific assignments, use the context provided.`;
+Keep responses concise (2-3 sentences max for general questions, or longer if explaining document content), friendly, and helpful. Use a warm, encouraging tone. If asked about specific assignments or documents, use the context provided.`;
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -580,6 +649,59 @@ Keep responses concise (2-3 sentences max), friendly, and helpful. Use a warm, e
                   <p className="text-[10px] text-red-600">{error}</p>
                 </div>
               )}
+
+              {/* Document Upload Section */}
+              <div className="mt-3 pt-3 border-t border-neutral-200">
+                <input
+                  ref={docInputRef}
+                  type="file"
+                  accept=".pdf,.pptx"
+                  onChange={handleDocumentUpload}
+                  className="hidden"
+                />
+
+                {documentContext ? (
+                  <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-[11px] font-medium text-green-800 truncate max-w-[150px]">
+                          {documentContext.filename}
+                        </p>
+                        <p className="text-[9px] text-green-600">
+                          {documentContext.totalPages} pages loaded
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={clearDocumentContext}
+                      className="p-1 text-green-600 hover:text-green-800 hover:bg-green-100 rounded"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => docInputRef.current?.click()}
+                    disabled={isUploadingDoc}
+                    className="w-full flex items-center justify-center gap-2 p-2 bg-neutral-50 border border-neutral-200 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:border-neutral-300 transition-colors disabled:opacity-50"
+                  >
+                    {isUploadingDoc ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span className="text-[11px]">Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Paperclip className="w-3.5 h-3.5" />
+                        <span className="text-[11px]">
+                          Upload document for context
+                        </span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Tips */}

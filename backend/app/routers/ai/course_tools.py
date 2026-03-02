@@ -9,7 +9,7 @@ from fastapi import HTTPException
 import re
 import json
 
-client = get_ai_client()
+# Client is lazy-loaded via get_ai_client()
 
 router = APIRouter(prefix="/ai/tools", tags=["AI Course Tools"])
 
@@ -32,6 +32,7 @@ async def generate_summary(slides: List[SlideContent]) -> str:
     Reads the parsed slides and generates a cohesive, high-level summary paragraph.
     """
     settings = get_settings()
+    client = get_ai_client()
     content_string = build_content_string(slides)
 
     prompt = f"""You are an expert academic tutor.
@@ -60,6 +61,7 @@ async def extract_key_points(slides: List[SlideContent]) -> List[str]:
     Returns a list of strings.
     """
     settings = get_settings()
+    client = get_ai_client()
     content_string = build_content_string(slides)
 
     prompt = f"""You are an expert academic tutor.
@@ -97,6 +99,7 @@ async def generate_concepts(slides: List[SlideContent]) -> List[Dict[str, str]]:
     Returns a list of dictionaries containing 'term' and 'definition'.
     """
     settings = get_settings()
+    client = get_ai_client()
     content_string = build_content_string(slides)
 
     prompt = f"""You are an expert academic tutor.

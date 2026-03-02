@@ -8,10 +8,11 @@ from app.services.ai.prompt_banks import IMPROVEMENT_SYSTEM_PROMPT
 from app.services.ai.quiz_services import _parse_gpt_response, _build_question_objects
 from app.schemas import QuizResponse
 
-client = get_ai_client()
+# Client is lazy-loaded via get_ai_client()
 
 async def generate_improvement_quiz(wrong_file_path: str = "wrong_questions.json") -> QuizResponse:
     settings = get_settings()
+    client = get_ai_client()
     
     if not os.path.exists(wrong_file_path):
         raise HTTPException(404, "No wrong questions found.")

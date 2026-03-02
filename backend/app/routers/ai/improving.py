@@ -9,7 +9,8 @@ from datetime import datetime
 from app.services.ai.openai_key import get_ai_client
 from fastapi import HTTPException
 from app.services.ai.quiz_services import _parse_gpt_response, _build_question_objects
-client = get_ai_client()
+
+# Client is lazy-loaded via get_ai_client()
 
 router = APIRouter(prefix="/ai/improve", tags=["AI Adaptive Learning"])
 
@@ -37,6 +38,7 @@ async def generate_improvement_quiz(wrong_file_path: str = "wrong_questions.json
     Reads the user's previously missed questions and generates a targeted improvement quiz.
     """
     settings = get_settings()
+    client = get_ai_client()
 
     # 1. Load the missed questions
     if not os.path.exists(wrong_file_path):

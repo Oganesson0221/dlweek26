@@ -12,7 +12,7 @@ from app.services.ai.prompt_banks import QUIZ_SYSTEM_PROMPT, GRADING_PROMPT_TEMP
 from app.schemas import QuizQuestion, MCQOption, QuizResponse, QuestionType, DifficultyLevel, QuizGenerateRequest, StudentAnswer
 from app.services.file_parser import SlideContent, build_content_string
 
-client = get_ai_client()
+# Client is now lazy-loaded via get_ai_client()
 
 def _parse_gpt_response(raw: str) -> dict:
     cleaned = re.sub(r"```(?:json)?", "", raw).replace("```", "").strip()
@@ -111,6 +111,7 @@ def _compute_scores(quiz_questions: List[QuizQuestion], student_answers: List[St
 
 async def generate_quiz_from_slides(slides: List[SlideContent], request: QuizGenerateRequest, filename: str) -> QuizResponse:
     settings = get_settings()
+    client = get_ai_client()
     content_string = build_content_string(slides)
     topics = [s.heading for s in slides if s.heading]
     
@@ -146,6 +147,7 @@ async def generate_quiz_from_slides(slides: List[SlideContent], request: QuizGen
 
 async def grade_and_record_quiz(quiz_questions: List[QuizQuestion], student_answers: List[StudentAnswer], wrong_file_path: str = "wrong_questions.json") -> dict:
     settings = get_settings()
+    client = get_ai_client()
     
     q_data = [{"id": q.id, "options": [o.model_dump() for o in (q.options or [])], "marks_available": q.marks} for q in quiz_questions]
     a_data = [{"question_id": a.question_id, "student_answer": a.answer} for a in student_answers]

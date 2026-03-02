@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Upload,
   Play,
@@ -13,18 +13,67 @@ import {
   Trophy,
   Clock,
   Zap,
+  Loader2,
+  FileText,
+  X,
 } from "lucide-react";
-import { courses, quizQuestions, quizResults } from "@/data/learnLensData";
+import {
+  courses as mockCourses,
+  quizQuestions as mockQuizQuestions,
+  quizResults,
+} from "@/data/learnLensData";
+import { useCoursesBackend } from "@/hooks/useCoursesBackend";
+import {
+  generateQuizFromFile,
+  gradeQuiz,
+  type QuizQuestion as BackendQuizQuestion,
+  type QuizResponse,
+} from "@/api/quizApi";
 import type { QuizQuestion } from "@/types";
 import { formatDate } from "@/utils/helpers";
 
+// Convert backend question to frontend format
+function convertToFrontendQuestion(q: BackendQuizQuestion): QuizQuestion {
+  const correctOption = q.options?.find((opt) => opt.is_correct);
+  return {
+    id: q.id,
+    question: q.question,
+    type:
+      q.type === "mcq"
+        ? "multiple-choice"
+        : q.type === "true_false"
+          ? "true-false"
+          : "open-ended",
+    options: q.options?.map((opt) => opt.text),
+    correctAnswer: correctOption?.text || "",
+    explanation: q.explanation || "",
+    topic: q.topic || "General",
+    difficulty: (q.difficulty as "easy" | "medium" | "hard") || "medium",
+  };
+}
+
 export const QuizPage: React.FC = () => {
+  // Backend courses with fallback
+  const { courses: backendCourses } = useCoursesBackend();
+  const courses = backendCourses.length > 0 ? backendCourses : mockCourses;
+
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [activeQuiz, setActiveQuiz] = useState<QuizQuestion[] | null>(null);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+
+  // File upload states
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [generatedQuiz, setGeneratedQuiz] = useState<QuizResponse | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [numQuestions, setNumQuestions] = useState(5);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Use mock quiz questions as fallback
+  const quizQuestions = mockQuizQuestions;
 
   const courseQuestions = selectedCourse
     ? quizQuestions.filter((q) =>
@@ -54,6 +103,65 @@ export const QuizPage: React.FC = () => {
       if (answers[q.id] === q.correctAnswer) correct++;
     });
     return Math.round((correct / activeQuiz.length) * 100);
+  };
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = [".pdf", ".pptx"];
+    const fileExt = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+
+    if (!validTypes.includes(fileExt)) {
+      setUploadError("Please upload a PDF or PowerPoint (.pptx) file");
+      return;
+    }
+
+    setUploadedFile(file);
+    setUploadError(null);
+    setGeneratedQuiz(null);
+  };
+
+  // Clear uploaded file
+  const clearFile = () => {
+    setUploadedFile(null);
+    setGeneratedQuiz(null);
+    setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Generate quiz from uploaded file
+  const handleGenerateQuiz = async () => {
+    if (!uploadedFile) return;
+
+    setIsGeneratingQuiz(true);
+    setUploadError(null);
+
+    try {
+      const quiz = await generateQuizFromFile(
+        uploadedFile,
+        `Quiz from ${uploadedFile.name}`,
+        undefined,
+        numQuestions,
+      );
+      setGeneratedQuiz(quiz);
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to generate quiz");
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
+  // Start quiz from generated questions
+  const startGeneratedQuiz = () => {
+    if (!generatedQuiz) return;
+    const frontendQuestions = generatedQuiz.questions.map(
+      convertToFrontendQuestion,
+    );
+    startQuiz(frontendQuestions);
   };
 
   // Background wrapper component
@@ -328,29 +436,135 @@ export const QuizPage: React.FC = () => {
               Generate Quiz from Materials
             </h2>
           </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.pptx"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
           <div className="border-2 border-dashed border-[#0078d4]/30 rounded-xl p-8 text-center bg-gradient-to-br from-[#0078d4]/5 to-[#50e6ff]/5 hover:border-[#0078d4]/50 transition-colors">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0078d4]/20 to-[#50e6ff]/20 flex items-center justify-center mx-auto mb-4">
-              <Upload className="w-8 h-8 text-[#0078d4]" />
-            </div>
-            <p className="text-[14px] font-medium text-neutral-700">
-              Upload lecture slides, notes, or PDFs
-            </p>
-            <p className="text-[12px] text-neutral-500 mt-1">
-              Copilot will generate targeted quizzes from your materials
-            </p>
-            <button
-              onClick={() => setUploadedFile("lecture_notes.pdf")}
-              className="mt-4 px-5 py-2 bg-gradient-to-r from-[#0078d4] to-[#50e6ff] text-white text-[13px] font-semibold rounded-lg hover:shadow-lg transition-all"
-            >
-              Browse Files
-            </button>
-            {uploadedFile && (
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/80 border border-[#107c10]/30 rounded-lg">
-                <BookOpen className="w-4 h-4 text-[#107c10]" />
-                <span className="text-[13px] text-neutral-700 font-medium">
-                  {uploadedFile}
-                </span>
-                <CheckCircle2 className="w-4 h-4 text-[#107c10]" />
+            {!uploadedFile ? (
+              <>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0078d4]/20 to-[#50e6ff]/20 flex items-center justify-center mx-auto mb-4">
+                  <Upload className="w-8 h-8 text-[#0078d4]" />
+                </div>
+                <p className="text-[14px] font-medium text-neutral-700">
+                  Upload lecture slides, notes, or PDFs
+                </p>
+                <p className="text-[12px] text-neutral-500 mt-1">
+                  AI will generate targeted quizzes from your materials
+                </p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-4 px-5 py-2 bg-gradient-to-r from-[#0078d4] to-[#50e6ff] text-white text-[13px] font-semibold rounded-lg hover:shadow-lg transition-all"
+                >
+                  Browse Files
+                </button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#107c10] to-[#00cc6a] flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[14px] font-semibold text-neutral-800">
+                      {uploadedFile.name}
+                    </p>
+                    <p className="text-[12px] text-neutral-500">
+                      {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    onClick={clearFile}
+                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4 text-neutral-400" />
+                  </button>
+                </div>
+
+                {/* Number of questions selector */}
+                <div className="flex items-center justify-center gap-3">
+                  <label className="text-[12px] text-neutral-600 font-medium">
+                    Questions:
+                  </label>
+                  <select
+                    value={numQuestions}
+                    onChange={(e) => setNumQuestions(Number(e.target.value))}
+                    className="px-3 py-1.5 bg-white border border-neutral-200 rounded-lg text-[13px] text-neutral-700"
+                  >
+                    {[3, 5, 10, 15, 20].map((n) => (
+                      <option key={n} value={n}>
+                        {n} questions
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {uploadError && (
+                  <p className="text-[12px] text-red-500 font-medium">
+                    {uploadError}
+                  </p>
+                )}
+
+                {!generatedQuiz ? (
+                  <button
+                    onClick={handleGenerateQuiz}
+                    disabled={isGeneratingQuiz}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white text-[13px] font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2 mx-auto"
+                  >
+                    {isGeneratingQuiz ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Generating Quiz...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate Quiz
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-white/80 rounded-xl border border-[#107c10]/30">
+                      <p className="text-[14px] font-semibold text-neutral-800">
+                        {generatedQuiz.title}
+                      </p>
+                      <p className="text-[12px] text-neutral-500 mt-1">
+                        {generatedQuiz.total_questions} questions •{" "}
+                        {generatedQuiz.total_marks} marks • ~
+                        {generatedQuiz.estimated_duration_minutes || 10} min
+                      </p>
+                      {generatedQuiz.topics_covered &&
+                        generatedQuiz.topics_covered.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {generatedQuiz.topics_covered
+                              .slice(0, 5)
+                              .map((topic, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-0.5 bg-[#0078d4]/10 text-[#0078d4] text-[10px] font-medium rounded-full"
+                                >
+                                  {topic}
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                    </div>
+                    <button
+                      onClick={startGeneratedQuiz}
+                      className="px-6 py-2.5 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[13px] font-semibold rounded-lg hover:shadow-lg transition-all flex items-center gap-2 mx-auto"
+                    >
+                      <Play className="w-4 h-4" />
+                      Start Quiz
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

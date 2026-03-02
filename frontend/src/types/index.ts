@@ -166,9 +166,10 @@ export interface SemesterInfo {
 
 export interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
+  toolsUsed?: string[];
 }
 
 export interface Agent {
@@ -177,6 +178,7 @@ export interface Agent {
   description: string;
   icon: string;
   color: string;
+  systemPrompt?: string;
 }
 
 export interface VisionAnalysis {

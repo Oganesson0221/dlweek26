@@ -3,11 +3,11 @@ import httpx
 from app.core.config import get_settings
 from app.services.file_parser import SlideContent, build_content_string
 from app.services.ai.prompt_banks import CONCEPT_MAP_VISUALIZATION_PROMPT
+from app.services.ai.openai_key import get_ai_client
 from fastapi import HTTPException
-from openai import AsyncOpenAI
 from typing import List
 
-client = AsyncOpenAI() # Will auto-detect from OPENAI_API_KEY in env
+# Client is lazy-loaded via get_ai_client()
 
 async def generate_concept_map_bytes(slides: List[SlideContent], filename: str) -> bytes:
     """
@@ -15,6 +15,7 @@ async def generate_concept_map_bytes(slides: List[SlideContent], filename: str) 
     Utilizes gpt-4o via the image generation API.
     """
     settings = get_settings()
+    client = get_ai_client()
     content_string = build_content_string(slides)
     prompt = f"{CONCEPT_MAP_VISUALIZATION_PROMPT}\n\nSlide Content:\n{content_string}"
 
