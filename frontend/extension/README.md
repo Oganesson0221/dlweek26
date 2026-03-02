@@ -1,6 +1,6 @@
-# LearnLens Clippy Notes - Chrome Extension
+# Microsoft CoursePilot Clippy Notes - Chrome Extension
 
-A Chrome browser extension that lets you save notes from any webpage directly to LearnLens!
+A Chrome browser extension that lets you save notes from any webpage directly to Microsoft CoursePilot!
 
 ## Features
 
@@ -62,7 +62,7 @@ mv clippy-128.png.svg clippy-128.png
 
 ### Method 1: Popup Interface
 
-1. Click the LearnLens Clippy icon in your browser toolbar
+1. Click the Microsoft CoursePilot Clippy icon in your browser toolbar
 2. Select text on any webpage
 3. Click "Get Selection" to capture the selected text
 4. Choose a subject and add tags (optional)
@@ -77,7 +77,7 @@ mv clippy-128.png.svg clippy-128.png
 ### Method 3: Context Menu (Right-Click)
 
 1. Select text on any webpage
-2. Right-click and choose "Save to LearnLens Notes"
+2. Right-click and choose "Save to Microsoft CoursePilot Notes"
 3. The note is saved instantly with "quick-save" tag
 
 ## Viewing Your Notes
@@ -94,9 +94,9 @@ mv clippy-128.png.svg clippy-128.png
 2. Click "Export All Notes"
 3. A JSON file will be downloaded with all your notes
 
-## Integration with LearnLens Web App
+## Integration with Microsoft CoursePilot Web App
 
-The extension stores notes in Chrome's local storage. To sync with the LearnLens web app:
+The extension stores notes in Chrome's local storage. To sync with the Microsoft CoursePilot web app:
 
 ### Method 1: Export/Import (Manual Sync)
 
@@ -108,9 +108,9 @@ The extension stores notes in Chrome's local storage. To sync with the LearnLens
 Since both the extension and web app use the same note format, you can sync them:
 
 1. Export notes from the extension as JSON
-2. Open the LearnLens web app in the same browser
+2. Open the Microsoft CoursePilot web app in the same browser
 3. Open browser DevTools (F12) → Console tab
-4. Run: `localStorage.setItem('learnlens-notes', JSON.stringify(YOUR_EXPORTED_NOTES.notes))`
+4. Run: `localStorage.setItem('microsoft-coursepilot-notes', JSON.stringify(YOUR_EXPORTED_NOTES.notes))`
 5. Refresh the Notes page
 
 ### Note Format
@@ -175,4 +175,4 @@ extension/
 
 ---
 
-Made with 💙 by LearnLens Team
+Made with 💙 by Microsoft CoursePilot Team

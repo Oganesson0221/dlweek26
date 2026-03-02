@@ -142,7 +142,7 @@ export const CopilotAssistant: React.FC = () => {
           <div className="px-4 py-3 border-b border-border-subtle bg-accent/5 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-[13px] font-semibold text-white flex-1">
-              LearnLens Copilot
+              Microsoft CoursePilot
             </span>
             <button
               onClick={() => setIsOpen(false)}

@@ -19,7 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 // Removed hardcoded imports - now using backend-generated data only
-// import { courses, conceptNodes, conceptLinks } from "@/data/learnLensData";
+// import { courses, conceptNodes, conceptLinks } from "@/data/microsoftCoursePilotData";
 import { getMasteryColor } from "@/utils/helpers";
 import {
   summarizeFile,

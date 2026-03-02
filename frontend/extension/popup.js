@@ -1,5 +1,5 @@
 // Clippy Notes Extension - Popup Script
-// Now saves to MongoDB via LearnLens backend API
+// Now saves to MongoDB via Microsoft CoursePilot backend API
 
 // API Configuration - Update this to your backend URL
 const API_BASE_URL = "http://localhost:8000"; // Change to your production URL when deploying

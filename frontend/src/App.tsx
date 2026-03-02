@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { NavHeader } from "./components/NavHeader";
-import { CopilotCompanion } from "./components/CopilotCompanion";
 import { OverviewPage } from "./pages/OverviewPage";
 import { JourneyMapPage } from "./pages/JourneyMapPage";
 import { QuizPage } from "./pages/QuizPage";
@@ -37,7 +36,6 @@ function App() {
     <div className="min-h-screen bg-[#fafafa]">
       <NavHeader activePage={currentPage} onNavigate={setCurrentPage} />
       <main className="px-6 py-6 max-w-[1280px] mx-auto">{renderPage()}</main>
-      <CopilotCompanion />
     </div>
   );
 }

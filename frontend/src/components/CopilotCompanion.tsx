@@ -9,7 +9,7 @@ import {
   Bell,
   Target,
 } from "lucide-react";
-import { copilotSuggestions } from "@/data/learnLensData";
+import { copilotSuggestions } from "@/data/microsoftCoursePilotData";
 import type { CopilotSuggestion } from "@/types";
 
 interface CopilotCompanionProps {

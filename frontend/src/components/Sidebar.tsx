@@ -52,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
             <span className="text-sm font-bold text-white whitespace-nowrap">
-              LearnLens AI
+              Microsoft CoursePilot
             </span>
           </div>
         )}

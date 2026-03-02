@@ -1,7 +1,7 @@
 #!/bin/bash
-# Start the LearnLens Study Navigator
+# Start the Microsoft CoursePilot Study Navigator
 
-echo "🚀 Starting LearnLens Study Navigator..."
+echo "🚀 Starting Microsoft CoursePilot Study Navigator..."
 echo ""
 
 # Change to project root
@@ -45,7 +45,7 @@ FRONTEND_PID=$!
 cd ..
 
 echo ""
-echo "✅ LearnLens is running!"
+echo "✅ Microsoft CoursePilot is running!"
 echo "   - Backend:  http://localhost:8000"
 echo "   - Frontend: http://localhost:3000 (or 3001 if 3000 is busy)"
 echo "   - API Docs: http://localhost:8000/docs"

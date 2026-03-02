@@ -223,7 +223,7 @@ Analyze the progress and provide detailed feedback."""
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "LearnLens Progress Tracker"
+                    "X-Title": "Microsoft CoursePilot Progress Tracker"
                 },
                 json={
                     "model": "openai/gpt-4o-mini",
@@ -320,7 +320,7 @@ Generate a professional email for {email_type.replace('_', ' ')}."""
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "LearnLens Email Generator"
+                    "X-Title": "Microsoft CoursePilot Email Generator"
                 },
                 json={
                     "model": "openai/gpt-4o-mini",
@@ -426,7 +426,7 @@ Generate a comprehensive template structure."""
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "LearnLens Template Generator"
+                    "X-Title": "Microsoft CoursePilot Template Generator"
                 },
                 json={
                     "model": "openai/gpt-4o-mini",
