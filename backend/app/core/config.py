@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 
 
 class Settings(BaseSettings):
@@ -17,7 +18,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     DEFAULT_MODEL: str = "gpt-4.1"
     TEMPERATURE: float = 0.2
-    REMINDER_LEADS_HOURS: list[int] = [72, 24, 6]
+    reminder_default_leads_hours: List[int] = [168, 72, 24]  
+    # 168 = 7 days
+    # 72 = 3 days
+    # 24 = 1 day
     
     # AI Settings
     primary_model: str = os.getenv("PRIMARY_MODEL", "gpt-4o")

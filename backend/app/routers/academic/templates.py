@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
+
 from app.db.session import get_session
 from app.schemas.academic import TemplateGenRequest
 from app.models.academic import GeneratedDocument
@@ -20,6 +21,6 @@ def gen_ppt(body: TemplateGenRequest, session: Session = Depends(get_session)):
 @router.get("/download/{doc_id}")
 def download(doc_id: int, session: Session = Depends(get_session)):
     doc = session.exec(select(GeneratedDocument).where(GeneratedDocument.id == doc_id)).first()
-    if doc is None:
+    if not doc:
         return {"error": "document_not_found"}
     return FileResponse(path=doc.file_path, filename=doc.file_name)

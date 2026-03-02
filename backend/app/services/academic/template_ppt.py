@@ -1,53 +1,111 @@
 from pathlib import Path
+from datetime import datetime
 from sqlmodel import Session, select
-from pptx import Presentation
-from pptx.util import Inches
-from ...models.academic import Assignment, Course, GeneratedDocument
-from ...core.config import settings
+from fastapi import HTTPException
 
+from app.core.config import settings
+from app.models.academic import (
+    Assignment,
+    Course,
+    CourseOutline,
+    CourseComponent,
+    TopicNode,
+    GeneratedDocument,
+)
 
-def generate_ppt(session: Session, assignment_id: int) -> GeneratedDocument:
+def generate_ppt(session: Session, assignment_id: int):
     a = session.exec(select(Assignment).where(Assignment.id == assignment_id)).first()
-    if a is None:
-        raise ValueError("assignment_not_found")
+    if not a:
+        raise HTTPException(status_code=404, detail="Assignment not found")
 
-    c = session.exec(select(Course).where(Course.id == a.course_id)).first()
-    if c is None:
-        raise ValueError("course_not_found")
+    course = session.exec(select(Course).where(Course.id == a.course_id)).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found for assignment")
 
-    out_dir = Path(settings.generated_dir)
+    outline = session.exec(select(CourseOutline).where(CourseOutline.course_id == course.id)).first()
+    components = session.exec(select(CourseComponent).where(CourseComponent.course_id == course.id)).all()
+    topics = session.exec(
+        select(TopicNode).where(TopicNode.course_id == course.id).order_by(TopicNode.order_index)
+    ).all()
+
+    try:
+        from pptx import Presentation
+    except Exception:
+        raise HTTPException(status_code=500, detail="python-pptx not installed. pip install python-pptx")
+
+    out_dir = Path(settings.GENERATED_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    safe_title = "".join(ch if ch.isalnum() or ch in (" ", "_", "-") else "_" for ch in a.title).strip()
-    file_name = f"{c.code}_{safe_title}_slides.pptx"
+    safe_course = course.code.replace("/", "_").replace(" ", "_")
+    safe_assign = a.title.replace("/", "_").replace(" ", "_")
+    file_name = f"{safe_course}_{safe_assign}_course_summary.pptx"
     file_path = out_dir / file_name
 
     prs = Presentation()
 
-    # Title
-    s = prs.slides.add_slide(prs.slide_layouts[0])
-    s.shapes.title.text = f"{c.code} {c.name}"
-    s.placeholders[1].text = f"{a.title}\nDue: {a.due_at.isoformat(timespec='minutes')}"
+    # Slide 1: Overview
+    slide = prs.slides.add_slide(prs.slide_layouts[1])  # title + content
+    slide.shapes.title.text = f"{course.code} - {course.name}"
+    body = slide.shapes.placeholders[1].text_frame
+    body.clear()
+    body.text = f"Term: {course.term}"
+    body.add_paragraph().text = f"Assignment: {a.title}"
+    body.add_paragraph().text = f"Due: {a.due_at.isoformat()}"
+    body.add_paragraph().text = f"Generated: {datetime.utcnow().isoformat()}"
 
-    # Agenda
-    s = prs.slides.add_slide(prs.slide_layouts[1])
-    s.shapes.title.text = "Agenda"
-    tf = s.shapes.placeholders[1].text_frame
-    tf.text = "Problem"
-    for item in ["Approach", "Results", "Discussion", "Conclusion"]:
-        tf.add_paragraph().text = item
+    # Slide 2: Outline
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
+    slide.shapes.title.text = "Course Outline"
+    body = slide.shapes.placeholders[1].text_frame
+    body.clear()
+    if outline and outline.description:
+        body.text = outline.description[:1200]
+        if len(outline.description) > 1200:
+            body.add_paragraph().text = "(Outline truncated for slide)"
+    else:
+        body.text = "No outline found in DB yet."
 
-    # Sections
-    for title in ["Problem", "Approach", "Results", "Conclusion"]:
-        s = prs.slides.add_slide(prs.slide_layouts[5])
-        s.shapes.title.text = title
-        tb = s.shapes.add_textbox(Inches(1), Inches(1.7), Inches(8), Inches(4.6))
-        tb.text_frame.text = "Add content here."
+    # Slide 3: Components + Topics
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
+    slide.shapes.title.text = "Assessments and Topics"
+    body = slide.shapes.placeholders[1].text_frame
+    body.clear()
+
+    body.text = "Assessment Components:"
+    if components:
+        for c in components:
+            pct = round(c.weight * 100, 1)
+            body.add_paragraph().text = f"- {c.name}: {pct}%"
+    else:
+        body.add_paragraph().text = "- No components found"
+
+    body.add_paragraph().text = ""
+    body.add_paragraph().text = "Topics:"
+    if topics:
+        for t in topics[:20]:
+            body.add_paragraph().text = f"{t.order_index}. {t.title}"
+        if len(topics) > 20:
+            body.add_paragraph().text = "(Topics truncated)"
+    else:
+        body.add_paragraph().text = "- No topics found"
 
     prs.save(str(file_path))
 
-    gd = GeneratedDocument(assignment_id=assignment_id, doc_type="ppt", file_name=file_name, file_path=str(file_path))
+    gd = GeneratedDocument(
+        assignment_id=a.id,
+        doc_type="ppt",
+        file_name=file_name,
+        file_path=str(file_path),
+    )
     session.add(gd)
     session.commit()
     session.refresh(gd)
-    return gd
+
+    return {
+        "doc_id": gd.id,
+        "doc_type": gd.doc_type,
+        "file_name": gd.file_name,
+        "download_path": f"/academic/templates/download/{gd.id}",
+        "course_code": course.code,
+        "assignment_id": a.id,
+    }
