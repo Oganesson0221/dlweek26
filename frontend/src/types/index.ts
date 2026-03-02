@@ -199,3 +199,86 @@ export interface BlameEntry {
   severity: "critical" | "high" | "medium" | "low";
   message: string;
 }
+
+// ─── Git-Style Learning Types ───
+
+export interface Topic {
+  id: string;
+  name: string;
+  color: string;
+  mastery: number;
+  masteryLevel: "beginner" | "learning" | "proficient" | "mastered";
+  totalCommits: number;
+  totalTimeMinutes: number;
+}
+
+export interface StudyCommit {
+  id: string;
+  hash: string;
+  topic: string;
+  topicName: string;
+  branch: string;
+  message: string;
+  date: string;
+  timeSpentMinutes: number;
+  scoreImprovement: number;
+  scoreBefore: number;
+  scoreAfter: number;
+  type: "study" | "practice" | "review" | "assessment";
+  notes: string;
+  difficulty: number;
+  mistakes: string[];
+}
+
+export interface LearningBranch {
+  id: string;
+  name: string;
+  displayName: string;
+  topic: string;
+  color: string;
+  status: "active" | "merged" | "stale";
+  createdDate: string;
+  lastCommitDate: string;
+  commits: string[];
+  parentBranch: string;
+  aheadOfMain: number;
+  mergeReady: boolean;
+  aiMergeSuggestion?: string;
+}
+
+export interface AIReview {
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+  readyToMerge: boolean;
+  confidence: number;
+}
+
+export interface PullRequest {
+  id: string;
+  title: string;
+  description: string;
+  branch: string;
+  targetBranch: string;
+  status: "open" | "merged" | "closed";
+  createdDate: string;
+  mergedDate?: string;
+  commits: string[];
+  score: number;
+  aiReview: AIReview;
+  checksPass: boolean;
+  labels: string[];
+}
+
+export interface ContributionDay {
+  date: string;
+  count: number;
+  level: 0 | 1 | 2 | 3 | 4;
+}
+
+export interface StreakInfo {
+  current: number;
+  longest: number;
+  lastStudyDate: string;
+}

@@ -20,18 +20,37 @@ Rules:
 5. Provide a detailed explanation of why the correct answer is right.
 6. Return ONLY valid JSON. No markdown."""
 
-CONCEPT_MAP_VISUALIZATION_PROMPT = """You are an expert academic tutor and visualization specialist.
-Analyze the following lecture slide content. Identify all technical terminology, definitions, and relationships between concepts.
+CONCEPT_MAP_VISUALIZATION_PROMPT = """You are given text extracted from lecture slides.
 
-Create a single, clean, high-resolution scientific visualization (a concept map image).
+Your task: help to extract the content from the slides to help build an Interactive Terminology Map for an educational application.
 
-Rules for the Visualization:
-1. Include a central node for the overall topic of the slides.
-2. Branch out with nodes for primary concepts, then secondary concepts, creating a hierarchy.
-3. Every node MUST have a term and a concise definition based on the slides.
-4. Use arrows to show relationships. Clearly label the relationship on the arrows (e.g., "requires", "leads to", "is a type of").
-5. Do NOT include extraneous art, background textures, or human hands. The focus must be purely on the structure of information.
-6. The final output must be an image.
+OUTPUT FORMAT (STRICT):
+- Return ONLY a single JavaScript object literal (no markdown, no code fences, no extra commentary).
+- The top-level keys MUST be cn1, cn2, cn3, ... up to cnN (N between 8 and 25 unless the slides clearly contain fewer).
+- Each cnX value MUST be an object with EXACTLY these keys:
+  1) term: string (2 to 6 words)
+  2) definition: string ( 1 to 2 sentences, concise, student-friendly)
+  3) examples: array of 1 to 4 short strings (each <= 12 words)
+  4) relatedTerms: array of cn-ids (0 to 6 items)
+
+CONTENT RULES:
+- Extract the most important terminology from the slides. Prefer concepts that are definable and linkable.
+- Definitions must reflect the slide content; do NOT invent unrelated terms.
+- relatedTerms must only contain ids that exist in your output.
+- No self-links (a node cannot link to itself).
+- Avoid duplicates: do not create two nodes that mean the same thing.
+- Make links meaningful (prerequisite, part-of, contrast, used-with). If cnA links cnB, usually cnB should link back to cnA when the relationship is naturally mutual.
+- Use consistent capitalization and naming.
+
+IMPORTANT:
+- Do NOT output JSON with quotes around keys at the top level
+- You must strictly output in the style:
+  cn1: { term: "...", definition: "...", examples: [...], relatedTerms: ["cn2"] },
+  cn2: { ... }
+
+SLIDE TEXT START
+{{PASTE_SLIDE_TEXT_HERE}}
+SLIDE TEXT END
 """
 
 GRADING_PROMPT_TEMPLATE = """You are an automated grading assistant. Evaluate the student's answers against the correct quiz options.

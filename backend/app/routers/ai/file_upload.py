@@ -3,11 +3,18 @@ File parsing endpoints for Quiz generation and Clippy assistant.
 Allows uploading PDF/PPTX files and returns parsed content.
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from typing import List, Optional
 from pydantic import BaseModel
 
 from app.services.file_parser import parse_uploaded_file, build_content_string, SlideContent
+from app.services.ai.summarizer import generate_summary, extract_key_points
+from app.services.ai.generate_concept_map import generate_concept_map_bytes
+from app.db.mongodb import (
+    create_summary, get_all_summaries, get_summary_by_id, delete_summary,
+    create_keywords, get_all_keywords, get_keywords_by_id, delete_keywords,
+    create_concept_map, get_all_concept_maps, get_concept_map_by_id, delete_concept_map
+)
 
 router = APIRouter(prefix="/ai/files", tags=["AI File Processing"])
 
@@ -148,3 +155,223 @@ async def get_content_for_clippy(file: UploadFile = File(...)):
         "content": content_string,
         "summary_prompt": f"This document '{file.filename}' contains {len(slides)} pages/slides. The user may ask questions about it."
     }
+
+
+class SummaryResponse(BaseModel):
+    """Response from summary generation"""
+    id: str
+    filename: str
+    course_name: str
+    total_pages: int
+    summary: str
+    created_at: str
+
+
+class KeywordsResponse(BaseModel):
+    """Response from keyword extraction"""
+    id: str
+    filename: str
+    course_name: str
+    total_pages: int
+    keywords: List[str]
+    created_at: str
+
+
+@router.post("/summarize", response_model=SummaryResponse)
+async def summarize_file(
+    file: UploadFile = File(...),
+    course_name: str = Form("Untitled Course"),
+):
+    """
+    Upload a PDF/PPTX file and generate a summary.
+    Returns a cohesive summary of the document content and saves to MongoDB.
+    """
+    if not file.filename:
+        raise HTTPException(400, "No filename provided")
+    
+    file_bytes = await file.read()
+    
+    if len(file_bytes) == 0:
+        raise HTTPException(400, "Empty file")
+    
+    try:
+        slides = parse_uploaded_file(file.filename, file_bytes)
+    except Exception as e:
+        raise HTTPException(400, f"Failed to parse file: {str(e)}")
+    
+    try:
+        summary = await generate_summary(slides)
+    except Exception as e:
+        raise HTTPException(500, f"Failed to generate summary: {str(e)}")
+    
+    # Save to MongoDB
+    saved = create_summary(course_name, file.filename, summary, len(slides))
+    
+    return SummaryResponse(
+        id=saved["id"],
+        filename=file.filename,
+        course_name=course_name,
+        total_pages=len(slides),
+        summary=summary,
+        created_at=saved["created_at"]
+    )
+
+
+@router.get("/summaries")
+async def list_summaries():
+    """Get all saved summaries"""
+    return get_all_summaries()
+
+
+@router.get("/summaries/{summary_id}")
+async def get_summary(summary_id: str):
+    """Get a specific summary by ID"""
+    doc = get_summary_by_id(summary_id)
+    if not doc:
+        raise HTTPException(404, "Summary not found")
+    return doc
+
+
+@router.delete("/summaries/{summary_id}")
+async def remove_summary(summary_id: str):
+    """Delete a summary by ID"""
+    if not delete_summary(summary_id):
+        raise HTTPException(404, "Summary not found")
+    return {"status": "deleted"}
+
+
+@router.post("/extract-keywords", response_model=KeywordsResponse)
+async def extract_keywords_file(
+    file: UploadFile = File(...),
+    course_name: str = Form("Untitled Course"),
+):
+    """
+    Upload a PDF/PPTX file and extract key points/keywords.
+    Returns a list of key concepts from the document and saves to MongoDB.
+    """
+    if not file.filename:
+        raise HTTPException(400, "No filename provided")
+    
+    file_bytes = await file.read()
+    
+    if len(file_bytes) == 0:
+        raise HTTPException(400, "Empty file")
+    
+    try:
+        slides = parse_uploaded_file(file.filename, file_bytes)
+    except Exception as e:
+        raise HTTPException(400, f"Failed to parse file: {str(e)}")
+    
+    try:
+        keywords = await extract_key_points(slides)
+    except Exception as e:
+        raise HTTPException(500, f"Failed to extract keywords: {str(e)}")
+    
+    # Save to MongoDB
+    saved = create_keywords(course_name, file.filename, keywords, len(slides))
+    
+    return KeywordsResponse(
+        id=saved["id"],
+        filename=file.filename,
+        course_name=course_name,
+        total_pages=len(slides),
+        keywords=keywords,
+        created_at=saved["created_at"]
+    )
+
+
+@router.get("/keywords")
+async def list_keywords():
+    """Get all saved keywords records"""
+    return get_all_keywords()
+
+
+@router.get("/keywords/{keywords_id}")
+async def get_keywords(keywords_id: str):
+    """Get a specific keywords record by ID"""
+    doc = get_keywords_by_id(keywords_id)
+    if not doc:
+        raise HTTPException(404, "Keywords record not found")
+    return doc
+
+
+@router.delete("/keywords/{keywords_id}")
+async def remove_keywords(keywords_id: str):
+    """Delete a keywords record by ID"""
+    if not delete_keywords(keywords_id):
+        raise HTTPException(404, "Keywords record not found")
+    return {"status": "deleted"}
+
+
+class ConceptMapResponse(BaseModel):
+    """Response from concept map generation"""
+    id: str
+    filename: str
+    course_name: str
+    total_pages: int
+    concept_map_data: str
+    created_at: str
+
+
+@router.post("/generate-concept-map", response_model=ConceptMapResponse)
+async def generate_concept_map_from_file(
+    file: UploadFile = File(...),
+    course_name: str = Form("Untitled Course"),
+):
+    """
+    Upload a PDF/PPTX file and generate an interactive concept map.
+    Returns a JavaScript object literal with terminology nodes and relationships.
+    """
+    if not file.filename:
+        raise HTTPException(400, "No filename provided")
+    
+    file_bytes = await file.read()
+    
+    if len(file_bytes) == 0:
+        raise HTTPException(400, "Empty file")
+    
+    try:
+        slides = parse_uploaded_file(file.filename, file_bytes)
+    except Exception as e:
+        raise HTTPException(400, f"Failed to parse file: {str(e)}")
+    
+    try:
+        concept_map_bytes = await generate_concept_map_bytes(slides, file.filename)
+        concept_map_data = concept_map_bytes.decode("utf-8")
+    except Exception as e:
+        raise HTTPException(500, f"Failed to generate concept map: {str(e)}")
+    
+    # Save to MongoDB
+    saved = create_concept_map(course_name, file.filename, concept_map_data, len(slides))
+    
+    return ConceptMapResponse(
+        id=saved["id"],
+        filename=file.filename,
+        course_name=course_name,
+        total_pages=len(slides),
+        concept_map_data=concept_map_data,
+        created_at=saved["created_at"]
+    )
+
+
+@router.get("/concept-maps")
+async def list_concept_maps():
+    """Get all saved concept maps"""
+    return get_all_concept_maps()
+
+
+@router.get("/concept-maps/{concept_map_id}")
+async def get_concept_map(concept_map_id: str):
+    """Get a specific concept map by ID"""
+    doc = get_concept_map_by_id(concept_map_id)
+    if not doc:
+        raise HTTPException(404, "Concept map not found")
+    return doc
+
+
+@router.delete("/concept-maps/{concept_map_id}")
+async def remove_concept_map(concept_map_id: str):
+    """Delete a concept map by ID"""
+    if not delete_concept_map(concept_map_id):
+        raise HTTPException(404, "Concept map not found")
+    return {"status": "deleted"}
