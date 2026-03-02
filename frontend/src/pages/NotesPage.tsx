@@ -447,40 +447,6 @@ const NotesPage: React.FC = () => {
             ))}
           </div>
         )}
-
-        {/* Stats */}
-        {!loading && notes.length > 0 && (
-          <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-around text-center">
-              <div>
-                <div className="text-3xl font-bold text-blue-500">
-                  {notes.length}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Notes
-                </div>
-              </div>
-              <div className="w-px h-12 bg-gray-200 dark:bg-gray-700"></div>
-              <div>
-                <div className="text-3xl font-bold text-purple-500">
-                  {new Set(notes.map((n) => n.subject)).size}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Subjects
-                </div>
-              </div>
-              <div className="w-px h-12 bg-gray-200 dark:bg-gray-700"></div>
-              <div>
-                <div className="text-3xl font-bold text-green-500">
-                  {notes.filter((n) => n.sourceUrl).length}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  With Sources
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
