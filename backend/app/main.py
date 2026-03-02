@@ -16,6 +16,7 @@ from app.routers.academic.templates_mongo import router as templates_router
 from app.routers.academic.deadlines_mongo import router as deadlines_router
 from app.routers.academic.copilot_hooks_mongo import router as copilot_router
 from app.routers.academic.progress_mongo import router as progress_router
+from app.routers.academic.editor_mongo import router as editor_router
 
 # AI routers
 from app.routers.ai.course_tools import router as course_tools_router
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(deadlines_router)
     app.include_router(copilot_router)
     app.include_router(progress_router)
+    app.include_router(editor_router)
 
     # Mount AI routers
     app.include_router(course_tools_router)
