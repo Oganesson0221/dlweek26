@@ -304,161 +304,6 @@ def get_courses_with_progress() -> list:
         })
     return result
 
-<<<<<<< HEAD
-# ============ WRONG QUESTIONS (Quiz Weak Topics) ============
-
-def save_wrong_questions(questions: List[Dict[str, Any]], user_id: str = "default", course_code: Optional[str] = None) -> dict:
-    """Save wrong quiz questions to MongoDB for adaptive learning."""
-    db = get_db()
-    doc = {
-        "user_id": user_id,
-        "course_code": course_code,
-        "questions": questions,
-        "created_at": datetime.utcnow()
-    }
-    result = db.wrong_questions.insert_one(doc)
-    doc["_id"] = result.inserted_id
-    return serialize_doc(doc)
-
-def get_wrong_questions(user_id: str = "default", course_code: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Get all wrong questions for a user for weak topic practice, optionally filtered by course."""
-    db = get_db()
-    query = {"user_id": user_id}
-    if course_code:
-        query["course_code"] = course_code
-    docs = list(db.wrong_questions.find(query).sort("created_at", -1))
-    all_questions = []
-    for doc in docs:
-        all_questions.extend(doc.get("questions", []))
-    return all_questions
-
-def clear_wrong_questions(user_id: str = "default", course_code: Optional[str] = None) -> bool:
-    """Clear wrong questions after improvement."""
-    db = get_db()
-    query = {"user_id": user_id}
-    if course_code:
-        query["course_code"] = course_code
-    db.wrong_questions.delete_many(query)
-    return True
-
-def get_weak_topics(user_id: str = "default", course_code: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Analyze wrong questions to identify weak topics."""
-    questions = get_wrong_questions(user_id, course_code)
-    topic_counts = {}
-    for q in questions:
-        topic = q.get("topic", "General")
-        if topic not in topic_counts:
-            topic_counts[topic] = {"topic": topic, "count": 0, "questions": []}
-        topic_counts[topic]["count"] += 1
-        topic_counts[topic]["questions"].append(q)
-    
-    # Sort by count descending
-    weak_topics = sorted(topic_counts.values(), key=lambda x: x["count"], reverse=True)
-    return weak_topics
-
-
-# ============ QUIZ RESULTS ============
-
-def save_quiz_result(
-    user_id: str,
-    quiz_id: str,
-    score: float,
-    total_questions: int,
-    correct_answers: int,
-    wrong_answers: int,
-    time_spent_minutes: int,
-    course_code: Optional[str] = None,
-    topics_covered: Optional[List[str]] = None
-) -> dict:
-    """Save quiz result to MongoDB."""
-    db = get_db()
-    result = {
-        "user_id": user_id,
-        "quiz_id": quiz_id,
-        "score": score,
-        "total_questions": total_questions,
-        "correct_answers": correct_answers,
-        "wrong_answers": wrong_answers,
-        "time_spent_minutes": time_spent_minutes,
-        "course_code": course_code,
-        "topics_covered": topics_covered or [],
-        "created_at": datetime.utcnow()
-    }
-    db_result = db.quiz_results.insert_one(result)
-    result["_id"] = db_result.inserted_id
-    return serialize_doc(result)
-
-def get_quiz_results(user_id: str = "default", limit: int = 10) -> List[Dict[str, Any]]:
-    """Get recent quiz results for a user."""
-    db = get_db()
-    results = list(db.quiz_results.find({"user_id": user_id}).sort("created_at", -1).limit(limit))
-    return serialize_docs(results)
-
-def get_all_quiz_results(limit: int = 20) -> List[Dict[str, Any]]:
-    """Get recent quiz results for all users."""
-    db = get_db()
-    results = list(db.quiz_results.find().sort("created_at", -1).limit(limit))
-    return serialize_docs(results)
-
-
-# ============ SAVED COURSE MATERIALS ============
-
-def save_course_material(
-    filename: str,
-    slides: List[Dict[str, Any]],
-    course_code: Optional[str] = None,
-    user_id: str = "default",
-    title: Optional[str] = None
-) -> dict:
-    """Save parsed slide content for reuse in quiz generation."""
-    db = get_db()
-    
-    # Check if this file already exists for the user
-    existing = db.course_materials.find_one({
-        "user_id": user_id,
-        "filename": filename
-    })
-    
-    doc = {
-        "user_id": user_id,
-        "filename": filename,
-        "title": title or filename,
-        "course_code": course_code,
-        "slides": slides,
-        "total_slides": len(slides),
-        "updated_at": datetime.utcnow()
-    }
-    
-    if existing:
-        # Update existing material
-        db.course_materials.update_one(
-            {"_id": existing["_id"]},
-            {"$set": doc}
-        )
-        doc["_id"] = existing["_id"]
-    else:
-        # Insert new material
-        doc["created_at"] = datetime.utcnow()
-        result = db.course_materials.insert_one(doc)
-        doc["_id"] = result.inserted_id
-    
-    return serialize_doc(doc)
-
-def get_course_materials(user_id: str = "default", course_code: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Get saved course materials for a user, optionally filtered by course."""
-    db = get_db()
-    query = {"user_id": user_id}
-    if course_code:
-        query["course_code"] = course_code
-    materials = list(db.course_materials.find(query).sort("updated_at", -1))
-    return serialize_docs(materials)
-
-def get_course_material_by_id(material_id: str) -> Optional[Dict[str, Any]]:
-    """Get a specific course material by ID."""
-    db = get_db()
-    try:
-        doc = db.course_materials.find_one({"_id": ObjectId(material_id)})
-=======
 # ============ SUMMARIES ============
 
 def create_summary(course_name: str, filename: str, summary: str, total_pages: int) -> dict:
@@ -485,21 +330,10 @@ def get_summary_by_id(summary_id: str) -> Optional[dict]:
     db = get_db()
     try:
         doc = db.summaries.find_one({"_id": ObjectId(summary_id)})
->>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
         return serialize_doc(doc) if doc else None
     except:
         return None
 
-<<<<<<< HEAD
-def delete_course_material(material_id: str, user_id: str = "default") -> bool:
-    """Delete a course material."""
-    db = get_db()
-    try:
-        result = db.course_materials.delete_one({
-            "_id": ObjectId(material_id),
-            "user_id": user_id
-        })
-=======
 def delete_summary(summary_id: str) -> bool:
     """Delete a summary by ID"""
     db = get_db()
@@ -583,7 +417,6 @@ def delete_concept_map(concept_map_id: str) -> bool:
     db = get_db()
     try:
         result = db.concept_maps.delete_one({"_id": ObjectId(concept_map_id)})
->>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
         return result.deleted_count > 0
     except:
         return False

@@ -282,45 +282,6 @@ export async function extractConcepts(
   return res.data;
 }
 
-<<<<<<< HEAD
-// ============ SAVED MATERIALS ============
-
-/**
- * Saved material structure from backend
- */
-export interface SavedMaterial {
-  id: string;
-  filename: string;
-  title: string;
-  course_code?: string;
-  total_slides: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-/**
- * Save a material for later quiz generation
- */
-export async function saveMaterial(
-  file: File,
-  courseCode?: string,
-  title?: string,
-  userId: string = "default",
-): Promise<{
-  message: string;
-  id: string;
-  filename: string;
-  total_slides: number;
-}> {
-  const form = new FormData();
-  form.append("file", file);
-  if (courseCode) form.append("course_code", courseCode);
-  if (title) form.append("title", title);
-  form.append("user_id", userId);
-
-  const res = await apiClient.post("/ai/files/save-material", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-=======
 // ─── File-based Summary and Keyword Extraction ───────────────────────────────
 
 export interface SummaryResponse {
@@ -355,74 +316,27 @@ export async function summarizeFile(
   const res = await apiClient.post("/ai/files/summarize", form, {
     headers: { "Content-Type": "multipart/form-data" },
     timeout: 120000, // 2 minutes for file processing
->>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
   });
   return res.data;
 }
 
 /**
-<<<<<<< HEAD
- * Get all saved materials for a user
- */
-export async function getSavedMaterials(
-  userId: string = "default",
-  courseCode?: string,
-): Promise<{ materials: SavedMaterial[] }> {
-  const params = new URLSearchParams({ user_id: userId });
-  if (courseCode) params.append("course_code", courseCode);
-  const res = await apiClient.get(
-    `/ai/files/saved-materials?${params.toString()}`,
-  );
-=======
  * Get all saved summaries
  */
 export async function getSummaries(): Promise<SummaryResponse[]> {
   const res = await apiClient.get("/ai/files/summaries");
->>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
   return res.data;
 }
 
 /**
-<<<<<<< HEAD
- * Generate quiz from a saved material
- */
-export async function generateQuizFromSavedMaterial(
-  materialId: string,
-  title?: string,
-  topic?: string,
-  numMcq: number = 5,
-): Promise<QuizResponse> {
-  const params = new URLSearchParams();
-  if (title) params.append("title", title);
-  if (topic) params.append("topic", topic);
-  params.append("num_mcq", String(numMcq));
-
-  const res = await apiClient.post(
-    `/ai/files/quiz-from-saved/${materialId}?${params.toString()}`,
-  );
-=======
  * Get a specific summary by ID
  */
 export async function getSummaryById(id: string): Promise<SummaryResponse> {
   const res = await apiClient.get(`/ai/files/summaries/${id}`);
->>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
   return res.data;
 }
 
 /**
-<<<<<<< HEAD
- * Delete a saved material
- */
-export async function deleteSavedMaterial(
-  materialId: string,
-  userId: string = "default",
-): Promise<{ message: string }> {
-  const res = await apiClient.delete(
-    `/ai/files/saved-materials/${materialId}?user_id=${userId}`,
-  );
-  return res.data;
-}
-=======
  * Delete a summary by ID
  */
 export async function deleteSummary(id: string): Promise<void> {
@@ -520,4 +434,3 @@ export async function getConceptMapById(id: string): Promise<ConceptMapResponse>
 export async function deleteConceptMap(id: string): Promise<void> {
   await apiClient.delete(`/ai/files/concept-maps/${id}`);
 }
->>>>>>> 38af08e6dedcb0ec6b90e5d58922ab3d160f4311
