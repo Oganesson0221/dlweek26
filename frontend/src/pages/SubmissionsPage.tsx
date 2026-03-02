@@ -44,11 +44,11 @@ import {
 import { renderMarkdownBold } from "@/utils/markdownHelpers";
 import { ClippyAssistant } from "@/components/ClippyAssistant";
 import {
-  parseCourseOutlineWithOpenAI,
   generateAssignmentTemplateWithOpenAI,
   generateSubmissionGuidelinesWithOpenAI,
   generateEmailWithOpenAI,
 } from "@/utils/openaiHelpers";
+import { uploadCourseOutline } from "@/api/academicApi";
 
 /* ── Template types ── */
 type TemplateType = "docx" | "pptx" | "lab-report" | "assignment";
@@ -227,6 +227,8 @@ export const SubmissionsPage: React.FC = () => {
   const [generatingGuidelines, setGeneratingGuidelines] = useState(false);
   const [guidelines, setGuidelines] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadCourseCode, setUploadCourseCode] = useState("");
+  const [uploadCourseName, setUploadCourseName] = useState("");
   const [templateLoading, setTemplateLoading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -427,6 +429,11 @@ export const SubmissionsPage: React.FC = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!uploadCourseCode.trim() || !uploadCourseName.trim()) {
+      alert("Please enter course code and course name before uploading.");
+      e.target.value = "";
+      return;
+    }
 
     setUploadingOutline(true);
     setUploadProgress(0);
@@ -437,30 +444,59 @@ export const SubmissionsPage: React.FC = () => {
     }, 500);
 
     try {
-      const outline = await parseCourseOutlineWithOpenAI(file);
+      const response = await uploadCourseOutline({
+        code: uploadCourseCode.trim(),
+        name: uploadCourseName.trim(),
+        term: "Y2S2",
+        file,
+      });
       clearInterval(progressInterval);
       setUploadProgress(100);
+
+      const course = response?.course;
+      const ingest = response?.ingest;
+      const components = Array.isArray(ingest?.components_extracted)
+        ? ingest.components_extracted
+        : [];
+      const instructor = ingest?.instructor ?? "";
+      const outlineDescription = ingest?.outline_preview ?? "";
 
       const newOutline: UploadedOutline = {
         id: Date.now().toString(),
         fileName: file.name,
-        courseName: outline.courseName,
-        courseCode: outline.courseCode,
+        courseName: course?.name ?? uploadCourseName.trim(),
+        courseCode: course?.code ?? uploadCourseCode.trim(),
         uploadDate: new Date().toISOString(),
-        outline,
+        outline: {
+          courseName: course?.name ?? uploadCourseName.trim(),
+          courseCode: course?.code ?? uploadCourseCode.trim(),
+          instructor,
+          semester: course?.term ?? "Y2S2",
+          description: outlineDescription,
+          components: components.map((component: any) => ({
+            name: component?.name ?? "Untitled Component",
+            type: "assignment" as const,
+            weight: Math.round((Number(component?.weight) || 0) * 100),
+            submissionGuidelines: [],
+            rubric: [],
+          })),
+        },
       };
       setUploadedOutlines((prev) => [newOutline, ...prev]);
       setSelectedOutline(newOutline.id);
       setShowOutlineUploader(false);
+      setUploadCourseCode("");
+      setUploadCourseName("");
+      e.target.value = "";
 
       setClippyMessages((prev) => [
-        `Successfully parsed "${outline.courseName}"! Found ${outline.components.length} components with rubrics.`,
+        `Uploaded "${newOutline.courseCode}" and extracted ${newOutline.outline.components.length} components.`,
         ...prev.slice(0, 4),
       ]);
     } catch (error) {
       clearInterval(progressInterval);
-      console.error("Failed to parse outline:", error);
-      alert("Failed to parse course outline. Please try again.");
+      console.error("Failed to upload course outline:", error);
+      alert("Failed to upload course outline. Please try again.");
     } finally {
       setUploadingOutline(false);
       setUploadProgress(0);
@@ -1177,6 +1213,35 @@ export const SubmissionsPage: React.FC = () => {
             </div>
 
             <div className="px-5 py-6">
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="block text-[11px] font-semibold text-neutral-600 mb-1">
+                    Course Code
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadCourseCode}
+                    onChange={(e) => setUploadCourseCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. SC2006"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md text-[12px] text-neutral-700 focus:outline-none focus:border-neutral-300"
+                    disabled={uploadingOutline}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-neutral-600 mb-1">
+                    Course Name
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadCourseName}
+                    onChange={(e) => setUploadCourseName(e.target.value)}
+                    placeholder="e.g. Software Engineering"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md text-[12px] text-neutral-700 focus:outline-none focus:border-neutral-300"
+                    disabled={uploadingOutline}
+                  />
+                </div>
+              </div>
+
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-neutral-400 cursor-pointer transition-colors bg-neutral-50/50"
@@ -1219,8 +1284,7 @@ export const SubmissionsPage: React.FC = () => {
               )}
 
               <p className="text-[10px] text-neutral-400 mt-4 text-center">
-                We'll extract course components, rubrics, and submission
-                guidelines automatically
+                Term is auto-set to Y2S2 for now.
               </p>
             </div>
           </div>

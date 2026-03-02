@@ -15,7 +15,8 @@ import {
   GraduationCap
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { courses, semesterInfo } from "@/data/learnLensData";
+// import { courses, semesterInfo } from "@/data/learnLensData";
+import { useCoursesBackend } from "@/hooks/useCoursesBackend";
 import {
   getDaysUntil,
   formatDate,
@@ -30,10 +31,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
   const [showDeadlinePopup, setShowDeadlinePopup] = useState(true);
 
   // Calculate current date info
-  const today = new Date("2026-03-01"); // Simulating today as March 1st, 2026
+  const today = new Date(); // Simulating today as March 1st, 2026
   const hour = today.getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
-  
+  const { courses, semesterInfo, loading, error, refetch } = useCoursesBackend();
   const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
   const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
