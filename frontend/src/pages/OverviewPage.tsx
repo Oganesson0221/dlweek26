@@ -131,7 +131,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
           <h1 className="text-5xl font-black text-slate-900 tracking-tight">
             Welcome, <span className="text-indigo-600">Student.</span>
           </h1>
-          <div className="bg-slate-100 rounded-[32px] p-8 text-center">
+          <div className="backdrop-blur-md bg-neutral-100/80 rounded-xl p-8 text-center border border-white/50">
             <p className="text-slate-600">No courses found yet. Please add courses to get started.</p>
           </div>
         </div>
@@ -148,7 +148,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             initial={{ opacity: 0, scale: 0.9, x: 20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9, x: 20 }}
-            className="fixed top-24 right-8 z-50 w-80 bg-white/80 backdrop-blur-xl rounded-[32px] p-5 shadow-2xl shadow-indigo-100/50 border border-white flex flex-col gap-4 group"
+            className="fixed top-24 right-8 z-50 w-80 backdrop-blur-md bg-white/80 rounded-xl p-5 shadow-2xl shadow-neutral-100/50 border border-white/50 flex flex-col gap-4 group"
           >
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -209,7 +209,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white p-2 rounded-[24px] border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-3 backdrop-blur-md bg-white/80 p-2 rounded-xl border border-white/50 shadow-sm">
           <div className="flex -space-x-2">
             {[1, 2, 3].map((i) => (
               <div
@@ -235,7 +235,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* Semester Trajectory - Full Width Span */}
-      <div className="bg-white rounded-[40px] border border-slate-200 p-8 shadow-sm relative overflow-hidden group hover:border-indigo-200 transition-colors">
+      <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-8 shadow-lg relative overflow-hidden group hover:border-white/70 transition-all">
         <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
           <Timer className="w-48 h-48 text-slate-900" />
         </div>
@@ -284,7 +284,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-white/20" />
 
               <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10">
-                <div className="w-10 h-10 bg-white rounded-2xl shadow-xl border-[6px] border-slate-900 flex items-center justify-center transform rotate-12 group-hover:rotate-0 transition-transform">
+                <div className="w-10 h-10 bg-white/90 rounded-2xl shadow-xl border-[6px] border-neutral-900 flex items-center justify-center transform rotate-12 group-hover:rotate-0 transition-transform">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />
                 </div>
               </div>
@@ -362,7 +362,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
           {courses.map((c) => (
             <div
               key={c.id}
-              className="bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group cursor-pointer"
+              className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-6 shadow-lg hover:shadow-xl hover:border-white/70 transition-all group cursor-pointer"
               onClick={() => onNavigate("journey")}
             >
               <div className="flex items-start justify-between mb-6">
@@ -445,10 +445,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             {weeklyRoadmap.map((week, idx) => (
               <div
                 key={week.weekNum}
-                className={`rounded-[36px] p-6 transition-all border ${
+                className={`rounded-xl p-6 transition-all border ${
                   idx === 0
-                    ? "bg-slate-900 text-white shadow-2xl shadow-slate-200 border-slate-800 scale-[1.05] z-10"
-                    : "bg-white border-slate-200 shadow-sm hover:border-indigo-100"
+                    ? "backdrop-blur-md bg-neutral-900/90 text-white shadow-2xl shadow-neutral-200 border-white/20 scale-[1.05] z-10"
+                    : "backdrop-blur-md bg-white/80 border-white/50 shadow-lg hover:border-white/70"
                 }`}
               >
                 <div className="mb-8">
@@ -552,7 +552,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
         {/* Sidebar Card - Outlook */}
         <div className="xl:col-span-4">
           <div className="sticky top-24">
-            <div className="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-200 group">
+            <div className="backdrop-blur-md bg-neutral-900/90 rounded-xl p-8 text-white relative overflow-hidden shadow-2xl shadow-neutral-200/50 group border border-white/10">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <GraduationCap className="w-32 h-32 text-white" />
               </div>

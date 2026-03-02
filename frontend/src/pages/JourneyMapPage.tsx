@@ -203,7 +203,7 @@ export const JourneyMapPage: React.FC = () => {
           </p>
         </div>
         
-        <div className="inline-flex items-center gap-2 bg-white p-2 rounded-[24px] border border-slate-100 shadow-sm">
+        <div className="inline-flex items-center gap-2 backdrop-blur-md bg-white/80 p-2 rounded-xl border border-white/50 shadow-lg">
           <button
             onClick={() => setZoom(Math.max(50, zoom - 20))}
             className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
@@ -255,7 +255,7 @@ export const JourneyMapPage: React.FC = () => {
         <div className="lg:col-span-3 space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-[24px] p-5 border border-slate-200 shadow-sm">
+            <div className="backdrop-blur-md bg-white/80 rounded-xl p-5 border border-white/50 shadow-lg">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Progress</p>
               <motion.p className="text-[24px] font-black text-slate-900">
                 {Math.round((completedTopics / totalTopics) * 100)}%
@@ -271,7 +271,7 @@ export const JourneyMapPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-[24px] p-5 border border-slate-200 shadow-sm">
+            <div className="backdrop-blur-md bg-white/80 rounded-xl p-5 border border-white/50 shadow-lg">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Topics Left</p>
               <motion.p className="text-[24px] font-black text-slate-900">
                 {totalTopics - completedTopics}
@@ -279,7 +279,7 @@ export const JourneyMapPage: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-2">{estRemaining}h remaining</p>
             </div>
 
-            <div className={`rounded-[24px] p-5 border shadow-sm ${weakAreas > 0 ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-200'}`}>
+            <div className={`rounded-xl p-5 border shadow-lg ${weakAreas > 0 ? 'backdrop-blur-md bg-rose-50/80 border-rose-200/50' : 'backdrop-blur-md bg-emerald-50/80 border-emerald-200/50'}`}>
               <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: weakAreas > 0 ? '#b91c1c' : '#15803d' }}>
                 {weakAreas > 0 ? 'Weak Areas' : 'On Track'}
               </p>
@@ -291,7 +291,7 @@ export const JourneyMapPage: React.FC = () => {
           </div>
 
           {/* Course Header */}
-          <div className="bg-white rounded-[40px] border border-slate-200 p-8 shadow-sm">
+          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-8 shadow-lg">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="text-[28px] font-black text-slate-900 tracking-tight">{course.name}</h2>
@@ -315,7 +315,7 @@ export const JourneyMapPage: React.FC = () => {
           </div>
 
           {/* Interactive Journey Map */}
-          <div className="bg-white rounded-[40px] border border-slate-200 p-8 shadow-sm relative overflow-hidden group">
+          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-8 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
               <Zap className="w-48 h-48 text-slate-900" />
             </div>
@@ -323,7 +323,7 @@ export const JourneyMapPage: React.FC = () => {
             <h3 className="text-[20px] font-black text-slate-900 mb-8">Course Route Map</h3>
 
             <div
-              className="relative bg-gradient-to-br from-slate-50 to-slate-50/50 rounded-[32px] border border-slate-200 p-6 overflow-auto"
+              className="relative bg-gradient-to-br from-neutral-50/80 to-neutral-50/50 rounded-xl border border-white/50 p-6 overflow-auto backdrop-blur-sm"
               style={{ minHeight: `${(svgH + 40) * (zoom / 100)}px` }}
             >
               {/* SVG overlay for connections - scales with zoom */}
@@ -466,7 +466,7 @@ export const JourneyMapPage: React.FC = () => {
                               initial={{ opacity: 0, scale: 0.9, y: -10 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-                              className="absolute top-full z-20 mt-4 w-72 bg-white rounded-[24px] shadow-xl border border-slate-200 p-5"
+                              className="absolute top-full z-20 mt-4 w-72 backdrop-blur-md bg-white/90 rounded-xl shadow-xl border border-white/50 p-5"
                             >
                               {node.kind === "topic" ? (
                                 <TopicDetail t={node.data} onClose={() => setExpandedNode(null)} color={course.color} />
@@ -491,7 +491,7 @@ export const JourneyMapPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm"
+            className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-6 shadow-lg"
           >
             <h3 className="text-[16px] font-black text-slate-900 mb-5">Grade Breakdown</h3>
             <div className="space-y-4">
@@ -528,10 +528,10 @@ export const JourneyMapPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className={`rounded-[32px] border p-6 shadow-sm ${
+                className={`rounded-xl border p-6 shadow-lg ${
                   urgency
-                    ? "bg-rose-50 border-rose-200"
-                    : "bg-white border-slate-200"
+                    ? "backdrop-blur-md bg-rose-50/80 border-rose-200/50"
+                    : "backdrop-blur-md bg-white/80 border-white/50"
                 }`}
               >
                 <div className="flex items-start gap-3 mb-4">
@@ -559,7 +559,7 @@ export const JourneyMapPage: React.FC = () => {
           })()}
 
           {/* Legend */}
-          <div className="bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm">
+          <div className="backdrop-blur-md bg-white/80 rounded-xl border border-white/50 p-6 shadow-lg">
             <h3 className="text-[14px] font-black text-slate-900 mb-4">Route Legend</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
