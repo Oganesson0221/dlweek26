@@ -1,4 +1,4 @@
-// ─── LearnLens Types ───
+// ─── Microsoft CoursePilot Types ───
 
 export type CheckpointType =
   | "quiz"

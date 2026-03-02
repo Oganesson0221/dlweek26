@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   courses as mockCourses,
   semesterInfo as mockSemesterInfo,
-} from "@/data/learnLensData";
+} from "@/data/microsoftCoursePilotData";
 import { useCoursesBackend } from "@/hooks/useCoursesBackend";
 import {
   getDaysUntil,

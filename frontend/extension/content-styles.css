@@ -1,6 +1,6 @@
-/* LearnLens Clippy Notes - Content Script Styles */
+/* Microsoft CoursePilot Clippy Notes - Content Script Styles */
 
-#learnlens-floating-btn {
+#microsoft-coursepilot-floating-btn {
   position: fixed;
   z-index: 999999;
   display: none;
@@ -25,22 +25,22 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-#learnlens-floating-btn:hover {
+#microsoft-coursepilot-floating-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(0, 120, 212, 0.5);
 }
 
-#learnlens-floating-btn:active {
+#microsoft-coursepilot-floating-btn:active {
   transform: scale(0.98);
 }
 
-#learnlens-floating-btn img {
+#microsoft-coursepilot-floating-btn img {
   width: 20px;
   height: 20px;
   pointer-events: none;
 }
 
-#learnlens-toast {
+#microsoft-coursepilot-toast {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -62,13 +62,13 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#learnlens-toast img {
+#microsoft-coursepilot-toast img {
   width: 24px;
   height: 24px;
 }
 
 /* Animation keyframes */
-@keyframes learnlens-fadeIn {
+@keyframes microsoft-coursepilot-fadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -79,7 +79,7 @@
   }
 }
 
-@keyframes learnlens-fadeOut {
+@keyframes microsoft-coursepilot-fadeOut {
   from {
     opacity: 1;
     transform: translateY(0);
@@ -90,14 +90,14 @@
   }
 }
 
-#learnlens-floating-btn.fade-in {
-  animation: learnlens-fadeIn 0.2s ease forwards;
+#microsoft-coursepilot-floating-btn.fade-in {
+  animation: microsoft-coursepilot-fadeIn 0.2s ease forwards;
 }
 
-#learnlens-toast.fade-in {
-  animation: learnlens-fadeIn 0.3s ease forwards;
+#microsoft-coursepilot-toast.fade-in {
+  animation: microsoft-coursepilot-fadeIn 0.3s ease forwards;
 }
 
-#learnlens-toast.fade-out {
-  animation: learnlens-fadeOut 0.3s ease forwards;
+#microsoft-coursepilot-toast.fade-out {
+  animation: microsoft-coursepilot-fadeOut 0.3s ease forwards;
 }

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Clippy Notes",
+  "name": "Microsoft CoursePilot - Clippy Notes",
   "version": "1.0.0",
-  "description": "Save notes from any webpage with Clippy! Your friendly study companion.",
+  "description": "Save notes from any webpage with Clippy! Your friendly Microsoft CoursePilot study companion.",
   "permissions": ["storage", "activeTab", "contextMenus", "scripting"],
   "action": {
     "default_popup": "popup.html",

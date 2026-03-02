@@ -37,7 +37,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
         <img src="/logo.png" alt="Microsoft" className="h-4 object-contain" />
         <div className="w-px h-4 bg-neutral-200" />
         <span className="text-sm font-semibold tracking-tight text-neutral-900">
-          LearnLens
+          Microsoft CoursePilot
         </span>
       </div>
 

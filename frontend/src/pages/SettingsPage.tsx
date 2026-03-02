@@ -69,7 +69,7 @@ export const SettingsPage: React.FC = () => {
           API Configuration
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Configure your OpenAI API keys to power LearnLens AI tools. Keys are
+          Configure your OpenAI API keys to power Microsoft CoursePilot AI tools. Keys are
           stored locally in your browser.
         </p>
       </div>

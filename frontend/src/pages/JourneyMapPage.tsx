@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { courses, semesterInfo } from "@/data/learnLensData";
+import { courses, semesterInfo } from "@/data/microsoftCoursePilotData";
 import type { Course, CourseTopic, Checkpoint } from "@/types";
 import {
   formatDate,

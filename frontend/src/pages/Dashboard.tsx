@@ -209,7 +209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 bg-surface-raised border border-border-subtle rounded-md px-3 py-1.5">
           <GraduationCap className="w-3.5 h-3.5" />
-          <span>LearnLens AI</span>
+          <span>Microsoft CoursePilot</span>
         </div>
       </div>
 
@@ -378,7 +378,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <Sparkles className="w-5 h-5 text-accent shrink-0" />
         <div>
           <p className="text-[13px] font-semibold text-accent">
-            LearnLens AI — Powered by GPT-4o
+            Microsoft CoursePilot — Powered by GPT-4o
           </p>
           <p className="text-[11px] text-slate-500 mt-0.5">
             Your version-controlled learning platform. Track commits, branches,
