@@ -123,10 +123,20 @@ export async function generateQuiz(
 export async function gradeQuiz(
   quizQuestions: QuizQuestion[],
   studentAnswers: StudentAnswer[],
+  options?: {
+    quiz_id?: string;
+    course_code?: string;
+    time_spent_minutes?: number;
+    user_id?: string;
+  }
 ): Promise<GradeResult> {
   const res = await apiClient.post("/ai/quiz/grade", {
     quiz_questions: quizQuestions,
     student_answers: studentAnswers,
+    quiz_id: options?.quiz_id,
+    course_code: options?.course_code,
+    time_spent_minutes: options?.time_spent_minutes || 0,
+    user_id: options?.user_id || "default",
   });
   return res.data;
 }
@@ -149,8 +159,74 @@ export async function getContentForClippy(
 /**
  * Generate improvement quiz based on weak areas
  */
-export async function generateImprovementQuiz(): Promise<QuizResponse> {
-  const res = await apiClient.post("/ai/improve/generate-test");
+export async function generateImprovementQuiz(courseCode?: string): Promise<QuizResponse> {
+  const params = new URLSearchParams();
+  if (courseCode) params.append("course_code", courseCode);
+  const res = await apiClient.post(`/ai/improve/generate-test?${params.toString()}`);
+  return res.data;
+}
+
+/**
+ * Weak topic structure from backend
+ */
+export interface WeakTopic {
+  topic: string;
+  count: number;
+  percentage: number;
+}
+
+/**
+ * Get weak topics based on wrong answers
+ */
+export async function getWeakTopics(userId: string = "default", courseCode?: string): Promise<{ weak_topics: WeakTopic[]; total_wrong: number }> {
+  const params = new URLSearchParams({ user_id: userId });
+  if (courseCode) params.append("course_code", courseCode);
+  const res = await apiClient.get(`/ai/improve/weak-topics?${params.toString()}`);
+  return res.data;
+}
+
+/**
+ * Get wrong questions for a user
+ */
+export async function getWrongQuestions(userId: string = "default", courseCode?: string): Promise<{ user_id: string; wrong_questions: any[] }> {
+  const params = new URLSearchParams({ user_id: userId });
+  if (courseCode) params.append("course_code", courseCode);
+  const res = await apiClient.get(`/ai/improve/wrong-questions?${params.toString()}`);
+  return res.data;
+}
+
+/**
+ * Clear wrong questions for a user
+ */
+export async function clearWrongQuestions(userId: string = "default", courseCode?: string): Promise<{ message: string }> {
+  const params = new URLSearchParams({ user_id: userId });
+  if (courseCode) params.append("course_code", courseCode);
+  const res = await apiClient.delete(`/ai/improve/wrong-questions?${params.toString()}`);
+  return res.data;
+}
+
+/**
+ * Quiz result structure from backend
+ */
+export interface QuizResult {
+  id: string;
+  user_id: string;
+  quiz_id: string;
+  score: number;
+  total_questions: number;
+  correct_answers: number;
+  wrong_answers: number;
+  time_spent_minutes: number;
+  course_code?: string;
+  topics_covered: string[];
+  created_at: string;
+}
+
+/**
+ * Get quiz results for a user from MongoDB
+ */
+export async function getQuizResults(userId: string = "default", limit: number = 10): Promise<{ user_id: string; results: QuizResult[] }> {
+  const res = await apiClient.get(`/ai/improve/quiz-results?user_id=${userId}&limit=${limit}`);
   return res.data;
 }
 
@@ -179,5 +255,83 @@ export async function extractConcepts(
   slides: ParsedSlide[],
 ): Promise<Array<{ term: string; definition: string }>> {
   const res = await apiClient.post("/ai/tools/concepts", slides);
+  return res.data;
+}
+
+// ============ SAVED MATERIALS ============
+
+/**
+ * Saved material structure from backend
+ */
+export interface SavedMaterial {
+  id: string;
+  filename: string;
+  title: string;
+  course_code?: string;
+  total_slides: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Save a material for later quiz generation
+ */
+export async function saveMaterial(
+  file: File,
+  courseCode?: string,
+  title?: string,
+  userId: string = "default"
+): Promise<{ message: string; id: string; filename: string; total_slides: number }> {
+  const form = new FormData();
+  form.append("file", file);
+  if (courseCode) form.append("course_code", courseCode);
+  if (title) form.append("title", title);
+  form.append("user_id", userId);
+
+  const res = await apiClient.post("/ai/files/save-material", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+/**
+ * Get all saved materials for a user
+ */
+export async function getSavedMaterials(
+  userId: string = "default",
+  courseCode?: string
+): Promise<{ materials: SavedMaterial[] }> {
+  const params = new URLSearchParams({ user_id: userId });
+  if (courseCode) params.append("course_code", courseCode);
+  const res = await apiClient.get(`/ai/files/saved-materials?${params.toString()}`);
+  return res.data;
+}
+
+/**
+ * Generate quiz from a saved material
+ */
+export async function generateQuizFromSavedMaterial(
+  materialId: string,
+  title?: string,
+  topic?: string,
+  numMcq: number = 5
+): Promise<QuizResponse> {
+  const params = new URLSearchParams();
+  if (title) params.append("title", title);
+  if (topic) params.append("topic", topic);
+  params.append("num_mcq", String(numMcq));
+  
+  const res = await apiClient.post(`/ai/files/quiz-from-saved/${materialId}?${params.toString()}`);
+  return res.data;
+}
+
+/**
+ * Delete a saved material
+ */
+export async function deleteSavedMaterial(
+  materialId: string,
+  userId: string = "default"
+): Promise<{ message: string }> {
+  const res = await apiClient.delete(`/ai/files/saved-materials/${materialId}?user_id=${userId}`);
   return res.data;
 }

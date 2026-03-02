@@ -11,6 +11,7 @@ from app.services.ai.openai_key import get_ai_client
 from app.services.ai.prompt_banks import QUIZ_SYSTEM_PROMPT, GRADING_PROMPT_TEMPLATE
 from app.schemas import QuizQuestion, MCQOption, QuizResponse, QuestionType, DifficultyLevel, QuizGenerateRequest, StudentAnswer
 from app.services.file_parser import SlideContent, build_content_string
+from app.db.mongodb import save_wrong_questions, save_quiz_result
 
 # Client is now lazy-loaded via get_ai_client()
 
@@ -22,18 +23,22 @@ def _parse_gpt_response(raw: str) -> dict:
         raise HTTPException(500, f"Failed to parse GPT JSON: {e}")
 
 
-def _normalize_options(raw_options) -> List[MCQOption]:
+def _normalize_options(raw_options, correct_answer: str = "") -> List[MCQOption]:
     if not raw_options:
         return []
 
     normalized: List[MCQOption] = []
     label_pool = ["A", "B", "C", "D", "E", "F"]
+    correct_label = correct_answer.strip().upper() if correct_answer else ""
 
     for idx, raw_opt in enumerate(raw_options):
         if isinstance(raw_opt, dict):
             label = str(raw_opt.get("label", label_pool[idx] if idx < len(label_pool) else chr(65 + idx)))
             text = str(raw_opt.get("text", raw_opt.get("option", ""))).strip()
+            # Check is_correct from dict, OR match against correct_answer label
             is_correct = bool(raw_opt.get("is_correct", raw_opt.get("correct", False)))
+            if not is_correct and correct_label and label.upper() == correct_label:
+                is_correct = True
             normalized.append(MCQOption(label=label, text=text, is_correct=is_correct))
             continue
 
@@ -46,7 +51,8 @@ def _normalize_options(raw_options) -> List[MCQOption]:
             else:
                 label = label_pool[idx] if idx < len(label_pool) else chr(65 + idx)
                 text = value
-            normalized.append(MCQOption(label=label, text=text, is_correct=False))
+            is_correct = correct_label and label.upper() == correct_label
+            normalized.append(MCQOption(label=label, text=text, is_correct=is_correct))
 
     return normalized
 
@@ -54,7 +60,8 @@ def _build_question_objects(raw_questions: list) -> List[QuizQuestion]:
     questions = []
     for i, q in enumerate(raw_questions):
         q_id = q.get("id") or f"q{i + 1}"
-        options = _normalize_options(q.get("options", []))
+        correct_answer = q.get("correct_answer", "")
+        options = _normalize_options(q.get("options", []), correct_answer)
         questions.append(QuizQuestion(
             id=q_id,
             type=QuestionType.mcq,
@@ -145,7 +152,15 @@ async def generate_quiz_from_slides(slides: List[SlideContent], request: QuizGen
         created_at=datetime.now(timezone.utc).isoformat(),
     )
 
-async def grade_and_record_quiz(quiz_questions: List[QuizQuestion], student_answers: List[StudentAnswer], wrong_file_path: str = "wrong_questions.json") -> dict:
+async def grade_and_record_quiz(
+    quiz_questions: List[QuizQuestion], 
+    student_answers: List[StudentAnswer], 
+    wrong_file_path: str = "wrong_questions.json",
+    quiz_id: str = None,
+    course_code: str = None,
+    time_spent_minutes: int = 0,
+    user_id: str = "default"
+) -> dict:
     settings = get_settings()
     client = get_ai_client()
     
@@ -169,15 +184,23 @@ async def grade_and_record_quiz(quiz_questions: List[QuizQuestion], student_answ
     graded_data["total_correct"] = total_correct
     graded_data["total_wrong"] = total_wrong
     
-    # Save wrong questions for adaptive engine
+    # Save wrong questions for adaptive engine (MongoDB)
     if wrong_ids:
         wrong_questions = [q.model_dump() for q in quiz_questions if q.id in wrong_ids]
-        existing_wrong = []
-        if os.path.exists(wrong_file_path):
-            with open(wrong_file_path, "r", encoding="utf-8") as f:
-                existing_wrong = json.load(f)
-        existing_wrong.extend(wrong_questions)
-        with open(wrong_file_path, "w", encoding="utf-8") as f:
-            json.dump(existing_wrong, f, indent=2)
+        save_wrong_questions(wrong_questions, user_id=user_id, course_code=course_code)
+    
+    # Save quiz result to MongoDB
+    topics_covered = list(set(q.topic for q in quiz_questions if q.topic))
+    save_quiz_result(
+        user_id=user_id,
+        quiz_id=quiz_id or str(uuid.uuid4()),
+        score=score_pct,
+        total_questions=len(quiz_questions),
+        correct_answers=total_correct,
+        wrong_answers=total_wrong,
+        time_spent_minutes=time_spent_minutes,
+        course_code=course_code,
+        topics_covered=topics_covered
+    )
             
     return graded_data

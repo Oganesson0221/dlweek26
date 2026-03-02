@@ -1,23 +1,76 @@
 from fastapi import APIRouter
 from app.schemas import QuizResponse
 import os
-from app.services.ai.adaptive_engine import generate_improvement_quiz
 from app.core.config import get_settings
 import json
 import uuid
 from datetime import datetime
 from app.services.ai.openai_key import get_ai_client
-from fastapi import HTTPException
+from fastapi import HTTPException, Query
 from app.services.ai.quiz_services import _parse_gpt_response, _build_question_objects
+from app.db.mongodb import get_wrong_questions, get_weak_topics, clear_wrong_questions, get_quiz_results, get_all_quiz_results
 
 # Client is lazy-loaded via get_ai_client()
 
 router = APIRouter(prefix="/ai/improve", tags=["AI Adaptive Learning"])
 
 @router.post("/generate-test", response_model=QuizResponse)
-async def create_improvement_test():
-    """Generates a test based on previously missed questions in wrong_questions.json"""
-    return await generate_improvement_quiz()
+async def create_improvement_test(course_code: str = Query(None)):
+    """Generates a test based on previously missed questions from MongoDB, optionally filtered by course"""
+    return await generate_improvement_quiz(course_code=course_code)
+
+@router.get("/weak-topics")
+async def get_user_weak_topics(user_id: str = Query("default"), course_code: str = Query(None)):
+    """Get weak topics based on wrong questions from MongoDB, optionally filtered by course"""
+    weak_topics = get_weak_topics(user_id=user_id, course_code=course_code)
+    total_wrong = sum(t.get("count", 0) for t in weak_topics)
+    
+    # Format for frontend - add percentage
+    formatted_topics = []
+    for topic in weak_topics:
+        count = topic.get("count", 0)
+        formatted_topics.append({
+            "topic": topic.get("topic", "General"),
+            "count": count,
+            "percentage": (count / total_wrong * 100) if total_wrong > 0 else 0
+        })
+    
+    return {
+        "weak_topics": formatted_topics,
+        "total_wrong": total_wrong
+    }
+
+@router.get("/wrong-questions")
+async def get_all_wrong_questions(user_id: str = Query("default"), course_code: str = Query(None)):
+    """Get all wrong questions from MongoDB, optionally filtered by course"""
+    questions = get_wrong_questions(user_id=user_id, course_code=course_code)
+    return {
+        "user_id": user_id,
+        "wrong_questions": questions
+    }
+
+@router.delete("/wrong-questions")
+async def clear_all_wrong_questions(user_id: str = Query("default"), course_code: str = Query(None)):
+    """Clear all wrong questions after mastery, optionally filtered by course"""
+    clear_wrong_questions(user_id=user_id, course_code=course_code)
+    return {"message": "Wrong questions cleared successfully"}
+
+@router.get("/quiz-results")
+async def get_user_quiz_results(user_id: str = Query("default"), limit: int = Query(10)):
+    """Get recent quiz results for a user from MongoDB"""
+    results = get_quiz_results(user_id=user_id, limit=limit)
+    return {
+        "user_id": user_id,
+        "results": results
+    }
+
+@router.get("/quiz-results/all")
+async def get_all_user_quiz_results(limit: int = Query(20)):
+    """Get all recent quiz results from MongoDB"""
+    results = get_all_quiz_results(limit=limit)
+    return {
+        "results": results
+    }
 
 SYSTEM_PROMPT = """You are an expert educational assessment designer.
 Your task is to create a remedial improvement quiz based on questions a student previously got wrong.
@@ -33,25 +86,19 @@ Rules:
 
 # ─── Main Generation ──────────────────────────────────────────────────────────
 
-async def generate_improvement_quiz(wrong_file_path: str = "wrong_questions.json") -> QuizResponse:
+async def generate_improvement_quiz(course_code: str = None) -> QuizResponse:
     """
-    Reads the user's previously missed questions and generates a targeted improvement quiz.
+    Reads the user's previously missed questions from MongoDB and generates a targeted improvement quiz.
+    Optionally filters by course_code to focus on a specific subject.
     """
     settings = get_settings()
     client = get_ai_client()
 
-    # 1. Load the missed questions
-    if not os.path.exists(wrong_file_path):
-        raise HTTPException(status_code=404, detail="No wrong questions file found. Take a quiz first!")
-
-    try:
-        with open(wrong_file_path, "r", encoding="utf-8") as f:
-            wrong_questions = json.load(f)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Failed to read the wrong questions file.")
+    # 1. Load the missed questions from MongoDB
+    wrong_questions = get_wrong_questions(user_id="default", course_code=course_code)
 
     if not wrong_questions:
-        raise HTTPException(status_code=400, detail="No wrong questions available to improve upon.")
+        raise HTTPException(status_code=400, detail="No wrong questions available. Take a quiz first!")
 
     # 2. Build the prompt
     prompt = f"""Generate a new improvement quiz based on these previously missed questions.
@@ -103,15 +150,11 @@ Return this EXACT JSON structure:
     total_marks = sum(q.marks for q in questions)
     total_qs = len(questions)
 
-    # Note: We optionally clear the wrong_questions.json here if you want to 'reset' 
-    # the improvement queue after generating the test.
-    # os.remove(wrong_file_path)
-
     quiz_id = str(uuid.uuid4())
     return QuizResponse(
         id=quiz_id,
         title="Improvement Quiz",
-        source_file="wrong_questions.json",
+        source_file="mongodb_wrong_questions",
         topic="Remedial Review",
         total_questions=total_qs,
         total_marks=total_marks,

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Upload,
   Play,
@@ -16,18 +16,24 @@ import {
   Loader2,
   FileText,
   X,
+  AlertTriangle,
 } from "lucide-react";
-import {
-  courses as mockCourses,
-  quizQuestions as mockQuizQuestions,
-  quizResults,
-} from "@/data/learnLensData";
 import { useCoursesBackend } from "@/hooks/useCoursesBackend";
 import {
   generateQuizFromFile,
   gradeQuiz,
+  getWeakTopics,
+  generateImprovementQuiz,
+  getQuizResults,
+  getSavedMaterials,
+  saveMaterial,
+  generateQuizFromSavedMaterial,
+  deleteSavedMaterial,
   type QuizQuestion as BackendQuizQuestion,
   type QuizResponse,
+  type WeakTopic,
+  type QuizResult,
+  type SavedMaterial,
 } from "@/api/quizApi";
 import type { QuizQuestion } from "@/types";
 import { formatDate } from "@/utils/helpers";
@@ -53,15 +59,17 @@ function convertToFrontendQuestion(q: BackendQuizQuestion): QuizQuestion {
 }
 
 export const QuizPage: React.FC = () => {
-  // Backend courses with fallback
+  // Backend courses only - no mocks
   const { courses: backendCourses } = useCoursesBackend();
-  const courses = backendCourses.length > 0 ? backendCourses : mockCourses;
+  const courses = backendCourses;
 
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [activeQuiz, setActiveQuiz] = useState<QuizQuestion[] | null>(null);
+  const [backendQuestions, setBackendQuestions] = useState<BackendQuizQuestion[] | null>(null); // Original backend questions for grading
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // File upload states
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -69,32 +77,114 @@ export const QuizPage: React.FC = () => {
   const [generatedQuiz, setGeneratedQuiz] = useState<QuizResponse | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [numQuestions, setNumQuestions] = useState(5);
+  const [quizStartTime, setQuizStartTime] = useState<Date | null>(null);
+
+  // Weak topics state
+  const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
+  const [totalWrongCount, setTotalWrongCount] = useState(0);
+  const [isLoadingWeakTopics, setIsLoadingWeakTopics] = useState(false);
+  const [isGeneratingImprovementQuiz, setIsGeneratingImprovementQuiz] = useState(false);
+
+  // Quiz results from MongoDB
+  const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+  const [isLoadingQuizResults, setIsLoadingQuizResults] = useState(false);
+
+  // Saved materials from MongoDB
+  const [savedMaterials, setSavedMaterials] = useState<SavedMaterial[]>([]);
+  const [isLoadingSavedMaterials, setIsLoadingSavedMaterials] = useState(false);
+  const [isSavingMaterial, setIsSavingMaterial] = useState(false);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+
+  // Fetch weak topics, quiz results, and saved materials on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingWeakTopics(true);
+      setIsLoadingSavedMaterials(true);
+      setIsLoadingQuizResults(true);
+      
+      try {
+        const courseCode = selectedCourse || undefined;
+        const [weakTopicsData, resultsData, materialsData] = await Promise.all([
+          getWeakTopics("default", courseCode),
+          getQuizResults("default", 10),
+          getSavedMaterials("default", courseCode)
+        ]);
+        
+        setWeakTopics(weakTopicsData.weak_topics || []);
+        setTotalWrongCount(weakTopicsData.total_wrong || 0);
+        setQuizResults(resultsData.results || []);
+        setSavedMaterials(materialsData.materials || []);
+      } catch (error) {
+        console.error("Failed to fetch quiz data:", error);
+      } finally {
+        setIsLoadingWeakTopics(false);
+        setIsLoadingQuizResults(false);
+        setIsLoadingSavedMaterials(false);
+      }
+    };
+    fetchData();
+  }, [showResults, selectedCourse]); // Refetch when quiz results are shown or course changes
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Use mock quiz questions as fallback
-  const quizQuestions = mockQuizQuestions;
-
-  const courseQuestions = selectedCourse
-    ? quizQuestions.filter((q) =>
-        courses
-          .find((c) => c.id === selectedCourse)
-          ?.topics.some((t) => t.id === q.topic),
-      )
-    : quizQuestions;
-
-  const startQuiz = (qs: QuizQuestion[]) => {
-    setActiveQuiz(qs);
+  // Start quiz with backend questions for grading
+  const startQuiz = (frontendQs: QuizQuestion[], backendQs?: BackendQuizQuestion[]) => {
+    setActiveQuiz(frontendQs);
+    setBackendQuestions(backendQs || null);
     setCurrentQ(0);
     setAnswers({});
     setShowResults(false);
+    setQuizStartTime(new Date());
   };
 
   const handleAnswer = (questionId: string, answer: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
   };
 
-  const finishQuiz = () => setShowResults(true);
+  // Finish quiz and submit to backend for grading + storage
+  const finishQuiz = async () => {
+    if (!activeQuiz || !backendQuestions) {
+      setShowResults(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Build student answers - map answer text back to option label
+      const studentAnswers = activeQuiz.map((q) => {
+        const answerText = answers[q.id] || "";
+        const backendQ = backendQuestions.find(bq => bq.id === q.id);
+        const selectedOption = backendQ?.options?.find(opt => opt.text === answerText);
+        return {
+          question_id: q.id,
+          answer: selectedOption?.label || answerText, // Send label (A, B, C, D) for grading
+        };
+      });
+
+      // Calculate time spent
+      const timeSpent = quizStartTime 
+        ? Math.round((new Date().getTime() - quizStartTime.getTime()) / 60000) 
+        : 0;
+
+      // Grade quiz and save to MongoDB
+      await gradeQuiz(
+        backendQuestions,
+        studentAnswers,
+        {
+          quiz_id: generatedQuiz?.id,
+          course_code: selectedCourse || undefined,
+          time_spent_minutes: timeSpent,
+          user_id: "default",
+        }
+      );
+    } catch (error) {
+      console.error("Failed to grade quiz:", error);
+      // Still show results even if grading fails
+    } finally {
+      setIsSubmitting(false);
+      setShowResults(true);
+    }
+  };
 
   const getScore = () => {
     if (!activeQuiz) return 0;
@@ -133,7 +223,7 @@ export const QuizPage: React.FC = () => {
     }
   };
 
-  // Generate quiz from uploaded file
+  // Generate quiz from uploaded file and save material for reuse
   const handleGenerateQuiz = async () => {
     if (!uploadedFile) return;
 
@@ -141,6 +231,21 @@ export const QuizPage: React.FC = () => {
     setUploadError(null);
 
     try {
+      // Save material first for future reuse
+      setIsSavingMaterial(true);
+      try {
+        await saveMaterial(uploadedFile, selectedCourse || undefined, uploadedFile.name);
+        // Refresh saved materials list
+        const materialsData = await getSavedMaterials("default", selectedCourse || undefined);
+        setSavedMaterials(materialsData.materials || []);
+      } catch (saveErr) {
+        console.warn("Failed to save material:", saveErr);
+        // Continue with quiz generation even if save fails
+      } finally {
+        setIsSavingMaterial(false);
+      }
+
+      // Generate quiz
       const quiz = await generateQuizFromFile(
         uploadedFile,
         `Quiz from ${uploadedFile.name}`,
@@ -155,13 +260,35 @@ export const QuizPage: React.FC = () => {
     }
   };
 
+  // Generate quiz from saved material
+  const handleGenerateFromSaved = async (materialId: string) => {
+    setSelectedMaterialId(materialId);
+    setIsGeneratingQuiz(true);
+    setUploadError(null);
+
+    try {
+      const quiz = await generateQuizFromSavedMaterial(
+        materialId,
+        undefined,
+        undefined,
+        numQuestions
+      );
+      setGeneratedQuiz(quiz);
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to generate quiz from saved material");
+    } finally {
+      setIsGeneratingQuiz(false);
+      setSelectedMaterialId(null);
+    }
+  };
+
   // Start quiz from generated questions
   const startGeneratedQuiz = () => {
     if (!generatedQuiz) return;
     const frontendQuestions = generatedQuiz.questions.map(
       convertToFrontendQuestion,
     );
-    startQuiz(frontendQuestions);
+    startQuiz(frontendQuestions, generatedQuiz.questions);
   };
 
   // Background wrapper component
@@ -190,6 +317,18 @@ export const QuizPage: React.FC = () => {
   // Quiz in progress
   if (activeQuiz && !showResults) {
     const q = activeQuiz[currentQ];
+    
+    // Defensive check for undefined question
+    if (!q) {
+      return (
+        <PageWrapper>
+          <div className="max-w-3xl mx-auto p-8 text-center">
+            <p className="text-neutral-600">Loading question...</p>
+          </div>
+        </PageWrapper>
+      );
+    }
+    
     return (
       <PageWrapper>
         <div className="max-w-3xl mx-auto space-y-5">
@@ -296,9 +435,18 @@ export const QuizPage: React.FC = () => {
             ) : (
               <button
                 onClick={finishQuiz}
-                className="px-5 py-2.5 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[13px] font-semibold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[13px] font-semibold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
               >
-                Finish <CheckCircle2 className="w-4 h-4" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+                  </>
+                ) : (
+                  <>
+                    Finish <CheckCircle2 className="w-4 h-4" />
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -344,8 +492,8 @@ export const QuizPage: React.FC = () => {
               >
                 Back to Quizzes
               </button>
-              <button
-                onClick={() => startQuiz(activeQuiz)}
+            <button
+                onClick={() => startQuiz(activeQuiz, backendQuestions || undefined)}
                 className="px-5 py-2.5 bg-gradient-to-r from-[#0078d4] to-[#50e6ff] text-white text-[13px] font-semibold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" /> Retry Quiz
@@ -568,6 +716,56 @@ export const QuizPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Saved Materials Section */}
+          {savedMaterials.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-neutral-200">
+              <div className="flex items-center gap-2 mb-3">
+                <BookOpen className="w-4 h-4 text-[#5c2d91]" />
+                <h3 className="text-[13px] font-semibold text-neutral-700">
+                  Your Saved Materials
+                </h3>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {isLoadingSavedMaterials ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+                  </div>
+                ) : (
+                  savedMaterials.map((material) => (
+                    <div
+                      key={material.id}
+                      className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-neutral-200 hover:border-[#5c2d91]/30 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-[#5c2d91]" />
+                        <div>
+                          <p className="text-[13px] font-medium text-neutral-800 truncate max-w-[200px]">
+                            {material.title}
+                          </p>
+                          <p className="text-[11px] text-neutral-500">
+                            {material.total_slides} slides
+                            {material.course_code && ` • ${material.course_code}`}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleGenerateFromSaved(material.id)}
+                        disabled={isGeneratingQuiz && selectedMaterialId === material.id}
+                        className="px-3 py-1.5 bg-gradient-to-r from-[#5c2d91] to-[#b4a0ff] text-white text-[11px] font-semibold rounded-lg hover:shadow-md transition-all disabled:opacity-50"
+                      >
+                        {isGeneratingQuiz && selectedMaterialId === material.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          "Generate Quiz"
+                        )}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Course filter */}
@@ -609,15 +807,23 @@ export const QuizPage: React.FC = () => {
                   Quick Practice
                 </h3>
                 <p className="text-[12px] text-neutral-500">
-                  {courseQuestions.length} questions available
+                  {generatedQuiz ? `${generatedQuiz.questions.length} questions generated` : "Upload materials to generate quiz"}
                 </p>
               </div>
             </div>
             <button
-              onClick={() => startQuiz(courseQuestions.slice(0, 5))}
+              onClick={() => {
+                if (generatedQuiz) {
+                  const frontendQuestions = generatedQuiz.questions.map(convertToFrontendQuestion);
+                  const backendQs = generatedQuiz.questions.slice(0, 5);
+                  startQuiz(frontendQuestions.slice(0, 5), backendQs);
+                } else {
+                  fileInputRef.current?.click();
+                }
+              }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[14px] font-semibold rounded-xl hover:shadow-lg transition-all"
             >
-              <Play className="w-4 h-4" /> Start 5-Question Quiz
+              <Play className="w-4 h-4" /> {generatedQuiz ? "Start Quiz" : "Upload to Generate"}
             </button>
           </div>
 
@@ -631,24 +837,79 @@ export const QuizPage: React.FC = () => {
                   Weak Area Focus
                 </h3>
                 <p className="text-[12px] text-neutral-500">
-                  Targeted practice on challenging topics
+                  {totalWrongCount > 0 
+                    ? `${totalWrongCount} wrong answers tracked`
+                    : "Practice topics you've struggled with"}
                 </p>
               </div>
             </div>
+            
+            {/* Show weak topics if available */}
+            {isLoadingWeakTopics ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+              </div>
+            ) : weakTopics.length > 0 ? (
+              <div className="mb-3 space-y-2">
+                {weakTopics.slice(0, 3).map((topic) => (
+                  <div 
+                    key={topic.topic} 
+                    className="flex items-center justify-between p-2 bg-red-50 border border-red-200 rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                      <span className="text-[12px] font-medium text-red-800 truncate max-w-[150px]">
+                        {topic.topic}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-red-600 font-medium">
+                      {topic.count} wrong ({topic.percentage.toFixed(0)}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-[12px] text-green-700 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  No weak areas detected yet. Take quizzes to track progress!
+                </p>
+              </div>
+            )}
+            
             <button
-              onClick={() =>
-                startQuiz(
-                  courseQuestions
-                    .filter(
-                      (q) =>
-                        q.difficulty === "hard" || q.difficulty === "medium",
-                    )
-                    .slice(0, 5),
-                )
-              }
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#d83b01] to-[#ff6f61] text-white text-[14px] font-semibold rounded-xl hover:shadow-lg transition-all"
+              onClick={async () => {
+                if (totalWrongCount > 0) {
+                  setIsGeneratingImprovementQuiz(true);
+                  try {
+                    const courseCode = selectedCourse || undefined;
+                    const quiz = await generateImprovementQuiz(courseCode);
+                    const frontendQuestions = quiz.questions.map(convertToFrontendQuestion);
+                    startQuiz(frontendQuestions, quiz.questions);
+                  } catch (error) {
+                    console.error("Failed to generate improvement quiz:", error);
+                    setUploadError("Failed to generate improvement quiz. Please try again.");
+                  } finally {
+                    setIsGeneratingImprovementQuiz(false);
+                  }
+                }
+              }}
+              disabled={isGeneratingImprovementQuiz || totalWrongCount === 0}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#d83b01] to-[#ff6f61] text-white text-[14px] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
             >
-              <Target className="w-4 h-4" /> Focus on Weak Areas
+              {isGeneratingImprovementQuiz ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Generating...
+                </>
+              ) : totalWrongCount > 0 ? (
+                <>
+                  <Target className="w-4 h-4" /> Practice Weak Topics
+                </>
+              ) : (
+                <>
+                  <Target className="w-4 h-4" /> Take quizzes first
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -664,51 +925,65 @@ export const QuizPage: React.FC = () => {
             </h2>
           </div>
           <div className="space-y-2">
-            {quizResults.map((result) => {
-              const course = courses.find((c) => c.id === result.courseId);
-              return (
-                <div
-                  key={result.id}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white/60 hover:bg-white transition-all border border-transparent hover:border-[#0078d4]/20 hover:shadow-sm"
-                >
+            {isLoadingQuizResults ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+              </div>
+            ) : quizResults.length === 0 ? (
+              <div className="text-center py-8 text-neutral-500">
+                <Trophy className="w-8 h-8 mx-auto mb-2 text-neutral-300" />
+                <p className="text-[13px]">No quiz results yet. Take a quiz to see your progress!</p>
+              </div>
+            ) : (
+              quizResults.map((result) => {
+                const course = courses.find((c) => c.code === result.course_code);
+                const scoreRounded = Math.round(result.score);
+                return (
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-bold text-white ${
-                      result.score >= 80
-                        ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
-                        : result.score >= 60
-                          ? "bg-gradient-to-br from-[#ff8c00] to-[#ffb347]"
-                          : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
-                    }`}
+                    key={result.id}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-white/60 hover:bg-white transition-all border border-transparent hover:border-[#0078d4]/20 hover:shadow-sm"
                   >
-                    {result.score}%
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[14px] font-semibold text-neutral-800">
-                      {course?.code} Quiz
-                    </p>
-                    <div className="flex items-center gap-3 text-[12px] text-neutral-500 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDate(result.date)}
-                      </span>
-                      <span>{result.timeSpent} min</span>
-                      <span className="font-medium text-[#0078d4]">
-                        {result.correctAnswers}/{result.totalQuestions} correct
-                      </span>
+                    <div
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-bold text-white ${
+                        scoreRounded >= 80
+                          ? "bg-gradient-to-br from-[#107c10] to-[#00cc6a]"
+                          : scoreRounded >= 60
+                            ? "bg-gradient-to-br from-[#ff8c00] to-[#ffb347]"
+                            : "bg-gradient-to-br from-[#d83b01] to-[#ff6f61]"
+                      }`}
+                    >
+                      {scoreRounded}%
                     </div>
+                    <div className="flex-1">
+                      <p className="text-[14px] font-semibold text-neutral-800">
+                        {result.course_code ? `${result.course_code} Quiz` : "Quiz"}
+                      </p>
+                      <div className="flex items-center gap-3 text-[12px] text-neutral-500 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {formatDate(result.created_at)}
+                        </span>
+                        {result.time_spent_minutes > 0 && (
+                          <span>{result.time_spent_minutes} min</span>
+                        )}
+                        <span className="font-medium text-[#0078d4]">
+                          {result.correct_answers}/{result.total_questions} correct
+                        </span>
+                      </div>
+                    </div>
+                    <Trophy
+                      className={`w-5 h-5 ${
+                        scoreRounded >= 80
+                          ? "text-[#107c10]"
+                          : scoreRounded >= 60
+                            ? "text-[#ff8c00]"
+                            : "text-neutral-300"
+                      }`}
+                    />
                   </div>
-                  <Trophy
-                    className={`w-5 h-5 ${
-                      result.score >= 80
-                        ? "text-[#107c10]"
-                        : result.score >= 60
-                          ? "text-[#ff8c00]"
-                          : "text-neutral-300"
-                    }`}
-                  />
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

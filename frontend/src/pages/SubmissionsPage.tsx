@@ -32,6 +32,8 @@ import {
   FileCheck,
   ExternalLink,
   Globe,
+  Check,
+  RefreshCcw,
 } from "lucide-react";
 import { courses as mockCourses } from "@/data/learnLensData";
 import { useCoursesBackend } from "@/hooks/useCoursesBackend";
@@ -54,6 +56,10 @@ import {
   generateWord,
   generatePpt,
   downloadUrl,
+  listCourses,
+  getCourseOutline,
+  getCourseComponents,
+  updateAssignmentStatus,
 } from "@/api/academicApi";
 
 /* ── Template types ── */
@@ -243,6 +249,50 @@ export const SubmissionsPage: React.FC = () => {
   const [templateLoading, setTemplateLoading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Load outlines from backend on mount
+  useEffect(() => {
+    const loadOutlines = async () => {
+      try {
+        const dbCourses = await listCourses();
+        const outlinesPromises = dbCourses.map(async (course: any) => {
+          const [outline, components] = await Promise.all([
+            getCourseOutline(course.code).catch(() => null),
+            getCourseComponents(course.code).catch(() => []),
+          ]);
+          
+          return {
+            id: course.id || course.code,
+            fileName: `${course.code}_outline.pdf`,
+            courseName: course.name,
+            courseCode: course.code,
+            uploadDate: course.created_at || new Date().toISOString(),
+            outline: {
+              courseName: course.name,
+              courseCode: course.code,
+              instructor: outline?.instructor || "",
+              semester: course.term || "Y2S2",
+              description: outline?.description || "",
+              components: (components || []).map((c: any) => ({
+                name: c.name,
+                type: "assignment" as const,
+                weight: Math.round((Number(c.weight) || 0) * 100),
+                submissionGuidelines: [],
+                rubric: [],
+              })),
+            },
+          };
+        });
+        
+        const loadedOutlines = await Promise.all(outlinesPromises);
+        setUploadedOutlines(loadedOutlines.filter(o => o.outline.components.length > 0));
+      } catch (error) {
+        console.error("Failed to load outlines from backend:", error);
+      }
+    };
+    
+    loadOutlines();
+  }, []);
+
   const filteredCourses = selectedCourse
     ? courses.filter((c) => c.id === selectedCourse)
     : courses;
@@ -367,6 +417,23 @@ export const SubmissionsPage: React.FC = () => {
     setEmailModalAssignment(null);
     setEmailData({ subject: "", body: "" });
   }, [emailModalAssignment, emailData, allAssignments]);
+
+  /* ── Status toggle handler ── */
+  const handleStatusToggle = useCallback(async (assignmentId: string, currentStatus: string) => {
+    const newStatus = currentStatus === "submitted" ? "in_progress" : "submitted";
+    try {
+      await updateAssignmentStatus(assignmentId as unknown as number, newStatus);
+      // Refetch courses to update UI
+      refetchCourses();
+      setClippyMessages((prev) => [
+        `Assignment marked as ${newStatus === "submitted" ? "submitted" : "in progress"}!`,
+        ...prev.slice(0, 4),
+      ]);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update assignment status");
+    }
+  }, [refetchCourses]);
 
   /* ── Template generation with Google Docs links ── */
   const handleTemplateGeneration = async (
@@ -1102,6 +1169,14 @@ export const SubmissionsPage: React.FC = () => {
                                   )}
                                   Open in Slides
                                 </button>
+
+                                <button
+                                  onClick={() => handleStatusToggle(a.id, a.status)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#107c10] to-[#00cc6a] text-white text-[12px] font-medium rounded-md hover:opacity-90 transition-colors"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  Mark Submitted
+                                </button>
                               </div>
                             </div>
                           )}
@@ -1165,6 +1240,14 @@ export const SubmissionsPage: React.FC = () => {
                           <span>Email Prof</span>
                         </button>
                       )}
+                      <button
+                        onClick={() => handleStatusToggle(a.id, a.status)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-amber-600 hover:bg-amber-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all border border-amber-300"
+                        title="Mark as incomplete"
+                      >
+                        <RefreshCcw className="w-3.5 h-3.5" />
+                        <span>Undo</span>
+                      </button>
                       <div className="flex items-center gap-2 px-2 py-1 bg-[#107c10]/10 rounded-lg">
                         <CheckCircle2 className="w-4 h-4 text-[#107c10]" />
                         {a.score !== undefined && (

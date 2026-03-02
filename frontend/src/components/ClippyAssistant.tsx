@@ -695,7 +695,7 @@ Keep responses concise (2-3 sentences max for general questions, or longer if ex
                       <>
                         <Paperclip className="w-3.5 h-3.5" />
                         <span className="text-[11px]">
-                          Upload document for context
+                          Upload submission to review &amp; score
                         </span>
                       </>
                     )}

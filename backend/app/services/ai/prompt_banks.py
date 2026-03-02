@@ -7,8 +7,31 @@ Rules:
 4. For every MCQ: provide exactly 4 options (A–D) with only 1 correct option.
 5. Every question must include a "topic" field (the slide title it came from).
 6. Every question must include a "slide_reference" like "Slide 3".
-7. Explanations should teach — explain WHY the answer is correct.
-8. Return ONLY valid JSON. No markdown, no prose, no extra text."""
+7. Every question must include a "correct_answer" field with the label of the correct option (e.g., "A", "B", "C", or "D").
+8. Explanations should teach — explain WHY the answer is correct.
+9. Return ONLY valid JSON. No markdown, no prose, no extra text.
+
+Return JSON in this EXACT structure:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What is...?",
+      "topic": "Topic Name",
+      "difficulty": "easy|medium|hard",
+      "marks": 1,
+      "options": [
+        {"label": "A", "text": "Option A text"},
+        {"label": "B", "text": "Option B text"},
+        {"label": "C", "text": "Option C text"},
+        {"label": "D", "text": "Option D text"}
+      ],
+      "correct_answer": "A",
+      "explanation": "The answer is A because...",
+      "slide_reference": "Slide 1"
+    }
+  ]
+}"""
 
 IMPROVEMENT_SYSTEM_PROMPT = """You are an expert educational assessment designer.
 Your task is to create a remedial improvement quiz based on questions a student previously got wrong.
@@ -17,8 +40,30 @@ Rules:
 2. Generate exactly one NEW multiple-choice question for each missed question.
 3. The new question must test the EXACT same concept, but use a different scenario, phrasing, or example.
 4. Provide exactly 4 options (A–D) with only 1 correct option.
-5. Provide a detailed explanation of why the correct answer is right.
-6. Return ONLY valid JSON. No markdown."""
+5. Include a "correct_answer" field with the label of the correct option (e.g., "A", "B", "C", or "D").
+6. Provide a detailed explanation of why the correct answer is right.
+7. Return ONLY valid JSON. No markdown.
+
+Return JSON in this EXACT structure:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What is...?",
+      "topic": "Topic Name",
+      "difficulty": "easy|medium|hard",
+      "marks": 1,
+      "options": [
+        {"label": "A", "text": "Option A text"},
+        {"label": "B", "text": "Option B text"},
+        {"label": "C", "text": "Option C text"},
+        {"label": "D", "text": "Option D text"}
+      ],
+      "correct_answer": "A",
+      "explanation": "The answer is A because..."
+    }
+  ]
+}"""
 
 CONCEPT_MAP_VISUALIZATION_PROMPT = """You are an expert academic tutor and visualization specialist.
 Analyze the following lecture slide content. Identify all technical terminology, definitions, and relationships between concepts.

@@ -1,12 +1,12 @@
 import os
 import re
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 from fastapi import UploadFile, HTTPException
 from app.core.config import settings
-from app.db.mongodb import upsert_outline, replace_components, add_topic
+from app.db.mongodb import upsert_outline, replace_components, add_topic, create_assignment
 
 
 # -------------------------
@@ -328,6 +328,20 @@ async def ingest_course_material(course_id: str, course_code: str, file: UploadF
 
     created_topics = persist_topics(course_code, final["topics"])
 
+    # Create assignments from components with staggered due dates
+    created_assignments = []
+    base_date = datetime.utcnow() + timedelta(days=14)  # Start 2 weeks from now
+    for idx, comp in enumerate(final["components"]):
+        due_date = base_date + timedelta(weeks=idx * 2)  # Spread out every 2 weeks
+        assignment = create_assignment(
+            course_code=course_code,
+            title=comp["name"],
+            description=f"Assessment component: {comp['name']} ({int(float(comp['weight']) * 100)}% of grade)",
+            due_at=due_date,
+            weight=float(comp["weight"])
+        )
+        created_assignments.append(assignment)
+
     return {
         "upload_path": path,
         "file_name": file.filename,
@@ -338,7 +352,9 @@ async def ingest_course_material(course_id: str, course_code: str, file: UploadF
         "topics_extracted": final["topics"],
         "components_saved": len(comps),
         "topics_saved": len(created_topics),
+        "assignments_created": len(created_assignments),
         "saved_topic_ids": [t["id"] for t in created_topics],
+        "saved_assignment_ids": [a["id"] for a in created_assignments],
         "timestamp": datetime.utcnow().isoformat(),
         "debug_chunk_signals_sample": signals[:2],
     }
