@@ -1,5 +1,6 @@
 # MongoDB connection for Clippy Notes
 import os
+import certifi
 from pymongo import MongoClient
 from datetime import datetime
 from typing import Optional
@@ -20,7 +21,7 @@ def get_mongo_client():
     if _client is None:
         if not MONGODB_URI:
             raise ValueError("VITE_MONGODB_URI not set in environment")
-        _client = MongoClient(MONGODB_URI)
+        _client = MongoClient(MONGODB_URI, tlsCAFile=certifi.where())
         # Use explicit database name from the URI or default to 'rishikaext'
         _db = _client["rishikaext"]
     return _db

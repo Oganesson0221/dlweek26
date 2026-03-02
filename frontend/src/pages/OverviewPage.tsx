@@ -445,9 +445,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
                 <div className="space-y-4">
                   {week.checkpoints.length > 0 ? (
-                    week.checkpoints.map((cp) => (
+                    week.checkpoints.map((cp, cpIdx) => (
                       <div
-                        key={cp.id}
+                        key={`${cp.courseCode}-${cp.id}-${cpIdx}`}
                         className={`p-4 rounded-2xl border transition-all relative overflow-hidden group/item ${
                           idx === 0
                             ? "bg-white/10 border-white/10 hover:bg-white/15"

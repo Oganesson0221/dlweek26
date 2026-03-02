@@ -23,7 +23,7 @@ let totalTokensUsed = 0;
 const MAX_TOKENS_PER_SESSION = 100000; // Adjust based on your budget
 
 export const openAIConfig = {
-  model: "gpt-4-turbo-preview", // or 'gpt-3.5-turbo' for cheaper option
+  model: "gpt-4o", // or 'gpt-4o-mini' for cheaper option
   maxTokens: 4000,
   temperature: 0.3,
 };
@@ -174,7 +174,7 @@ ${extractedText}`;
     const result = await callOpenAI(
       parsePrompt,
       "You are an expert at parsing academic documents into structured JSON. Extract information accurately and return valid JSON only.",
-      "gpt-4-turbo-preview", // Use GPT-4 for better accuracy
+      "gpt-4o", // Use GPT-4o for better accuracy
     );
 
     // Extract JSON from response
@@ -250,7 +250,7 @@ Format as plain text with markdown-style tables that can be easily converted to 
   return callOpenAI(
     prompt,
     "You are an expert at creating academic assignment templates. Create clear, well-structured templates that work in Microsoft Word.",
-    "gpt-4-turbo-preview",
+    "gpt-4o",
   );
 }
 
@@ -293,7 +293,7 @@ Format as well-structured markdown with tables and sections.`;
   return callOpenAI(
     prompt,
     "You are creating submission guidelines for students. Be clear, detailed, and helpful.",
-    "gpt-4-turbo-preview",
+    "gpt-4o",
   );
 }
 

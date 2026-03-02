@@ -8,15 +8,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.core.config import settings
 from app.core.cors import setup_cors
 from app.core.logging import setup_logging
-from app.db.init_db import init_db
 
-# Backend 2 routers
-from app.routers.academic.courses import router as courses_router
-from app.routers.academic.submissions import router as submissions_router
-from app.routers.academic.templates import router as templates_router
-from app.routers.academic.deadlines import router as deadlines_router
-from app.routers.academic.copilot_hooks import router as copilot_router
-from app.routers.academic.progress import router as progress_router
+# MongoDB routers for academic features
+from app.routers.academic.courses_mongo import router as courses_router
+from app.routers.academic.submissions_mongo import router as submissions_router
+from app.routers.academic.templates_mongo import router as templates_router
+from app.routers.academic.deadlines_mongo import router as deadlines_router
+from app.routers.academic.copilot_hooks_mongo import router as copilot_router
+from app.routers.academic.progress_mongo import router as progress_router
 
 # AI routers
 from app.routers.ai.course_tools import router as course_tools_router
@@ -39,10 +38,6 @@ def create_app() -> FastAPI:
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     os.makedirs(settings.GENERATED_DIR, exist_ok=True)
     os.makedirs(settings.IMAGE_DIR, exist_ok=True)
-
-    @app.on_event("startup")
-    def on_startup():
-        init_db()
 
     # Health check
     @app.get("/health")

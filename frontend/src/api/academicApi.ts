@@ -122,6 +122,7 @@ export async function uploadCourseOutline(body: {
 
   const res = await apiClient.post("/academic/courses/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000, // 2 minutes for file upload + AI processing
   });
   return res.data;
 }
@@ -143,4 +144,126 @@ export async function generatePpt(assignmentId: number) {
 export function downloadUrl(downloadPath: string) {
   const base = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
   return `${base}${downloadPath}`;
+}
+
+// ============ PROGRESS ENDPOINTS ============
+
+export async function getProgressOverview() {
+  const res = await apiClient.get("/academic/progress/overview");
+  return res.data;
+}
+
+export async function getCourseProgress(courseId: string) {
+  const res = await apiClient.get(`/academic/progress/courses/${courseId}`);
+  return res.data;
+}
+
+export async function getProgressTimeline() {
+  const res = await apiClient.get("/academic/progress/timeline");
+  return res.data;
+}
+
+export async function getProgressTraffic() {
+  const res = await apiClient.get("/academic/progress/traffic");
+  return res.data;
+}
+
+export async function getProgressReroute() {
+  const res = await apiClient.get("/academic/progress/reroute");
+  return res.data;
+}
+
+// ============ DEADLINE ENDPOINTS ============
+
+export async function checkDeadlineConflicts(assignmentIds: string[]) {
+  const res = await apiClient.post("/academic/deadlines/conflicts", {
+    assignment_ids: assignmentIds,
+  });
+  return res.data;
+}
+
+export async function suggestStartDate(
+  assignmentId: string,
+  plannedHours: number = 6,
+  difficulty: string = "medium",
+) {
+  const res = await apiClient.post("/academic/deadlines/suggest_start", {
+    assignment_id: assignmentId,
+    planned_hours: plannedHours,
+    difficulty,
+  });
+  return res.data;
+}
+
+export async function getDueReminders() {
+  const res = await apiClient.get("/academic/deadlines/reminders/due");
+  return res.data;
+}
+
+// ============ COPILOT HOOKS ============
+
+export async function draftAssignment(body: {
+  course_code: string;
+  assignment_title: string;
+  description?: string;
+  due_at?: string;
+  weight?: number;
+}) {
+  const res = await apiClient.post("/academic/copilot/draft_assignment", body);
+  return res.data;
+}
+
+export async function getAssignmentSuggestions(
+  courseCode: string,
+  context?: string,
+) {
+  const res = await apiClient.post(
+    `/academic/copilot/assignment_suggestions/${courseCode}`,
+    { context },
+  );
+  return res.data;
+}
+
+// ============ COURSE CREATION ============
+
+export async function createCourse(body: {
+  code: string;
+  name: string;
+  term?: string;
+}) {
+  const res = await apiClient.post("/academic/courses", body);
+  return res.data;
+}
+
+export async function updateCourseOutline(
+  courseCode: string,
+  body: { description: string; instructor: string },
+) {
+  const res = await apiClient.put(
+    `/academic/courses/${courseCode}/outline`,
+    body,
+  );
+  return res.data;
+}
+
+export async function updateCourseComponents(
+  courseCode: string,
+  components: Array<{ name: string; weight: number }>,
+) {
+  const res = await apiClient.put(
+    `/academic/courses/${courseCode}/components`,
+    components,
+  );
+  return res.data;
+}
+
+export async function addCourseTopic(
+  courseCode: string,
+  body: { parent_id?: string; title: string; order_index: number },
+) {
+  const res = await apiClient.post(
+    `/academic/courses/${courseCode}/topics`,
+    body,
+  );
+  return res.data;
 }
