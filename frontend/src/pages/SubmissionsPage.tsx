@@ -1435,8 +1435,7 @@ export const SubmissionsPage: React.FC = () => {
               )}
 
               <p className="text-[10px] text-neutral-400 mt-4 text-center">
-                Term is auto-set to Y2S2. Components and rubrics will be
-                extracted automatically.
+                Components and rubrics will be extracted automatically.
               </p>
             </div>
           </div>
