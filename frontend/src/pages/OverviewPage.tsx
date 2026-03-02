@@ -140,9 +140,24 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="space-y-10 max-w-7xl mx-auto pb-20 selection:bg-indigo-100 relative">
-      {/* Deadline Popup - Fixed in top right */}
-      <AnimatePresence>
+    <div className="relative min-h-screen">
+      {/* Background Image with Gradient Overlay */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/overview.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+        }}
+      />
+      {/* Lighter gradient overlay for overview */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-indigo-500/5 via-white/95 to-emerald-500/5" />
+
+      {/* Content container */}
+      <div className="relative z-10 space-y-10 max-w-7xl mx-auto pb-20 selection:bg-indigo-100 py-8 px-4">
+        {/* Deadline Popup - Fixed in top right */}
+        <AnimatePresence>
         {showDeadlinePopup && criticalDeadline && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, x: 20 }}
@@ -612,6 +627,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

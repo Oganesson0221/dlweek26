@@ -190,9 +190,24 @@ export const JourneyMapPage: React.FC = () => {
     const weakAreas = topicsArray.filter(t => !t.completed && t.mastery < 50).length;
 
     return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-20 selection:bg-indigo-100 relative">
-      {/* Header Row */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="relative min-h-screen">
+      {/* Background Image with Gradient Overlay */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/journey.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+        }}
+      />
+      {/* Gradient overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-indigo-500/10 via-white/90 to-purple-500/10" />
+
+      {/* Content container */}
+      <div className="relative z-10 space-y-8 max-w-7xl mx-auto pb-20 selection:bg-indigo-100 py-8 px-4">
+        {/* Header Row */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">
             Course <span className="text-indigo-600">Journey</span>
@@ -585,6 +600,7 @@ export const JourneyMapPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ const clippyMessages = [
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
+  loadCourses();
   loadNotes();
   rotateClippyMessage();
   checkForSelection();
@@ -54,6 +55,49 @@ tabs.forEach((tab) => {
     }
   });
 });
+
+// Load courses from MongoDB API to populate subject dropdowns
+async function loadCourses() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/academic/courses`);
+    if (!response.ok) throw new Error("Failed to fetch courses");
+
+    const courses = await response.json();
+
+    // Populate the subject-select dropdown (Add Note tab)
+    if (subjectSelect) {
+      subjectSelect.innerHTML = '<option value="">Select a subject...</option>';
+      courses.forEach((course) => {
+        const option = document.createElement("option");
+        option.value = course.code;
+        option.textContent = `${course.code} - ${course.name}`;
+        subjectSelect.appendChild(option);
+      });
+      // Add "Other" as fallback
+      const otherOption = document.createElement("option");
+      otherOption.value = "Other";
+      otherOption.textContent = "Other";
+      subjectSelect.appendChild(otherOption);
+    }
+
+    // Populate the filter-subject dropdown (Notes tab)
+    if (filterSubject) {
+      filterSubject.innerHTML = '<option value="all">All Subjects</option>';
+      courses.forEach((course) => {
+        const option = document.createElement("option");
+        option.value = course.code;
+        option.textContent = course.code;
+        filterSubject.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Error loading courses:", error);
+    // Fallback: Show default option
+    if (subjectSelect) {
+      subjectSelect.innerHTML = '<option value="Other">Other</option>';
+    }
+  }
+}
 
 // Get Selection from Page
 getSelectionBtn.addEventListener("click", async () => {

@@ -8,10 +8,18 @@ interface Note {
   created_at: string;
 }
 
+interface Course {
+  id: string;
+  code: string;
+  name: string;
+  term: string;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const NotesPage: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterSubject, setFilterSubject] = useState<string>("all");
@@ -19,6 +27,18 @@ const NotesPage: React.FC = () => {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+
+  // Fetch courses from MongoDB
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/academic/courses`);
+      if (!response.ok) throw new Error("Failed to fetch courses");
+      const data = await response.json();
+      setCourses(data || []);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    }
+  };
 
   // Fetch notes from MongoDB API
   const fetchNotes = async () => {
@@ -46,6 +66,11 @@ const NotesPage: React.FC = () => {
   useEffect(() => {
     fetchNotes();
   }, [filterSubject]);
+
+  // Fetch courses on mount
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   // Add new note
   const handleAddNote = async () => {
@@ -112,8 +137,11 @@ const NotesPage: React.FC = () => {
     }
   };
 
-  // Get unique subjects for filter
-  const subjects = ["all", ...new Set(notes.map((note) => note.subject))];
+  // Get unique subjects for filter - combine courses and existing note subjects
+  const courseSubjects = courses.map((c) => c.code);
+  const noteSubjects = notes.map((note) => note.subject);
+  const allSubjects = [...new Set([...courseSubjects, ...noteSubjects])];
+  const subjects = ["all", ...allSubjects];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -126,8 +154,23 @@ const NotesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="relative min-h-screen">
+      {/* Background Image with Gradient Overlay */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/notes.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+        }}
+      />
+      {/* Gradient overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-blue-500/10 via-white/90 to-purple-500/10" />
+
+      {/* Content container */}
+      <div className="relative z-10 p-6">
+        <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -213,8 +256,7 @@ const NotesPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Subject
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newNote.subject}
                     onChange={(e) =>
                       setNewNote((prev) => ({
@@ -222,9 +264,15 @@ const NotesPage: React.FC = () => {
                         subject: e.target.value,
                       }))
                     }
-                    placeholder="e.g., Machine Learning, React, etc."
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                  >
+                    <option value="">Select a subject...</option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.code}>
+                        {course.code} - {course.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -447,6 +495,7 @@ const NotesPage: React.FC = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
