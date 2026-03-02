@@ -1,5 +1,12 @@
-import React, { useState } from "react";
-import { TrendingUp, Clock, Award, Target, BarChart3 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  TrendingUp,
+  Clock,
+  Award,
+  Target,
+  BarChart3,
+  Loader2,
+} from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -17,12 +24,13 @@ import {
   Legend,
 } from "recharts";
 import {
-  courses,
-  performanceMetrics,
-  studySessions,
-  quizResults,
-} from "@/data/learnLensData";
-import { getCourseAverage, formatDate } from "@/utils/helpers";
+  getProgressOverview,
+  getCourseProgress,
+  getProgressTimeline,
+  type CourseProgress,
+  type TimelineWeek,
+} from "@/api/academicApi";
+import type { ProgressOverview, DbCourse } from "@/types/backendAcademic";
 
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -45,45 +53,130 @@ export const TrackingPage: React.FC = () => {
     "overview",
   );
 
+  // Backend data state
+  const [overview, setOverview] = useState<ProgressOverview | null>(null);
+  const [courseProgress, setCourseProgress] = useState<
+    Map<string, CourseProgress>
+  >(new Map());
+  const [timeline, setTimeline] = useState<TimelineWeek[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [overviewData, timelineData] = await Promise.all([
+          getProgressOverview(),
+          getProgressTimeline(),
+        ]);
+
+        setOverview(overviewData);
+        setTimeline(timelineData.timeline);
+
+        // Fetch individual course progress
+        if (overviewData.courses && overviewData.courses.length > 0) {
+          const progressMap = new Map<string, CourseProgress>();
+          await Promise.all(
+            overviewData.courses.map(async (course) => {
+              try {
+                const progress = await getCourseProgress(course.code);
+                progressMap.set(course.code, progress);
+              } catch (e) {
+                console.warn(`Failed to fetch progress for ${course.code}:`, e);
+              }
+            }),
+          );
+          setCourseProgress(progressMap);
+        }
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Failed to load progress data",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Compute derived data from backend
+  const courses = overview?.courses ?? [];
+  const totalAssignments = overview?.total_assignments ?? 0;
+  const completedAssignments = overview?.completed_assignments ?? 0;
+  const inProgressAssignments = overview?.in_progress_assignments ?? 0;
+  const completionPercentage = overview?.completion_percentage ?? 0;
+
+  // Radar chart data from courses
   const radarData = courses.map((c) => ({
     course: c.code,
-    progress: c.progress,
-    average: getCourseAverage(c),
+    progress: c.progress ?? 0,
+    average: c.progress ?? 0, // Use progress as approximation
     target: 80,
   }));
 
+  // Weekly hours from timeline
+  const weeklyHours = timeline.map((week, idx) => ({
+    week: idx + 1,
+    hours: week.items.length * 2, // Estimate 2 hours per item
+    quizAvg:
+      week.items.length > 0
+        ? Math.round(
+            (week.items.filter((i) => i.status === "submitted").length /
+              week.items.length) *
+              100,
+          )
+        : 0,
+  }));
+
+  // Study hours by course (computed from assignments)
   const studyByCourseLast7 = courses.map((c) => ({
     course: c.code,
-    hours:
-      Math.round(
-        studySessions
-          .filter((s) => s.course === c.id)
-          .reduce((sum, s) => sum + s.hours, 0) * 10,
-      ) / 10,
+    hours: (c.total_assignments ?? 0) * 1.5, // Estimate hours
   }));
 
-  const weeklyHours = performanceMetrics.map((m) => ({
-    week: m.week,
-    hours: m.studyHours,
-    quizAvg: m.quizAverage,
-  }));
+  // Compute total study hours estimate
+  const totalStudyHours = studyByCourseLast7.reduce(
+    (sum, s) => sum + s.hours,
+    0,
+  );
 
-  const totalStudyHours = studySessions.reduce((sum, s) => sum + s.hours, 0);
-  const avgQuizScore =
-    quizResults.length > 0
-      ? Math.round(
-          quizResults.reduce((sum, r) => sum + r.score, 0) / quizResults.length,
-        )
-      : 0;
-  const totalAssignments = courses.reduce(
-    (sum, c) => sum + c.assignments.length,
-    0,
-  );
-  const completedAssignments = courses.reduce(
-    (sum, c) =>
-      sum + c.assignments.filter((a) => a.status === "submitted").length,
-    0,
-  );
+  // Use assignment-based quiz average estimate
+  const avgQuizScore = Math.round(completionPercentage);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0078d4]/10 via-white/90 to-[#00cc6a]/10">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-[#0078d4]" />
+          <p className="text-neutral-600">Loading progress data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0078d4]/10 via-white/90 to-[#00cc6a]/10">
+        <div className="backdrop-blur-md bg-white/80 rounded-xl border border-red-200 p-6 shadow-lg max-w-md">
+          <h2 className="text-lg font-semibold text-red-600 mb-2">
+            Error Loading Data
+          </h2>
+          <p className="text-neutral-600">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-[#0078d4] text-white rounded-lg text-sm font-medium hover:bg-[#106ebe] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -141,28 +234,28 @@ export const TrackingPage: React.FC = () => {
             {
               title: "Total Study Hours",
               value: `${totalStudyHours.toFixed(1)}h`,
-              sub: "Last 2 weeks",
+              sub: "Estimated",
               icon: Clock,
               color: "from-[#0078d4] to-[#50e6ff]",
             },
             {
-              title: "Avg Quiz Score",
-              value: `${avgQuizScore}%`,
-              sub: `${quizResults.length} quizzes taken`,
+              title: "Completion Rate",
+              value: `${Math.round(completionPercentage)}%`,
+              sub: `${completedAssignments} of ${totalAssignments} done`,
               icon: Target,
               color: "from-[#ff8c00] to-[#ffb900]",
             },
             {
               title: "Assignments",
               value: `${completedAssignments}/${totalAssignments}`,
-              sub: "Completed",
+              sub: `${inProgressAssignments} in progress`,
               icon: Award,
               color: "from-[#5c2d91] to-[#b4a0ff]",
             },
             {
               title: "Overall Progress",
-              value: `${Math.round(courses.reduce((s, c) => s + c.progress, 0) / courses.length)}%`,
-              sub: "Across all courses",
+              value: `${courses.length > 0 ? Math.round(courses.reduce((s, c) => s + (c.progress ?? 0), 0) / courses.length) : 0}%`,
+              sub: `${courses.length} courses`,
               icon: TrendingUp,
               color: "from-[#107c10] to-[#00cc6a]",
             },
@@ -315,7 +408,9 @@ export const TrackingPage: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {courses.map((course, idx) => {
-              const avg = getCourseAverage(course);
+              const progress = courseProgress.get(course.code);
+              const courseCompletionPct =
+                progress?.completion_percentage ?? course.progress ?? 0;
               const colors = [
                 "from-[#0078d4] to-[#50e6ff]",
                 "from-[#107c10] to-[#00cc6a]",
@@ -339,66 +434,62 @@ export const TrackingPage: React.FC = () => {
                         {course.name}
                       </h3>
                       <p className="text-[11px] text-neutral-500">
-                        {course.code} · {course.instructor}
+                        {course.code} · {course.term}
                       </p>
                     </div>
                     <span
                       className={`text-[14px] font-bold ml-auto px-3 py-1 rounded-lg bg-gradient-to-r ${colors[idx % colors.length]} text-white shadow-md`}
                     >
-                      {course.grade}
+                      {Math.round(courseCompletionPct)}%
                     </span>
                   </div>
 
                   <div className="mb-4">
                     <div className="flex justify-between text-[11px] text-neutral-400 mb-1">
                       <span>Progress</span>
-                      <span className="tabular-nums">{course.progress}%</span>
+                      <span className="tabular-nums">
+                        {Math.round(courseCompletionPct)}%
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-accent"
-                        style={{ width: `${course.progress}%` }}
+                        style={{ width: `${courseCompletionPct}%` }}
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {course.checkpoints.map((cp) => (
-                      <div
-                        key={cp.id}
-                        className={`flex-1 p-2 rounded-md border text-center ${
-                          cp.status === "completed"
-                            ? "bg-green-50 border-green-100"
-                            : cp.status === "upcoming"
-                              ? "bg-neutral-50 border-neutral-200"
-                              : "bg-neutral-50 border-neutral-100"
-                        }`}
-                      >
-                        <p className="text-[10px] font-medium text-neutral-600 truncate">
-                          {cp.name.length > 20
-                            ? cp.name.slice(0, 20) + "…"
-                            : cp.name}
+                  {/* Assignment breakdown */}
+                  {progress && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-2 rounded-md border text-center bg-green-50 border-green-100">
+                        <p className="text-[10px] font-medium text-neutral-600">
+                          Completed
                         </p>
-                        {cp.score !== undefined ? (
-                          <p
-                            className={`text-[12px] font-semibold mt-0.5 tabular-nums ${
-                              cp.score >= 80
-                                ? "text-green-700"
-                                : cp.score >= 60
-                                  ? "text-amber-600"
-                                  : "text-red-600"
-                            }`}
-                          >
-                            {cp.score}%
-                          </p>
-                        ) : (
-                          <p className="text-[10px] text-neutral-400 mt-0.5">
-                            W{cp.weekNumber}
-                          </p>
-                        )}
+                        <p className="text-[12px] font-semibold mt-0.5 tabular-nums text-green-700">
+                          {progress.completed}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex-1 p-2 rounded-md border text-center bg-amber-50 border-amber-100">
+                        <p className="text-[10px] font-medium text-neutral-600">
+                          In Progress
+                        </p>
+                        <p className="text-[12px] font-semibold mt-0.5 tabular-nums text-amber-600">
+                          {progress.in_progress}
+                        </p>
+                      </div>
+                      <div className="flex-1 p-2 rounded-md border text-center bg-neutral-50 border-neutral-200">
+                        <p className="text-[10px] font-medium text-neutral-600">
+                          Not Started
+                        </p>
+                        <p className="text-[12px] font-semibold mt-0.5 tabular-nums text-neutral-600">
+                          {progress.total_assignments -
+                            progress.completed -
+                            progress.in_progress}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

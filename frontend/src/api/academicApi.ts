@@ -298,33 +298,6 @@ export async function saveTemplateProgress(
   return res.data;
 }
 
-// ============ PROGRESS ENDPOINTS ============
-
-export async function getProgressOverview() {
-  const res = await apiClient.get("/academic/progress/overview");
-  return res.data;
-}
-
-export async function getCourseProgress(courseId: string) {
-  const res = await apiClient.get(`/academic/progress/courses/${courseId}`);
-  return res.data;
-}
-
-export async function getProgressTimeline() {
-  const res = await apiClient.get("/academic/progress/timeline");
-  return res.data;
-}
-
-export async function getProgressTraffic() {
-  const res = await apiClient.get("/academic/progress/traffic");
-  return res.data;
-}
-
-export async function getProgressReroute() {
-  const res = await apiClient.get("/academic/progress/reroute");
-  return res.data;
-}
-
 // ============ DEADLINE ENDPOINTS ============
 
 export async function checkDeadlineConflicts(assignmentIds: string[]) {
@@ -417,5 +390,91 @@ export async function addCourseTopic(
     `/academic/courses/${courseCode}/topics`,
     body,
   );
+  return res.data;
+}
+
+// ============ PROGRESS TRACKING ENDPOINTS ============
+
+import type {
+  ProgressOverview,
+  TrafficItem,
+  RerouteSuggestion,
+} from "@/types/backendAcademic";
+
+export async function getProgressOverview(): Promise<ProgressOverview> {
+  const res = await apiClient.get("/academic/progress/overview");
+  return res.data;
+}
+
+export interface CourseProgress {
+  course: {
+    id: string;
+    code: string;
+    name: string;
+    term: string;
+  };
+  total_assignments: number;
+  completed: number;
+  in_progress: number;
+  completion_percentage: number;
+  breakdown: {
+    not_started: Array<{
+      id: string;
+      title: string;
+      due_at: string;
+      weight: number;
+    }>;
+    in_progress: Array<{
+      id: string;
+      title: string;
+      due_at: string;
+      weight: number;
+    }>;
+    submitted: Array<{
+      id: string;
+      title: string;
+      due_at: string;
+      weight: number;
+    }>;
+  };
+}
+
+export async function getCourseProgress(
+  courseId: string,
+): Promise<CourseProgress> {
+  const res = await apiClient.get(`/academic/progress/courses/${courseId}`);
+  return res.data;
+}
+
+export interface TimelineWeek {
+  week_start: string;
+  items: Array<{
+    id: string;
+    title: string;
+    course_code: string;
+    due_at: string;
+    status: string;
+    weight: number;
+  }>;
+}
+
+export async function getProgressTimeline(): Promise<{
+  timeline: TimelineWeek[];
+}> {
+  const res = await apiClient.get("/academic/progress/timeline");
+  return res.data;
+}
+
+export async function getProgressTraffic(): Promise<{
+  traffic: TrafficItem[];
+}> {
+  const res = await apiClient.get("/academic/progress/traffic");
+  return res.data;
+}
+
+export async function getProgressReroute(): Promise<{
+  suggestions: RerouteSuggestion[];
+}> {
+  const res = await apiClient.get("/academic/progress/reroute");
   return res.data;
 }
