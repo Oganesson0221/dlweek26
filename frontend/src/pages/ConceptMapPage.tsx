@@ -17,6 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 // Removed hardcoded imports - now using backend-generated data only
 // import { courses, conceptNodes, conceptLinks } from "@/data/microsoftCoursePilotData";
@@ -209,6 +211,7 @@ export const ConceptMapPage: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [expandedTerm, setExpandedTerm] = useState<string | null>(null);
   const [connectionPath, setConnectionPath] = useState<string[]>([]);
+  const [zoom, setZoom] = useState(100);
 
   // Summary section state
   const [summaryCourseName, setSummaryCourseName] = useState("");
@@ -464,6 +467,27 @@ export const ConceptMapPage: React.FC = () => {
     return { nodes: generatedNodes, links: generatedLinks };
   }, [dynamicTerminologyData, selectedCourse]);
 
+  // Calculate bounds for dynamic SVG sizing
+  const bounds = useMemo(() => {
+    if (!nodes.length) return { w: 1000, h: 600, offsetX: 0, offsetY: 0 };
+
+    const padding = 80;
+    const nodeWidth = 100;
+    const nodeHeight = 60;
+
+    const minX = Math.min(...nodes.map(n => n.x));
+    const minY = Math.min(...nodes.map(n => n.y));
+    const maxX = Math.max(...nodes.map(n => n.x + nodeWidth));
+    const maxY = Math.max(...nodes.map(n => n.y + nodeHeight));
+
+    return {
+      offsetX: -minX + padding,
+      offsetY: -minY + padding,
+      w: (maxX - minX) + padding * 2,
+      h: (maxY - minY) + padding * 2,
+    };
+  }, [nodes]);
+
   // Use ONLY backend-generated dynamic terminology data
   const activeTerminologyData = dynamicTerminologyData || {};
   console.log("Active terminology data:", activeTerminologyData);
@@ -556,17 +580,38 @@ export const ConceptMapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Course info display - no switching needed since backend generates per course */}
+        {/* Course info display and zoom controls */}
         <div className="flex items-center justify-between flex-wrap gap-4">
-          {conceptMapResult && (
-            <div className="inline-flex items-center gap-2 backdrop-blur-md bg-white/60 rounded-xl px-4 py-2 border border-white/50 shadow-lg">
-              <BookOpen className="w-4 h-4 text-[#5c2d91]" />
-              <span className="text-sm font-semibold text-neutral-800">
-                {conceptMapResult.course_name}
-              </span>
-              <span className="text-xs text-neutral-500">({conceptMapResult.total_pages} pages)</span>
+          <div className="flex items-center gap-4 flex-wrap">
+            {conceptMapResult && (
+              <div className="inline-flex items-center gap-2 backdrop-blur-md bg-white/60 rounded-xl px-4 py-2 border border-white/50 shadow-lg">
+                <BookOpen className="w-4 h-4 text-[#5c2d91]" />
+                <span className="text-sm font-semibold text-neutral-800">
+                  {conceptMapResult.course_name}
+                </span>
+                <span className="text-xs text-neutral-500">({conceptMapResult.total_pages} pages)</span>
+              </div>
+            )}
+            
+            {/* Zoom Controls */}
+            <div className="inline-flex items-center gap-2 backdrop-blur-md bg-white/80 p-2 rounded-xl border border-white/50 shadow-lg">
+              <button
+                onClick={() => setZoom(Math.max(50, zoom - 20))}
+                className="p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+                aria-label="Zoom out"
+              >
+                <ZoomOut className="w-5 h-5 text-neutral-400" />
+              </button>
+              <span className="text-[12px] font-bold text-neutral-600 min-w-[3rem] text-center">{zoom}%</span>
+              <button
+                onClick={() => setZoom(Math.min(150, zoom + 20))}
+                className="p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+                aria-label="Zoom in"
+              >
+                <ZoomIn className="w-5 h-5 text-neutral-400" />
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Path trail indicator */}
           {connectionPath.length > 0 && (
@@ -615,7 +660,7 @@ export const ConceptMapPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-neutral-50 to-white border border-neutral-100">
+            <div className="relative rounded-lg bg-gradient-to-br from-neutral-50 to-white border border-neutral-100">
               {nodes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#5c2d91]/10 to-[#0078d4]/10 flex items-center justify-center mb-4">
@@ -628,16 +673,32 @@ export const ConceptMapPage: React.FC = () => {
                 </div>
               ) : (
                 <div
-                  className="overflow-x-auto overflow-y-hidden"
-                  style={{ maxWidth: "100%" }}
+                  className="overflow-auto"
+                  style={{ 
+                    width: "100%",
+                    height: "600px"
+                  }}
                 >
+                <div style={{ 
+                  width: `${bounds.w * (zoom / 100)}px`,
+                  height: `${bounds.h * (zoom / 100)}px`,
+                  position: 'relative'
+                }}>
+                <div style={{ 
+                  transform: `scale(${zoom / 100})`, 
+                  transformOrigin: 'top left', 
+                  transition: 'transform 0.3s ease',
+                  width: `${bounds.w}px`,
+                  height: `${bounds.h}px`,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0
+                }}>
                 <svg
-                  width="100%"
-                  height="380"
-                  viewBox="0 0 1000 380"
+                  width={bounds.w}
+                  height={bounds.h}
+                  viewBox={`0 0 ${bounds.w} ${bounds.h}`}
                   preserveAspectRatio="xMidYMid meet"
-                  className="min-w-[700px]"
-                  style={{ maxHeight: "380px" }}
                 >
                   {/* Animated connection path overlay */}
                   {activeConnections.map((conn, idx) => {
@@ -647,10 +708,10 @@ export const ConceptMapPage: React.FC = () => {
                     return (
                       <line
                         key={`path-${idx}`}
-                        x1={source.x + 50}
-                        y1={source.y + 30}
-                        x2={target.x + 50}
-                        y2={target.y + 30}
+                        x1={source.x + 50 + bounds.offsetX}
+                        y1={source.y + 30 + bounds.offsetY}
+                        x2={target.x + 50 + bounds.offsetX}
+                        y2={target.y + 30 + bounds.offsetY}
                         stroke="url(#pathGradient)"
                         strokeWidth={3}
                         strokeDasharray="8 4"
@@ -697,10 +758,10 @@ export const ConceptMapPage: React.FC = () => {
                     return (
                       <line
                         key={`${link.source}-${link.target}`}
-                        x1={source.x + 50}
-                        y1={source.y + 30}
-                        x2={target.x + 50}
-                        y2={target.y + 30}
+                        x1={source.x + 50 + bounds.offsetX}
+                        y1={source.y + 30 + bounds.offsetY}
+                        x2={target.x + 50 + bounds.offsetX}
+                        y2={target.y + 30 + bounds.offsetY}
                         stroke={
                           isInPath
                             ? "#5c2d91"
@@ -735,8 +796,8 @@ export const ConceptMapPage: React.FC = () => {
                       >
                         {/* Node background with hover effect */}
                         <rect
-                          x={node.x}
-                          y={node.y}
+                          x={node.x + bounds.offsetX}
+                          y={node.y + bounds.offsetY}
                           width={100}
                           height={60}
                           rx={12}
@@ -773,8 +834,8 @@ export const ConceptMapPage: React.FC = () => {
 
                         {/* Term name */}
                         <text
-                          x={node.x + 50}
-                          y={node.y + 24}
+                          x={node.x + 50 + bounds.offsetX}
+                          y={node.y + 24 + bounds.offsetY}
                           textAnchor="middle"
                           className="text-[11px] font-semibold pointer-events-none"
                           fill={isExpanded || isSelected ? "white" : "#171717"}
@@ -786,8 +847,8 @@ export const ConceptMapPage: React.FC = () => {
 
                         {/* Mastery percentage */}
                         <text
-                          x={node.x + 50}
-                          y={node.y + 40}
+                          x={node.x + 50 + bounds.offsetX}
+                          y={node.y + 40 + bounds.offsetY}
                           textAnchor="middle"
                           className="text-[9px] pointer-events-none"
                           fill={
@@ -803,8 +864,8 @@ export const ConceptMapPage: React.FC = () => {
 
                         {/* Click hint */}
                         <text
-                          x={node.x + 50}
-                          y={node.y + 52}
+                          x={node.x + 50 + bounds.offsetX}
+                          y={node.y + 52 + bounds.offsetY}
                           textAnchor="middle"
                           className="text-[8px] pointer-events-none"
                           fill={
@@ -821,8 +882,8 @@ export const ConceptMapPage: React.FC = () => {
                         {/* Gap indicator */}
                         {node.isGap && (
                           <circle
-                            cx={node.x + 92}
-                            cy={node.y + 8}
+                            cx={node.x + 92 + bounds.offsetX}
+                            cy={node.y + 8 + bounds.offsetY}
                             r={5}
                             fill="#dc2626"
                           />
@@ -831,8 +892,8 @@ export const ConceptMapPage: React.FC = () => {
                         {/* Path indicator */}
                         {isInPath && !isExpanded && (
                           <circle
-                            cx={node.x + 8}
-                            cy={node.y + 8}
+                            cx={node.x + 8 + bounds.offsetX}
+                            cy={node.y + 8 + bounds.offsetY}
                             r={5}
                             fill="#5c2d91"
                             className="animate-pulse"
@@ -842,6 +903,8 @@ export const ConceptMapPage: React.FC = () => {
                     );
                   })}
                 </svg>
+                </div>
+                </div>
                 </div>
               )}
             </div>
