@@ -80,23 +80,48 @@ pip install -r requirements.txt
 
 #### Configure Environment Variables
 
-Create a `.env` file in the root directory:
+The application uses three `.env` files:
+
+**1. Root `.env` (Root directory)** - Global configuration:
 
 ```env
-# OpenAI API Configuration
+# OpenAI Configuration
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4o-mini
+VITE_OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_ORG_ID=your_openai_org_id_here
+VITE_OPENAI_ORG_ID=your_openai_org_id_here
 
 # MongoDB Configuration
-MONGO_URI=mongodb://localhost:27017/
-MONGO_DB_NAME=microsoft_coursepilot_db
+VITE_MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname?retryWrites=true&w=majority
 
-# Application Settings
-APP_NAME=Microsoft CoursePilot API
-DEBUG=true
-UPLOAD_DIR=backend/storage/uploads
-GENERATED_DIR=backend/storage/generated
-IMAGE_DIR=backend/storage/images
+# Model Settings
+DEFAULT_MODEL=gpt-4o-mini
+VISION_MODEL=gpt-4o-mini
+MAX_TOKENS=1000
+TEMPERATURE=0.7
+
+# OpenRouter API (optional)
+OPENROUTER_API=your_openrouter_api_key_here
+VITE_OPENROUTER_API=your_openrouter_api_key_here
+```
+
+**2. Backend `.env` (backend/.env)** - Backend-specific configuration:
+
+```env
+# Backend Environment Variables
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_ORG_ID=your_openai_org_id_here
+VITE_MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname?retryWrites=true&w=majority
+```
+
+**3. Frontend `.env` (frontend/.env)** - Frontend-specific configuration:
+
+```env
+# Backend API URL
+VITE_API_URL=http://localhost:8000
+
+# OpenAI Configuration for ClippyAssistant
+# These are loaded from root .env during build
 ```
 
 ### 3. Frontend Setup
@@ -267,17 +292,37 @@ Once the backend is running, visit http://localhost:8000/docs for interactive AP
 
 ## 🔐 Environment Variables
 
+The application uses three `.env` files for configuration:
+
+### Root `.env` (Global Configuration)
+
 | Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `OPENAI_API_KEY` | OpenAI API key for AI features | Yes | - |
-| `OPENAI_MODEL` | OpenAI model to use | No | `gpt-4o-mini` |
-| `MONGO_URI` | MongoDB connection string | Yes | `mongodb://localhost:27017/` |
-| `MONGO_DB_NAME` | MongoDB database name | Yes | `microsoft_coursepilot_db` |
-| `APP_NAME` | Application name | No | `Microsoft CoursePilot API` |
-| `DEBUG` | Enable debug mode | No | `false` |
-| `UPLOAD_DIR` | File upload directory | No | `backend/storage/uploads` |
-| `GENERATED_DIR` | Generated files directory | No | `backend/storage/generated` |
-| `IMAGE_DIR` | Image storage directory | No | `backend/storage/images` |
+|----------|-------------|----------|---------||
+| `OPENAI_API_KEY` | OpenAI API key for backend AI features | Yes | - |
+| `VITE_OPENAI_API_KEY` | OpenAI API key for frontend (ClippyAssistant) | Yes | - |
+| `OPENAI_ORG_ID` | OpenAI organization ID | No | - |
+| `VITE_OPENAI_ORG_ID` | OpenAI org ID for frontend | No | - |
+| `VITE_MONGODB_URI` | MongoDB connection string | Yes | - |
+| `DEFAULT_MODEL` | Default OpenAI model | No | `gpt-4o-mini` |
+| `VISION_MODEL` | Vision model for image analysis | No | `gpt-4o-mini` |
+| `MAX_TOKENS` | Maximum tokens for AI responses | No | `1000` |
+| `TEMPERATURE` | AI response creativity (0-2) | No | `0.7` |
+| `OPENROUTER_API` | OpenRouter API key (optional) | No | - |
+| `VITE_OPENROUTER_API` | OpenRouter API for frontend (optional) | No | - |
+
+### Backend `.env` (backend/.env)
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `OPENAI_API_KEY` | OpenAI API key | Yes |
+| `OPENAI_ORG_ID` | OpenAI organization ID | No |
+| `VITE_MONGODB_URI` | MongoDB connection string | Yes |
+
+### Frontend `.env` (frontend/.env)
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------||
+| `VITE_API_URL` | Backend API base URL | No | `http://localhost:8000` |
 
 ## 🧪 Development
 
