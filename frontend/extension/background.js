@@ -1,6 +1,6 @@
 // Clippy Notes Extension - Background Service Worker
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://coursepilot-qyw8.onrender.com";
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {

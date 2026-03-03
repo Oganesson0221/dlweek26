@@ -2,7 +2,7 @@
 // Now saves to MongoDB via Microsoft CoursePilot backend API
 
 // API Configuration - Update this to your backend URL
-const API_BASE_URL = "http://localhost:8000"; // Change to your production URL when deploying
+const API_BASE_URL = "https://coursepilot-qyw8.onrender.com"; // Change to your production URL when deploying
 
 // DOM Elements
 const tabs = document.querySelectorAll(".tab");

@@ -3,7 +3,8 @@
  * Centralizes all backend API calls
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://coursepilot-qyw8.onrender.com";
 
 // Generic fetch wrapper with error handling
 async function apiFetch<T>(

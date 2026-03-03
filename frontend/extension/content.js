@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = "https://coursepilot-qyw8.onrender.com";
 
   // Create floating save button
   let floatingBtn = null;

@@ -45,25 +45,24 @@ def create_app() -> FastAPI:
     def health():
         return {"status": "ok"}
 
-    # Mount Backend 2
-    app.include_router(courses_router)
-    app.include_router(submissions_router)
-    app.include_router(templates_router)
-    app.include_router(deadlines_router)
-    app.include_router(copilot_router)
-    app.include_router(progress_router)
-    app.include_router(editor_router)
+    # Mount Academic routers (MongoDB versions)
+    # Note: These routers have their own internal prefixes (e.g., "/academic/courses")
+    app.include_router(courses_router)          # Has prefix="/academic/courses"
+    app.include_router(submissions_router)      # Has prefix="/academic/submissions"
+    app.include_router(templates_router)        # Has prefix="/academic/templates"
+    app.include_router(deadlines_router)        # Has prefix="/academic/deadlines"
+    app.include_router(copilot_router)          # Has prefix="/academic/copilot"
+    app.include_router(progress_router)         # Has prefix="/academic/progress"
+    app.include_router(editor_router)           # Has prefix="/academic/editor"
 
-    # Mount AI routers
-    app.include_router(course_tools_router)
-    app.include_router(improving_router)
-    app.include_router(quiz_gen_router)
-    app.include_router(file_upload_router)
+    # Mount AI routers - these have their own internal prefixes
+    app.include_router(course_tools_router)     # Has prefix="/ai/tools"
+    app.include_router(improving_router)        # Has prefix="/ai/improve"
+    app.include_router(quiz_gen_router)         # Has prefix="/ai/quiz"
+    app.include_router(file_upload_router)      # Has prefix="/ai/files"
 
-    # Mount Notes router (MongoDB)
-    app.include_router(notes_router)
-
-
+    # Mount Notes router - has prefix="/notes"
+    app.include_router(notes_router)             # Has prefix="/notes"
 
     return app
 
