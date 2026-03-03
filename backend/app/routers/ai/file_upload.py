@@ -17,7 +17,7 @@ from app.db.mongodb import (
     save_course_material, get_course_materials, get_course_material_by_id, delete_course_material
 )
 
-router = APIRouter(prefix="/ai/files", tags=["AI File Processing"])
+router = APIRouter(tags=["AI File Processing"])
 
 
 class ParsedSlide(BaseModel):

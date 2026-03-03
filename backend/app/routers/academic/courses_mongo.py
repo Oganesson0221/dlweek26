@@ -13,7 +13,7 @@ from app.db.mongodb import (
 )
 from app.services.academic.ingest_course_material_mongo import ingest_course_material
 
-router = APIRouter(prefix="/academic/courses", tags=["academic-courses"])
+router = APIRouter(tags=["academic-courses"])
 
 
 def get_course_or_404(course_code: str) -> dict:

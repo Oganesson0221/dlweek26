@@ -14,7 +14,7 @@ from app.services.academic.course_service import (
     get_topics,
 )
 
-router = APIRouter(prefix="/academic/courses", tags=["academic-courses"])
+router = APIRouter(tags=["academic-courses"])
 
 
 # -----------------------------

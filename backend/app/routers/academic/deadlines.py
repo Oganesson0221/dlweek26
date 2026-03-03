@@ -7,7 +7,7 @@ from app.schemas.academic import ConflictQuery, StartDateSuggestRequest
 from app.services.academic.deadline_intel import detect_conflicts, suggest_start_date, upsert_work_plan
 from app.services.academic.reminder_service import due_reminders, mark_sent
 
-router = APIRouter(prefix="/academic/deadlines", tags=["academic-deadlines"])
+router = APIRouter(tags=["academic-deadlines"])
 
 
 

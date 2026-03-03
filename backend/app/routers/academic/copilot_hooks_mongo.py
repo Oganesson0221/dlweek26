@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from app.db.mongodb import get_course, list_assignments, create_assignment
 from app.services.ai.openai_key import get_ai_client
 
-router = APIRouter(prefix="/academic/copilot", tags=["academic-copilot-hooks"])
+router = APIRouter(tags=["academic-copilot-hooks"])
 
 
 class DraftHookRequest(BaseModel):

@@ -8,7 +8,7 @@ from app.models.academic import GeneratedDocument
 from app.services.academic.template_word import generate_word
 from app.services.academic.template_ppt import generate_ppt
 
-router = APIRouter(prefix="/academic/templates", tags=["academic-templates"])
+router = APIRouter(tags=["academic-templates"])
 
 @router.post("/word")
 def gen_word(body: TemplateGenRequest, session: Session = Depends(get_session)):

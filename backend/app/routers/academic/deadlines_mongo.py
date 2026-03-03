@@ -10,7 +10,7 @@ from app.db.mongodb import (
     get_assignment,
 )
 
-router = APIRouter(prefix="/academic/deadlines", tags=["academic-deadlines"])
+router = APIRouter(tags=["academic-deadlines"])
 
 
 class ConflictQuery(BaseModel):

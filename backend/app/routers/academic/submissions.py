@@ -7,7 +7,7 @@ from app.schemas.academic import AssignmentCreate, AssignmentStatusUpdate
 from app.services.academic.submission_service import create_assignment, list_assignments, update_status
 from app.services.academic.reminder_service import schedule_default_reminders
 
-router = APIRouter(prefix="/academic/submissions", tags=["academic-submissions"])
+router = APIRouter(tags=["academic-submissions"])
 
 
 def get_course_or_404(session: Session, course_code: str) -> Course:

@@ -12,7 +12,7 @@ from app.services.ai.progress_tracker import (
     generate_template_with_ai
 )
 
-router = APIRouter(prefix="/academic/editor", tags=["academic-editor"])
+router = APIRouter(tags=["academic-editor"])
 
 
 class ProgressAnalysisRequest(BaseModel):

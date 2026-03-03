@@ -4,7 +4,7 @@ from app.schemas.academic import TemplateGenRequest
 from app.db.mongodb import get_assignment, get_generated_doc, save_generated_doc
 from app.services.academic.template_generators import generate_word_doc, generate_ppt_doc
 
-router = APIRouter(prefix="/academic/templates", tags=["academic-templates"])
+router = APIRouter( tags=["academic-templates"])
 
 
 @router.post("/word")

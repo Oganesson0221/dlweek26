@@ -16,7 +16,7 @@ from app.services.academic.progress_engine import (
     compute_reroute,
 )
 
-router = APIRouter(prefix="/academic/progress", tags=["academic-progress"])
+router = APIRouter(tags=["academic-progress"])
 
 
 @router.get("/overview", response_model=ProgressOverviewResponse)

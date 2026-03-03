@@ -5,7 +5,7 @@ from app.models.academic import Course
 from app.schemas.academic import DraftHookRequest, SuggestionHookRequest
 from app.services.academic.copilot_hooks import draft_hook, suggestion_hook
 
-router = APIRouter(prefix="/academic/copilot", tags=["academic-copilot-hooks"])
+router = APIRouter(tags=["academic-copilot-hooks"])
 
 
 def get_course_or_404(session: Session, course_code: str):

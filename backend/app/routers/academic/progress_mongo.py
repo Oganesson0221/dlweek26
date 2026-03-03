@@ -9,7 +9,7 @@ from app.db.mongodb import (
     get_course,
 )
 
-router = APIRouter(prefix="/academic/progress", tags=["academic-progress"])
+router = APIRouter(tags=["academic-progress"])
 
 
 @router.get("/overview")

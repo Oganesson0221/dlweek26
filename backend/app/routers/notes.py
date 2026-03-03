@@ -27,7 +27,7 @@ env_file = find_env_file()
 if env_file:
     load_dotenv(env_file)
 
-router = APIRouter(prefix="/notes", tags=["Notes"])
+router = APIRouter(tags=["Notes"])
 
 # MongoDB connection
 MONGODB_URI = os.getenv("VITE_MONGODB_URI", "")

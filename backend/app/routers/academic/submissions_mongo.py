@@ -11,7 +11,7 @@ from app.db.mongodb import (
     get_workplan,
 )
 
-router = APIRouter(prefix="/academic/submissions", tags=["academic-submissions"])
+router = APIRouter(tags=["academic-submissions"])
 
 
 def get_course_or_404(course_code: str) -> dict:

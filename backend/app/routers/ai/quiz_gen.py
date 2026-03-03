@@ -5,7 +5,7 @@ from app.schemas import QuizGenerateRequest, QuizResponse, QuizQuestion, Student
 from app.services.ai.quiz_services import generate_quiz_from_slides, grade_and_record_quiz
 from app.services.file_parser import SlideContent
 
-router = APIRouter(prefix="/ai/quiz", tags=["AI Quiz Generation"])
+router = APIRouter(tags=["AI Quiz Generation"])
 
 
 class QuizGenerateBody(BaseModel):

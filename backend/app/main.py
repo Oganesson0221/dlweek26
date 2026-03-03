@@ -47,22 +47,23 @@ def create_app() -> FastAPI:
 
     # Mount Academic routers (MongoDB versions)
     # Note: These routers have their own internal prefixes (e.g., "/academic/courses")
-    app.include_router(courses_router)          # Has prefix="/academic/courses"
-    app.include_router(submissions_router)      # Has prefix="/academic/submissions"
-    app.include_router(templates_router)        # Has prefix="/academic/templates"
-    app.include_router(deadlines_router)        # Has prefix="/academic/deadlines"
-    app.include_router(copilot_router)          # Has prefix="/academic/copilot"
-    app.include_router(progress_router)         # Has prefix="/academic/progress"
-    app.include_router(editor_router)           # Has prefix="/academic/editor"
+    app.include_router(courses_router, prefix="/academic/courses")          # Has prefix="/academic/courses"
+    app.include_router(submissions_router, prefix="/academic/submissions")
+    app.include_router(templates_router, prefix="/academic/templates")
+    app.include_router(deadlines_router, prefix="/academic/deadlines")
+    app.include_router(copilot_router, prefix="/academic/copilot")
+    app.include_router(progress_router, prefix="/academic/progress")
+    app.include_router(editor_router, prefix="/academic/editor")
 
     # Mount AI routers - these have their own internal prefixes
-    app.include_router(course_tools_router)     # Has prefix="/ai/tools"
-    app.include_router(improving_router)        # Has prefix="/ai/improve"
-    app.include_router(quiz_gen_router)         # Has prefix="/ai/quiz"
-    app.include_router(file_upload_router)      # Has prefix="/ai/files"
+    app.include_router(course_tools_router, prefix="/ai/tools")     # Has prefix="/ai/tools"
+    app.include_router(improving_router, prefix="/ai/improve")        # Has prefix="/ai/improve"
+    app.include_router(quiz_gen_router, prefix="/ai/quiz")         # Has prefix="/ai/quiz"
+    app.include_router(file_upload_router, prefix="/ai/files")  # Prefix here instead
+
 
     # Mount Notes router - has prefix="/notes"
-    app.include_router(notes_router)             # Has prefix="/notes"
+    app.include_router(notes_router, prefix="/notes")
 
     return app
 

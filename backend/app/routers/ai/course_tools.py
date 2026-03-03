@@ -11,7 +11,7 @@ import json
 
 # Client is lazy-loaded via get_ai_client()
 
-router = APIRouter(prefix="/ai/tools", tags=["AI Course Tools"])
+router = APIRouter(tags=["AI Course Tools"])
 
 @router.post("/summary", response_model=str)
 async def get_summary(slides: List[SlideContent]):

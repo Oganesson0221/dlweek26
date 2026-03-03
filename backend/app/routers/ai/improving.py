@@ -12,7 +12,7 @@ from app.db.mongodb import get_wrong_questions, get_weak_topics, clear_wrong_que
 
 # Client is lazy-loaded via get_ai_client()
 
-router = APIRouter(prefix="/ai/improve", tags=["AI Adaptive Learning"])
+router = APIRouter(tags=["AI Adaptive Learning"])
 
 @router.post("/generate-test", response_model=QuizResponse)
 async def create_improvement_test(course_code: str = Query(None)):
